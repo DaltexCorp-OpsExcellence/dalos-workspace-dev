@@ -544,7 +544,11 @@ async function loadLiveData(){
     cur.forEach(r=>{const c=norm(r.receiving_country),ld=r.loading_date;if(!c||!ld)return;const k=c+'\u0001'+ld;if(!ldM[k])ldM[k]={c,ld,nw:0,ctr:new Set()};ldM[k].nw+=num(r.net_weight);if(r.container_number)ldM[k].ctr.add(r.container_number);});
     const by_mkt_ld=Object.values(ldM).map(o=>({c:o.c,ld:o.ld,nw:r2(o.nw),ctr:o.ctr.size})).sort((a,b)=>a.ld.localeCompare(b.ld));
 
-    RAW={by_mkt,by_mkt_variety,by_mkt_color,by_mkt_client,by_mkt_cls,by_mkt_week,by_mkt_ld};
+    const portM={};
+    cur.forEach(r=>{const c=norm(r.receiving_country),p=norm(r.receiving_port);if(!c||!p)return;(portM[c]=portM[c]||{})[p]=(portM[c][p]||0)+num(r.net_weight);});
+    const mode2=o=>{let b=null,c=-1;for(const k in o){if(o[k]>c){c=o[k];b=k;}}return b;};
+    const ports={};Object.keys(portM).forEach(c=>{ports[c]=mode2(portM[c]);});
+    RAW={by_mkt,by_mkt_variety,by_mkt_color,by_mkt_client,by_mkt_cls,by_mkt_week,by_mkt_ld,ports};
 
     PRIOR_MKT=sumByN(prior,r=>norm(r.receiving_country)); Object.keys(PRIOR_MKT).forEach(k=>PRIOR_MKT[k]=r2(PRIOR_MKT[k]));
     PRIOR_TOTAL=r2(prior.reduce((s,r)=>s+num(r.net_weight),0));
