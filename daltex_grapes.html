@@ -119,17 +119,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <div class="hstat"><div class="hstat-val">1</div><div class="hstat-lbl">Live</div></div>
         <div class="hstat"><div class="hstat-val">3</div><div class="hstat-lbl">Coming Soon</div></div>
         <div class="hstat"><div class="hstat-val">7</div><div class="hstat-lbl">Tabs</div></div>
-        <div class="hstat"><div class="hstat-val">162</div><div class="hstat-lbl">Records</div></div>
+        <div class="hstat"><div class="hstat-val" id="g-records">162</div><div class="hstat-lbl">Records</div></div>
       </div>
     </div>
     <div class="hero-season">
       <div class="hs-title">Season 2025/26</div>
-      <div class="hs-row"><span class="hs-lbl">Net Weight</span><span class="hs-val">2,314.14 T</span></div>
-      <div class="hs-row"><span class="hs-lbl">Containers</span><span class="hs-val">173</span></div>
-      <div class="hs-row"><span class="hs-lbl">Markets</span><span class="hs-val">12</span></div>
-      <div class="hs-row"><span class="hs-lbl">Top Market</span><span class="hs-val">UK 74%</span></div>
-      <div class="hs-row"><span class="hs-lbl">Top Variety</span><span class="hs-val">Flame 57%</span></div>
-      <div class="hs-row"><span class="hs-lbl">Weeks</span><span class="hs-val">W19 – W23</span></div>
+      <div class="hs-row"><span class="hs-lbl">Net Weight</span><span class="hs-val" id="g-nw">2,314.14 T</span></div>
+      <div class="hs-row"><span class="hs-lbl">Containers</span><span class="hs-val" id="g-ctr">173</span></div>
+      <div class="hs-row"><span class="hs-lbl">Markets</span><span class="hs-val" id="g-mkt">12</span></div>
+      <div class="hs-row"><span class="hs-lbl">Top Market</span><span class="hs-val" id="g-topmkt">UK 74%</span></div>
+      <div class="hs-row"><span class="hs-lbl">Top Variety</span><span class="hs-val" id="g-topvar">Flame 57%</span></div>
+      <div class="hs-row"><span class="hs-lbl">Weeks</span><span class="hs-val" id="g-weeks">W19 – W23</span></div>
     </div>
   </div>
 </div>
@@ -235,5 +235,34 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
 </div>
 
+
+<script>
+(async function(){
+  const SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
+  const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
+  const SID='19482d39-6074-4c60-b772-ced5df1ffdcb';
+  const num=v=>{const n=parseFloat(v);return isNaN(n)?0:n;};
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/grapes_shipments_view?season_id=eq.${SID}&select=*`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Range':'0-99999'}});
+    if(!r.ok)throw new Error('SB '+r.status);
+    const rows=await r.json();
+    const total=rows.reduce((s,x)=>s+num(x.net_weight),0);
+    const ctr=new Set(rows.map(x=>x.container_number).filter(Boolean)).size;
+    const mkts={},vars={};
+    rows.forEach(x=>{const m=(x.receiving_country||'').trim();if(m)mkts[m]=(mkts[m]||0)+num(x.net_weight);const v=(x.variety||'').trim();if(v)vars[v]=(vars[v]||0)+num(x.net_weight);});
+    const top=o=>{let k=null,b=-1;for(const x in o){if(o[x]>b){b=o[x];k=x;}}return [k,b];};
+    const tm=top(mkts),tv=top(vars);
+    const wk=[...new Set(rows.map(x=>parseInt(x.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b);
+    set('g-records',rows.length);
+    set('g-nw',total.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' T');
+    set('g-ctr',ctr);
+    set('g-mkt',Object.keys(mkts).length);
+    if(tm[0])set('g-topmkt',tm[0]+' '+Math.round(tm[1]/total*100)+'%');
+    if(tv[0])set('g-topvar',tv[0]+' '+Math.round(tv[1]/total*100)+'%');
+    set('g-weeks',wk.length?('W'+wk[0]+' \u2013 W'+wk[wk.length-1]):'\u2014');
+  }catch(e){console.warn('Grapes landing: live unavailable',e.message);}
+})();
+</script>
 </body>
 </html>
