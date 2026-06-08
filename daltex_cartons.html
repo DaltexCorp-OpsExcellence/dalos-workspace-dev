@@ -392,6 +392,10 @@ function filtPT(){
 function yoyBadge(pct){if(pct===null||isNaN(pct))return'';const up=pct>=0;return`<span style="display:inline-flex;align-items:center;gap:2px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:${up?'#f0fdf4':'#fef2f2'};color:${up?'#16a34a':'#dc2626'};border:1px solid ${up?'#bbf7d0':'#fecaca'}">${up?'&#9650; +':'&#9660; '}${Math.abs(pct).toFixed(1)}%</span>`;}
 
 // ── SUPABASE LIVE DATA LOADER (cartons) ──
+// container count: unique container# + loading-date, gap >7d = new instance
+function __ctWS(s){return (s||'').replace(/\s+/g,' ').trim();}
+function __ctAdd(o,r){const cn=__ctWS(r.container_number); if(!cn)return; if(!o.ctr||o.ctr.add)o.ctr={}; (o.ctr[cn]=o.ctr[cn]||[]).push(r.loading_date);}
+function __ctClusters(m){let t=0;for(const cn in m){const ds=m[cn].filter(Boolean).map(d=>+new Date(d+'T00:00:00')).sort((a,b)=>a-b);if(!ds.length){t++;continue;}let c=1,p=ds[0];for(let i=1;i<ds.length;i++){if((ds[i]-p)/86400000>7)c++;p=ds[i];}t+=c;}return t;}
 async function loadLiveData(){
   const SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
   const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
@@ -419,14 +423,14 @@ async function loadLiveData(){
     function typeAgg(rows,tf){
       const m={};
       rows.forEach(r=>{const t=r[tf];if(!t)return;
-        if(!m[t])m[t]={n:t,nw:0,cartons:0,ctr:new Set(),cls1:0,cls2:0};
+        if(!m[t])m[t]={n:t,nw:0,cartons:0,ctr:{},cls1:0,cls2:0};
         const o=m[t],nw=num(r.net_weight);
         o.nw+=nw; o.cartons+=num(r.carton_count);
-        if(r.container_number)o.ctr.add(r.container_number);
+        if(r.container_number)__ctAdd(o,r);
         const cls=String(r.daltex_class||'').trim();
         if(cls==='1')o.cls1+=nw; else if(cls==='2')o.cls2+=nw;
       });
-      return Object.values(m).map(o=>({n:o.n,nw:r2(o.nw),cartons:o.cartons,containers:o.ctr.size,cls1:r2(o.cls1),cls2:r2(o.cls2)})).sort((a,b)=>b.nw-a.nw);
+      return Object.values(m).map(o=>({n:o.n,nw:r2(o.nw),cartons:o.cartons,containers:__ctClusters(o.ctr),cls1:r2(o.cls1),cls2:r2(o.cls2)})).sort((a,b)=>b.nw-a.nw);
     }
 
     const _CT=typeAgg(cur,'carton_type');
