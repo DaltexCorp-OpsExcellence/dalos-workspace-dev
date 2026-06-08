@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Cartons &amp; Punnets · Daltex</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+
+:root{
+  --navy:#142850;--navy2:#1a3668;--orange:#DC6428;--orange2:#c45520;--orange-lt:#fff3ed;
+  --white:#fff;--bg:#f4f6fb;--bg2:#eef0f7;
+  --border:#e2e6f0;--border2:#cdd3e3;
+  --text:#0e1f3d;--text2:#4a5778;--text3:#8a95b0;
+  --green:#16a34a;--green-bg:#f0fdf4;--green-br:#bbf7d0;
+  --red:#dc2626;--red-bg:#fef2f2;--red-br:#fecaca;
+  --amber:#d97706;--amber-bg:#fffbeb;--amber-br:#fde68a;
+  --blue:#2563eb;--blue-bg:#eff6ff;--blue-br:#bfdbfe;
+  --r:6px;--r2:10px;
+  --shadow:0 1px 3px rgba(20,40,80,.06),0 1px 2px rgba(20,40,80,.04);
+  --shadow2:0 4px 14px rgba(20,40,80,.1);
+  --font:'Plus Jakarta Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;min-height:100vh}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+input,select,button,textarea{font-family:var(--font)}
+/* TOPBAR */
+.topbar{background:var(--navy);height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(14,31,61,.3)}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-icon{width:32px;height:32px;background:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.logo-text{font-size:16px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.logo-divider{width:1px;height:18px;background:rgba(255,255,255,.2);margin:0 4px}
+.logo-sub{font-size:12px;color:rgba(255,255,255,.6)}
+.tbadge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;padding:4px 10px;border-radius:20px}
+.tbadge-warn{background:rgba(220,100,40,.2);color:#ffb380;border:1px solid rgba(220,100,40,.3)}
+.tbadge-live{background:rgba(22,163,74,.2);color:#6ee7a0;border:1px solid rgba(22,163,74,.3)}
+.live-dot{width:5px;height:5px;border-radius:50%;background:#6ee7a0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+/* TABS */
+.tabs{background:var(--white);border-bottom:2px solid var(--border);padding:0 24px;display:flex;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;box-shadow:var(--shadow)}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:12px 16px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;display:flex;align-items:center;gap:6px;flex-shrink:0;transition:color .15s,border-color .15s;text-decoration:none}
+.tab:hover{color:var(--text2)}
+.tab.on{color:var(--navy);border-bottom-color:var(--orange);font-weight:600}
+/* LAYOUT */
+.main{flex:1;overflow-y:auto}
+.page{padding:20px 24px;max-width:1600px;margin:0 auto}
+.shell{display:flex;flex-direction:column;min-height:100vh}
+/* PAGE HEADER */
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap}
+.page-title{font-size:18px;font-weight:700;color:var(--navy);letter-spacing:-.4px}
+.page-title span{color:var(--orange)}
+.page-subtitle{font-size:12px;color:var(--text3);margin-top:2px}
+.season-toggle{display:flex;border:1px solid var(--border2);border-radius:var(--r);overflow:hidden;flex-shrink:0}
+.s-btn{font-size:11px;font-weight:500;padding:6px 14px;background:transparent;border:none;cursor:pointer;color:var(--text3);transition:all .15s}
+.s-btn.on{background:var(--navy);color:#fff}
+/* FILTERS */
+.fbar{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:12px 16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.fbar-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fbar-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);display:flex;align-items:center;gap:4px;white-space:nowrap}
+.fbar-sep{width:1px;height:18px;background:var(--border);flex-shrink:0}
+.date-grp{display:flex;align-items:center;gap:5px}
+.date-lbl{font-size:11px;color:var(--text3);font-weight:500}
+.finput{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);color:var(--text);padding:5px 10px;font-size:11px;outline:none;font-family:var(--mono);transition:border-color .15s}
+.finput:focus{border-color:var(--navy)}
+.fsel{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);color:var(--text);padding:5px 28px 5px 10px;font-size:11px;font-weight:500;outline:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a95b0'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;cursor:pointer;transition:border-color .15s}
+.fsel:focus{border-color:var(--navy)}
+.factions{display:flex;gap:6px;margin-left:auto}
+.fbtn{font-size:11px;font-weight:600;padding:6px 14px;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .15s;border:1px solid}
+.fbtn-apply{background:var(--navy);color:#fff;border-color:var(--navy)}
+.fbtn-reset{background:var(--white);color:var(--text2);border-color:var(--border2)}
+.fctx{margin-top:8px;display:flex;flex-wrap:wrap;gap:5px}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;background:var(--navy);color:#fff}
+.chip button{background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;padding:0;display:flex;align-items:center;font-size:10px}
+/* KPI */
+.kgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
+.kcard{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kcard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--orange)}
+.kcard-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;gap:5px}
+.kcard-val{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--navy);letter-spacing:-.5px;line-height:1}
+.kcard-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.kcard-bar{position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--border)}
+.kcard-bar-fill{height:100%;background:var(--orange)}
+/* CHART CARD */
+.cc{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:16px;box-shadow:var(--shadow)}
+.cc-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;gap:8px}
+.cc-title{font-size:13px;font-weight:600;color:var(--navy);letter-spacing:-.2px}
+.cc-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.cc-actions{display:flex;gap:4px;flex-shrink:0}
+.cc-btn{font-size:10px;font-weight:500;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:var(--bg);color:var(--text2);cursor:pointer;transition:all .15s}
+.cc-btn.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.chart-legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:6px}
+.cl-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.cl-rect{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+/* SUMMARY CARDS */
+.item-cards{display:grid;gap:8px;margin-bottom:14px}
+.item-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:13px 14px;box-shadow:var(--shadow);cursor:pointer;transition:all .18s;position:relative;overflow:hidden}
+.item-card:hover{border-color:var(--border2);box-shadow:var(--shadow2);transform:translateY(-1px)}
+.item-card.active{border-color:var(--navy);box-shadow:0 0 0 2px rgba(20,40,80,.08)}
+.ic-name{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:2px}
+.ic-sub{font-size:10px;color:var(--text3);margin-bottom:6px}
+.ic-nw{font-family:var(--mono);font-size:17px;font-weight:600;color:var(--navy);line-height:1}
+.ic-meta{font-size:10px;color:var(--text3);margin-top:3px}
+.ic-yoy{font-size:10px;font-weight:600;margin-top:4px}
+.ic-bar{position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--border)}
+.ic-bar-fill{height:100%}
+/* TABLE */
+.tbl-wrap{overflow-x:auto}
+.dt{width:100%;border-collapse:collapse;font-size:12px}
+.dt th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);padding:6px 10px;text-align:left;border-bottom:2px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none}
+.dt th:hover{color:var(--navy)}
+.dt td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;white-space:nowrap}
+.dt tr:last-child td{border-bottom:none}
+.dt tr:hover td{background:var(--bg)}
+.dt .tot td{background:var(--bg);font-weight:600}
+.mono{font-family:var(--mono);font-size:11px}
+.pct-bar{display:flex;align-items:center;gap:6px}
+.pct-track{flex:1;height:4px;background:var(--border);border-radius:2px;min-width:32px}
+.pct-fill{height:100%;border-radius:2px}
+.yoy-up{color:var(--green);font-family:var(--mono);font-size:10px;font-weight:600}
+.yoy-dn{color:var(--red);font-family:var(--mono);font-size:10px;font-weight:600}
+.cls1{background:var(--green-bg);color:var(--green);border:1px solid var(--green-br);display:inline-flex;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px}
+.cls2{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-br);display:inline-flex;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px}
+/* DRILL */
+.drill{background:var(--white);border:2px solid var(--navy);border-radius:var(--r2);padding:18px;box-shadow:var(--shadow2);margin-top:12px;display:none}
+.drill.vis{display:block}
+.drill-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.drill-title{font-size:14px;font-weight:700;color:var(--navy)}
+.drill-close{background:none;border:none;cursor:pointer;color:var(--text3);font-size:20px;display:flex;align-items:center}
+.drill-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+/* INSIGHTS */
+.insight-item{display:flex;gap:10px;padding:9px 10px;border-radius:var(--r);background:var(--bg);border:1px solid var(--border);margin-bottom:7px}
+.insight-icon{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px}
+.ii-ok{background:var(--green-bg);color:var(--green)}
+.ii-warn{background:var(--amber-bg);color:var(--amber)}
+.ii-info{background:var(--blue-bg);color:var(--blue)}
+.ii-flag{background:var(--orange-lt);color:var(--orange)}
+.ii-up{background:var(--green-bg);color:var(--green)}
+.insight-text{font-size:11px;line-height:1.6;color:var(--text2);flex:1}
+.insight-text strong{color:var(--text);font-weight:600}
+/* AI SECTION */
+.ai-section{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:16px;box-shadow:var(--shadow);margin-top:12px}
+.ai-bar{display:flex;align-items:center;gap:8px;margin-top:10px}
+.ai-input{flex:1;border:1px solid var(--border);background:var(--bg);border-radius:var(--r);outline:none;padding:7px 12px;font-size:12px;color:var(--text);font-family:var(--font);transition:border-color .2s}
+.ai-input:focus{border-color:var(--navy)}
+.ai-input::placeholder{color:var(--text3)}
+.ai-send{background:var(--navy);color:#fff;border:none;border-radius:var(--r);padding:7px 14px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.ai-send:hover{background:var(--navy2)}
+.ai-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px}
+.ai-chip{font-size:10px;font-weight:500;padding:3px 9px;border-radius:20px;background:var(--bg2);color:var(--text2);border:1px solid var(--border);cursor:pointer;transition:all .15s}
+.ai-chip:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.ai-thinking{display:none;align-items:center;gap:6px;font-size:11px;color:var(--text3);margin-top:8px}
+.ai-thinking.vis{display:flex}
+.dot-anim span{animation:dot 1.2s infinite;display:inline-block}
+.dot-anim span:nth-child(2){animation-delay:.2s}
+.dot-anim span:nth-child(3){animation-delay:.4s}
+@keyframes dot{0%,80%,100%{opacity:.3;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.ai-answer{margin-top:8px;padding:10px 12px;background:var(--blue-bg);border:1px solid var(--blue-br);border-radius:var(--r);font-size:12px;line-height:1.7;color:var(--text2);display:none}
+.ai-answer.vis{display:block}
+/* MISC */
+.mini-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)}
+.mini-row:last-child{border-bottom:none}
+.sdiv{display:flex;align-items:center;gap:8px;margin:14px 0 10px}
+.sdiv-line{flex:1;height:1px;background:var(--border)}
+.sdiv-txt{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);white-space:nowrap}
+.fade-in{animation:fadeIn .3s ease forwards}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.btn{font-size:11px;font-weight:600;padding:7px 14px;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;border:1px solid;white-space:nowrap}
+.btn-navy{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-ghost{background:#fff;color:var(--text2);border-color:var(--border2)}
+.btn-ghost:hover{background:var(--bg)}
+.btn-sm{padding:5px 10px;font-size:10px}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:10px 16px;border-radius:var(--r2);font-size:12px;font-weight:500;box-shadow:var(--shadow2);display:flex;align-items:center;gap:8px;z-index:9999;opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+
+.tabs{background:var(--white);border-bottom:2px solid var(--border);padding:0 24px;display:flex;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;box-shadow:var(--shadow);position:sticky;top:54px;z-index:100}
+.tab{padding:12px 16px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;display:flex;align-items:center;gap:6px;flex-shrink:0;transition:color .15s,border-color .15s}
+.tab:hover{color:var(--text2)}.tab.on{color:var(--navy);border-bottom-color:var(--orange);font-weight:600}
+.drill{background:var(--white);border:1px solid var(--navy);border-radius:var(--r2);padding:24px;box-shadow:var(--shadow2);margin-top:12px;display:none}
+.drill.vis{display:block}
+.drill-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid var(--border)}
+.drill-title{font-size:16px;font-weight:700;color:var(--navy)}
+.drill-close{background:none;border:none;cursor:pointer;font-size:22px;color:var(--text3);display:flex;align-items:center}
+.drill-close:hover{color:var(--navy)}
+.seg{display:flex;gap:8px;margin-bottom:16px}
+.seg-btn{padding:7px 16px;font-size:12px;font-weight:500;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text2);cursor:pointer;transition:all .15s}
+.seg-btn.on{background:var(--navy);color:#fff;border-color:var(--navy);font-weight:600}
+</style>
+</head>
+<body>
+<div class="shell">
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-icon">🍇</div>
+    <span class="logo-text">DALTEX</span>
+    <div class="logo-divider"></div>
+    <span class="logo-sub">Grapes Shipments</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <div class="tbadge tbadge-warn"><i class="ti ti-clock" style="font-size:11px"></i> Season 2025/26</div>
+    <div class="tbadge tbadge-warn"><i class="ti ti-table" style="font-size:11px"></i> Excel Data</div>
+  </div>
+  <a href="daltex_grapes.html" style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.7);font-size:11px;font-weight:500;text-decoration:none;transition:all .15s" onmouseover="this.style.background='rgba(255,255,255,.14)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,.08)';this.style.color='rgba(255,255,255,.7)'"><i class="ti ti-arrow-left" style="font-size:11px"></i> Grapes</a>
+</div>
+<div class="tabs">
+  <div class="tab" onclick="window.location='grapes_overview_branded.html'"><i class="ti ti-layout-dashboard"></i>Overview</div>
+  <div class="tab" onclick="window.location='daltex_markets.html'"><i class="ti ti-map-pin"></i>Markets</div>
+  <div class="tab" onclick="window.location='daltex_farms.html'"><i class="ti ti-building"></i>Farms</div>
+  <div class="tab" onclick="window.location='daltex_varieties_colors.html'"><i class="ti ti-palette"></i>Varieties &amp; Colors</div>
+  <div class="tab" onclick="window.location='daltex_clients.html'"><i class="ti ti-users"></i>Clients</div>
+  <div class="tab on" onclick="window.location='daltex_cartons.html'"><i class="ti ti-box"></i>Cartons &amp; Punnets</div>
+  <div class="tab" onclick="window.location='daltex_extract.html'"><i class="ti ti-database"></i>Data Explorer</div>
+</div>
+<div class="main"><div class="page">
+
+<div class="page-header">
+  <div>
+    <div class="page-title">Cartons &amp; Punnets <span>&#8212; Packaging Analysis</span></div>
+    <div class="page-subtitle">Season 2025/26 &#183; 9 carton types &#183; 6 punnet types &#183; 420,018 cartons &#183; 2,314.14 T net weight</div>
+  </div>
+</div>
+
+<div class="fbar"><div class="fbar-top">
+  <span class="fbar-label"><i class="ti ti-sliders-horizontal"></i> Filters</span>
+  <div class="fbar-sep"></div>
+  <select class="fsel" id="f-week"><option value="">All Weeks</option><option value="19">W19</option><option value="20">W20</option><option value="21">W21</option><option value="22">W22</option></select>
+  <select class="fsel" id="f-var"><option value="">All Varieties</option><option>Flame</option><option>Prime</option><option>Arra 30</option><option>Star Light</option><option>Early Flame</option><option>Early Pearl</option></select>
+  <select class="fsel" id="f-mkt"><option value="">All Markets</option><option>UK</option><option>Holland</option><option>Switzerland</option><option>Slovenia</option><option>Norway</option><option>South Africa</option></select>
+  <div class="factions">
+    <button class="fbtn fbtn-reset" onclick="resetF()"><i class="ti ti-refresh" style="font-size:11px"></i> Reset</button>
+    <button class="fbtn fbtn-apply" onclick="applyF()"><i class="ti ti-check" style="font-size:11px"></i> Apply</button>
+  </div>
+</div><div class="fctx" id="fctx"></div></div>
+
+<div class="kgrid" id="kgrid"></div>
+
+<!-- SEGMENT: Cartons / Punnets -->
+<div class="seg" id="seg">
+  <button class="seg-btn on" onclick="showSeg('ct',this)"><i class="ti ti-box"></i> Carton Types</button>
+  <button class="seg-btn" onclick="showSeg('pt',this)"><i class="ti ti-circle-dot"></i> Punnet Types</button>
+</div>
+
+<!-- CARTONS SECTION -->
+<div id="ct-section">
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px" id="ct-cards"></div>
+  <div class="cc" style="margin-bottom:12px">
+    <div class="cc-header"><div><div class="cc-title">Carton Type Performance</div><div class="cc-sub">Click any row to drill down</div></div>
+      <button class="cc-btn" onclick="doCSV('ct')"><i class="ti ti-download" style="font-size:10px"></i> CSV</button></div>
+    <div style="overflow-x:auto" id="ct-tbl"></div>
+  </div>
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px">
+    <div class="cc">
+      <div class="cc-header"><div><div class="cc-title">Net Weight by Carton Type (T)</div><div class="cc-sub">2025/26 vs Season 24/25</div></div></div>
+      <div id="ct-bar-leg" class="chart-legend" style="margin-bottom:6px"></div>
+      <div style="position:relative;height:280px"><canvas id="ct-bar"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="cc-header"><div><div class="cc-title">Carton Share</div><div class="cc-sub">% of total NW</div></div></div>
+      <div style="position:relative;height:200px"><canvas id="ct-donut"></canvas></div>
+      <div id="ct-donut-leg" class="chart-legend" style="margin-top:8px;flex-wrap:wrap"></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+    <div class="cc"><div class="cc-header"><div><div class="cc-title">Brand Breakdown</div><div class="cc-sub">NW by brand</div></div></div><div id="brand-bars"></div></div>
+    <div class="cc"><div class="cc-header"><div><div class="cc-title">Size Distribution</div><div class="cc-sub">NW by fruit size</div></div></div><div id="size-bars"></div></div>
+    <div class="cc"><div class="cc-header"><div><div class="cc-title">Mix vs Single Variety</div><div class="cc-sub">Pack type split</div></div></div><div id="mix-bars"></div></div>
+  </div>
+  <div class="drill" id="ct-drill">
+    <div class="drill-header">
+      <div class="drill-title" id="ct-drill-title">Carton Deep Dive</div>
+      <button class="drill-close" onclick="document.getElementById('ct-drill').classList.remove('vis')"><i class="ti ti-x"></i></button>
+    </div>
+    <div id="ct-drill-content"></div>
+  </div>
+</div>
+
+<!-- PUNNETS SECTION -->
+<div id="pt-section" style="display:none">
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px" id="pt-cards"></div>
+  <div class="cc" style="margin-bottom:12px">
+    <div class="cc-header"><div><div class="cc-title">Punnet Type Performance</div><div class="cc-sub">Click any row to drill down</div></div>
+      <button class="cc-btn" onclick="doCSV('pt')"><i class="ti ti-download" style="font-size:10px"></i> CSV</button></div>
+    <div style="overflow-x:auto" id="pt-tbl"></div>
+  </div>
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px">
+    <div class="cc">
+      <div class="cc-header"><div><div class="cc-title">Net Weight by Punnet Type (T)</div><div class="cc-sub">2025/26 vs Season 24/25</div></div></div>
+      <div id="pt-bar-leg" class="chart-legend" style="margin-bottom:6px"></div>
+      <div style="position:relative;height:240px"><canvas id="pt-bar"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="cc-header"><div><div class="cc-title">Punnet Share</div><div class="cc-sub">% of total NW</div></div></div>
+      <div style="position:relative;height:200px"><canvas id="pt-donut"></canvas></div>
+      <div id="pt-donut-leg" class="chart-legend" style="margin-top:8px;flex-wrap:wrap"></div>
+    </div>
+  </div>
+  <div class="drill" id="pt-drill">
+    <div class="drill-header">
+      <div class="drill-title" id="pt-drill-title">Punnet Deep Dive</div>
+      <button class="drill-close" onclick="document.getElementById('pt-drill').classList.remove('vis')"><i class="ti ti-x"></i></button>
+    </div>
+    <div id="pt-drill-content"></div>
+  </div>
+</div>
+
+<!-- AUTO INSIGHTS -->
+<div class="cc" style="margin-bottom:12px">
+  <div class="cc-header" style="margin-bottom:8px">
+    <div><div class="cc-title">Auto Insights</div></div>
+    <i class="ti ti-bulb" style="color:var(--orange);font-size:18px"></i>
+  </div>
+  <div id="insights-list"></div>
+</div>
+
+<!-- AI ANALYST -->
+<div class="ai-section">
+  <div class="cc-header" style="margin-bottom:0">
+    <div>
+      <div class="cc-title"><i class="ti ti-sparkles" style="color:var(--orange)"></i> AI Analyst</div>
+      <div class="cc-sub">Ask about cartons &amp; punnets</div>
+    </div>
+  </div>
+  <div class="ai-bar" style="margin-top:10px">
+    <input class="ai-input" id="ai-q" type="text" placeholder="e.g. Which carton type grew the most?">
+    <button class="ai-send" onclick="askAI()"><i class="ti ti-send" style="font-size:11px"></i> Ask</button>
+  </div>
+  <div class="ai-chips">
+    <div class="ai-chip" onclick="setQ('Which carton type has the highest YoY growth?')">Top YoY carton</div>
+    <div class="ai-chip" onclick="setQ('What is the most used punnet type?')">Top punnet</div>
+    <div class="ai-chip" onclick="setQ('Single vs mix variety split')">Single vs Mix</div>
+    <div class="ai-chip" onclick="setQ('Brand breakdown analysis')">Brand breakdown</div>
+    <div class="ai-chip" onclick="setQ('Which size dominates?')">Size analysis</div>
+  </div>
+  <div class="ai-thinking" id="ai-thinking"><div class="dot-anim"><span>&#9679;</span><span>&#9679;</span><span>&#9679;</span></div> Analysing&#8230;</div>
+  <div class="ai-answer" id="ai-answer"></div>
+</div>
+
+
+</div></div></div>
+<script>
+const CT = [{"n":"Green 5.5 KG","nw":783.16,"cartons":142392,"containers":57,"cls1":783.16,"cls2":0},{"n":"Black 5 KG","nw":435.24,"cartons":87048,"containers":35,"cls1":360.36,"cls2":74.88},{"n":"Green 9 KG","nw":349.55,"cartons":40208,"containers":22,"cls1":349.55,"cls2":0},{"n":"Green 5 KG","nw":284.37,"cartons":56874,"containers":23,"cls1":222.57,"cls2":61.8},{"n":"Black 4 KG","nw":240.61,"cartons":54912,"containers":22,"cls1":240.61,"cls2":0},{"n":"Black 9 KG","nw":79.56,"cartons":8840,"containers":5,"cls1":79.56,"cls2":0},{"n":"Dalia 4.5","nw":63.65,"cartons":14144,"containers":4,"cls1":0,"cls2":63.65},{"n":"Brown 5 KG","nw":40.56,"cartons":8112,"containers":3,"cls1":40.56,"cls2":0},{"n":"Dalia 5 KG","nw":37.44,"cartons":7488,"containers":3,"cls1":37.44,"cls2":0}];
+const PT = [{"n":"PUNNET K37","nw":954.78,"cartons":177216,"containers":70,"cls1":892.98,"cls2":61.8},{"n":"PUNNET CLAMSHELL","nw":564.01,"cartons":112802,"containers":45,"cls1":489.13,"cls2":74.88},{"n":"LOOSE","nw":413.71,"cartons":45968,"containers":26,"cls1":413.71,"cls2":0},{"n":"PUNNET B40","nw":230.63,"cartons":52416,"containers":21,"cls1":230.63,"cls2":0},{"n":"PUNNET K37 No Ventilation","nw":87.36,"cartons":17472,"containers":7,"cls1":87.36,"cls2":0},{"n":"CBAG","nw":63.65,"cartons":14144,"containers":4,"cls1":0,"cls2":63.65}];
+const CT_VAR = [{"ct":"Black 4 KG","v":"Early Pearl","nw":21.96},{"ct":"Black 4 KG","v":"Flame","nw":158.43},{"ct":"Black 4 KG","v":"Prime","nw":60.22},{"ct":"Black 5 KG","v":"Arra 30","nw":24.96},{"ct":"Black 5 KG","v":"Flame","nw":161.77},{"ct":"Black 5 KG","v":"Prime","nw":215.27},{"ct":"Black 5 KG","v":"Star Light","nw":33.24},{"ct":"Black 9 KG","v":"Flame","nw":63.65},{"ct":"Black 9 KG","v":"Sugraone","nw":15.91},{"ct":"Brown 5 KG","v":"Arra 30","nw":15.6},{"ct":"Brown 5 KG","v":"Star Light","nw":24.96},{"ct":"Dalia 4.5","v":"Flame","nw":9.18},{"ct":"Dalia 4.5","v":"Prime","nw":54.47},{"ct":"Dalia 5 KG","v":"Flame","nw":24.96},{"ct":"Dalia 5 KG","v":"Prime","nw":12.48},{"ct":"Green 5 KG","v":"Arra 30","nw":12.48},{"ct":"Green 5 KG","v":"Early Flame","nw":8.94},{"ct":"Green 5 KG","v":"Flame","nw":96.79},{"ct":"Green 5 KG","v":"Prime","nw":128.72},{"ct":"Green 5 KG","v":"Star Light","nw":37.44},{"ct":"Green 5.5 KG","v":"Early Flame","nw":15.83},{"ct":"Green 5.5 KG","v":"Flame","nw":539.18},{"ct":"Green 5.5 KG","v":"Prime","nw":171.13},{"ct":"Green 5.5 KG","v":"Star Light","nw":24.29},{"ct":"Green 5.5 KG","v":"Sugraone","nw":32.74},{"ct":"Green 9 KG","v":"Arra 30","nw":29.35},{"ct":"Green 9 KG","v":"Early Pearl","nw":1.0},{"ct":"Green 9 KG","v":"Exotic Pearl","nw":14.4},{"ct":"Green 9 KG","v":"Flame","nw":254.59},{"ct":"Green 9 KG","v":"Prime","nw":50.21}];
+const CT_MKT = [{"ct":"Black 4 KG","m":"UK","nw":240.61},{"ct":"Black 5 KG","m":"Holland","nw":87.36},{"ct":"Black 5 KG","m":"Norway","nw":49.92},{"ct":"Black 5 KG","m":"Slovenia","nw":12.48},{"ct":"Black 5 KG","m":"South Africa","nw":12.48},{"ct":"Black 5 KG","m":"Switzerland","nw":48.36},{"ct":"Black 5 KG","m":"UK","nw":224.64},{"ct":"Black 9 KG","m":"UK","nw":79.56},{"ct":"Brown 5 KG","m":"South Africa","nw":24.96},{"ct":"Brown 5 KG","m":"UAE","nw":15.6},{"ct":"Dalia 4.5","m":"Belarus","nw":15.91},{"ct":"Dalia 4.5","m":"Russia","nw":47.74},{"ct":"Dalia 5 KG","m":"Spain","nw":37.44},{"ct":"Green 5 KG","m":"Holland","nw":48.88},{"ct":"Green 5 KG","m":"Lativia","nw":49.92},{"ct":"Green 5 KG","m":"Poland","nw":12.49},{"ct":"Green 5 KG","m":"Slovenia","nw":49.92},{"ct":"Green 5 KG","m":"South Africa","nw":37.44},{"ct":"Green 5 KG","m":"Switzerland","nw":23.92},{"ct":"Green 5 KG","m":"UK","nw":61.8},{"ct":"Green 5.5 KG","m":"UK","nw":783.16},{"ct":"Green 9 KG","m":"UAE","nw":15.4},{"ct":"Green 9 KG","m":"UK","nw":334.15}];
+const CT_WK = [{"ct":"Black 4 KG","wk":20,"nw":87.86},{"ct":"Black 4 KG","wk":21,"nw":65.89},{"ct":"Black 4 KG","wk":22,"nw":86.86},{"ct":"Black 5 KG","wk":19,"nw":24.96},{"ct":"Black 5 KG","wk":20,"nw":136.24},{"ct":"Black 5 KG","wk":21,"nw":86.84},{"ct":"Black 5 KG","wk":22,"nw":187.2},{"ct":"Black 9 KG","wk":21,"nw":47.74},{"ct":"Black 9 KG","wk":22,"nw":31.82},{"ct":"Brown 5 KG","wk":20,"nw":12.48},{"ct":"Brown 5 KG","wk":22,"nw":28.08},{"ct":"Dalia 4.5","wk":20,"nw":15.91},{"ct":"Dalia 4.5","wk":22,"nw":47.74},{"ct":"Dalia 5 KG","wk":20,"nw":12.48},{"ct":"Dalia 5 KG","wk":22,"nw":24.96},{"ct":"Green 5 KG","wk":19,"nw":11.96},{"ct":"Green 5 KG","wk":20,"nw":110.16},{"ct":"Green 5 KG","wk":21,"nw":74.88},{"ct":"Green 5 KG","wk":22,"nw":74.89},{"ct":"Green 5 KG","wk":23,"nw":12.48},{"ct":"Green 5.5 KG","wk":19,"nw":13.73},{"ct":"Green 5.5 KG","wk":20,"nw":275.22},{"ct":"Green 5.5 KG","wk":21,"nw":164.74},{"ct":"Green 5.5 KG","wk":22,"nw":329.47},{"ct":"Green 9 KG","wk":20,"nw":31.82},{"ct":"Green 9 KG","wk":21,"nw":127.3},{"ct":"Green 9 KG","wk":22,"nw":190.43}];
+const PT_VAR = [{"pt":"CBAG","v":"Flame","nw":9.18},{"pt":"CBAG","v":"Prime","nw":54.47},{"pt":"LOOSE","v":"Arra 30","nw":29.35},{"pt":"LOOSE","v":"Flame","nw":318.24},{"pt":"LOOSE","v":"Prime","nw":50.21},{"pt":"LOOSE","v":"Sugraone","nw":15.91},{"pt":"PUNNET B40","v":"Early Pearl","nw":21.96},{"pt":"PUNNET B40","v":"Flame","nw":153.75},{"pt":"PUNNET B40","v":"Prime","nw":54.91},{"pt":"PUNNET CLAMSHELL","v":"Arra 30","nw":53.04},{"pt":"PUNNET CLAMSHELL","v":"Early Pearl","nw":1.0},{"pt":"PUNNET CLAMSHELL","v":"Exotic Pearl","nw":14.4},{"pt":"PUNNET CLAMSHELL","v":"Flame","nw":149.16},{"pt":"PUNNET CLAMSHELL","v":"Prime","nw":270.92},{"pt":"PUNNET CLAMSHELL","v":"Star Light","nw":75.48},{"pt":"PUNNET K37","v":"Early Flame","nw":24.77},{"pt":"PUNNET K37","v":"Flame","nw":626.48},{"pt":"PUNNET K37","v":"Prime","nw":226.35},{"pt":"PUNNET K37","v":"Star Light","nw":44.45},{"pt":"PUNNET K37","v":"Sugraone","nw":32.74},{"pt":"PUNNET K37 No Ventilation","v":"Flame","nw":51.74},{"pt":"PUNNET K37 No Ventilation","v":"Prime","nw":35.62}];
+const PT_MKT = [{"pt":"CBAG","m":"Belarus","nw":15.91},{"pt":"CBAG","m":"Russia","nw":47.74},{"pt":"LOOSE","m":"UK","nw":413.71},{"pt":"PUNNET B40","m":"UK","nw":230.63},{"pt":"PUNNET CLAMSHELL","m":"Holland","nw":136.24},{"pt":"PUNNET CLAMSHELL","m":"Lativia","nw":49.92},{"pt":"PUNNET CLAMSHELL","m":"Norway","nw":49.92},{"pt":"PUNNET CLAMSHELL","m":"Poland","nw":12.49},{"pt":"PUNNET CLAMSHELL","m":"Slovenia","nw":62.4},{"pt":"PUNNET CLAMSHELL","m":"South Africa","nw":74.88},{"pt":"PUNNET CLAMSHELL","m":"Switzerland","nw":72.28},{"pt":"PUNNET CLAMSHELL","m":"UAE","nw":31.0},{"pt":"PUNNET CLAMSHELL","m":"UK","nw":74.88},{"pt":"PUNNET K37","m":"Spain","nw":37.44},{"pt":"PUNNET K37","m":"UK","nw":917.34},{"pt":"PUNNET K37 No Ventilation","m":"UK","nw":87.36}];
+const PT_FARM = [{"pt":"CBAG","f":"Dina Farms","nw":17.31},{"pt":"CBAG","f":"El khier","nw":0.37},{"pt":"CBAG","f":"Elmasa","nw":17.83},{"pt":"CBAG","f":"Hana","nw":5.97},{"pt":"CBAG","f":"Menia","nw":16.89},{"pt":"CBAG","f":"Salma","nw":5.27},{"pt":"LOOSE","f":"Dina Farms","nw":2.34},{"pt":"LOOSE","f":"El khier","nw":99.76},{"pt":"LOOSE","f":"Elmasa","nw":3.24},{"pt":"LOOSE","f":"Hana","nw":198.97},{"pt":"LOOSE","f":"Menia","nw":51.99},{"pt":"LOOSE","f":"Salma","nw":57.4},{"pt":"PUNNET B40","f":"Dina Farms","nw":21.6},{"pt":"PUNNET B40","f":"El khier","nw":76.24},{"pt":"PUNNET B40","f":"Elmasa","nw":6.58},{"pt":"PUNNET B40","f":"Hana","nw":91.55},{"pt":"PUNNET B40","f":"Salma","nw":34.66},{"pt":"PUNNET CLAMSHELL","f":"Abu Dhabi","nw":3.68},{"pt":"PUNNET CLAMSHELL","f":"Akram Shawky","nw":10.1},{"pt":"PUNNET CLAMSHELL","f":"Dina Farms","nw":42.01},{"pt":"PUNNET CLAMSHELL","f":"El khier","nw":85.68},{"pt":"PUNNET CLAMSHELL","f":"Elmasa","nw":27.14},{"pt":"PUNNET CLAMSHELL","f":"Hana","nw":66.95},{"pt":"PUNNET CLAMSHELL","f":"Menia","nw":215.05},{"pt":"PUNNET CLAMSHELL","f":"Salma","nw":113.4},{"pt":"PUNNET K37","f":"Akram Shawky","nw":77.81},{"pt":"PUNNET K37","f":"Dina Farms","nw":94.61},{"pt":"PUNNET K37","f":"El khier","nw":114.43},{"pt":"PUNNET K37","f":"Elmasa","nw":7.03},{"pt":"PUNNET K37","f":"Hana","nw":279.66},{"pt":"PUNNET K37","f":"Menia","nw":24.96},{"pt":"PUNNET K37","f":"Salma","nw":356.27},{"pt":"PUNNET K37 No Ventilation","f":"Dina Farms","nw":6.06},{"pt":"PUNNET K37 No Ventilation","f":"El khier","nw":28.0},{"pt":"PUNNET K37 No Ventilation","f":"Elmasa","nw":7.68},{"pt":"PUNNET K37 No Ventilation","f":"Hana","nw":14.27},{"pt":"PUNNET K37 No Ventilation","f":"Menia","nw":12.48},{"pt":"PUNNET K37 No Ventilation","f":"Salma","nw":18.87}];
+const PT_WK = [{"pt":"CBAG","wk":20,"nw":15.91},{"pt":"CBAG","wk":22,"nw":47.74},{"pt":"LOOSE","wk":20,"nw":31.82},{"pt":"LOOSE","wk":21,"nw":175.03},{"pt":"LOOSE","wk":22,"nw":206.86},{"pt":"PUNNET B40","wk":20,"nw":87.86},{"pt":"PUNNET B40","wk":21,"nw":65.89},{"pt":"PUNNET B40","wk":22,"nw":76.88},{"pt":"PUNNET CLAMSHELL","wk":19,"nw":36.92},{"pt":"PUNNET CLAMSHELL","wk":20,"nw":184.6},{"pt":"PUNNET CLAMSHELL","wk":21,"nw":136.76},{"pt":"PUNNET CLAMSHELL","wk":22,"nw":193.25},{"pt":"PUNNET CLAMSHELL","wk":23,"nw":12.48},{"pt":"PUNNET K37","wk":19,"nw":13.73},{"pt":"PUNNET K37","wk":20,"nw":312.06},{"pt":"PUNNET K37","wk":21,"nw":189.7},{"pt":"PUNNET K37","wk":22,"nw":439.3},{"pt":"PUNNET K37 No Ventilation","wk":20,"nw":49.92},{"pt":"PUNNET K37 No Ventilation","wk":22,"nw":37.44}];
+const BRAND = [{"b":"Green","nw":1417.08},{"b":"Black","nw":755.41},{"b":"Dalia","nw":101.09},{"b":"Brown","nw":40.56}];
+const SIZE = [{"s":"16+","nw":1664.84},{"s":"17+","nw":292.67},{"s":"15+","nw":163.49},{"s":"18+","nw":156.29},{"s":"14+","nw":36.84}];
+const MIX = [{"m":"Mix Variety","nw":260.52,"cartons":49608},{"m":"Single Variety","nw":2053.62,"cartons":370410}];
+const CT_SPECS = {"Green 5.5 KG":{"cnw":"0.0055T","cgw":"0.0065T","jde":"O.T 5.5kg"},"Black 5 KG":{"cnw":"0.0050T","cgw":"0.0060T","jde":"O.T 5kg"},"Green 5 KG":{"cnw":"0.0050T","cgw":"0.0060T","jde":"O.T 5kg G"},"Green 9 KG":{"cnw":"0.0090T","cgw":"0.0105T","jde":"O.T 9kg"},"Black 4 KG":{"cnw":"0.0040T","cgw":"0.0050T","jde":"O.T 4kg"},"Black 9 KG":{"cnw":"0.0090T","cgw":"0.0105T","jde":"O.T 9kg B"},"Brown 9 KG":{"cnw":"0.0090T","cgw":"0.0105T","jde":"O.T 9kg Br"},"Green 4 KG":{"cnw":"0.0040T","cgw":"0.0050T","jde":"O.T 4kg G"},"Brown 4 KG":{"cnw":"0.0040T","cgw":"0.0050T","jde":"O.T 4kg Br"}};
+const PRIOR_CT = {"Green 5.5 KG":336.2,"Black 5 KG":230.2,"Green 5 KG":166.1,"Green 9 KG":134.2,"Black 4 KG":129.6,"Black 9 KG":24.0,"Brown 9 KG":22.0,"Green 4 KG":0,"Brown 4 KG":0};
+const PRIOR_PT = {"PUNNET K37":399.0,"PUNNET CLAMSHELL":325.8,"LOOSE":174.4,"PUNNET B40":129.6,"PUNNET K37 No Ventilation":138.0,"PUNNET K30":75.0};
+const PRIOR_CT_WEEK = {"Green 5.5 KG":{"19":6.8,"20":178.4,"21":121.8,"22":29.2},"Black 5 KG":{"20":98.4,"21":101.6,"22":30.2},"Green 5 KG":{"19":8.5,"20":68.6,"21":63.8,"22":25.2},"Green 9 KG":{"20":56.0,"21":62.4,"22":15.8},"Black 4 KG":{"19":27.4,"20":70.1,"21":22.0,"22":10.1}};
+const PRIOR_PT_WEEK = {"PUNNET K37":{"19":15.0,"20":204.0,"21":142.0,"22":38.0},"PUNNET CLAMSHELL":{"19":15.0,"20":140.0,"21":128.0,"22":42.8},"LOOSE":{"19":12.5,"20":100.0,"21":48.8,"22":13.1},"PUNNET B40":{"20":56.0,"21":61.6,"22":12.0}};
+const TOTAL_NW = 2314.14;
+const WEEKS    = [19,20,21,22];
+
+const VAR_COL  = {Flame:'#DC6428',Prime:'#142850','Arra 30':'#3d6fa8','Star Light':'#16a34a','Early Flame':'#e8872e','Early Pearl':'#6b7280'};
+const MKT_COL  = {UK:'#142850',Holland:'#DC6428',Switzerland:'#1a3668',Slovenia:'#d46024',Norway:'#3d6fa8',Lativia:'#f4a55a','South Africa':'#16a34a',Russia:'#6b7280',UAE:'#5c8fc9',Spain:'#d97706'};
+const FARM_COL = {Menia:'#142850',Hana:'#DC6428',Salma:'#1a3668','El khier':'#d46024','Akram Shawky':'#3d6fa8','Dina Farms':'#f4a55a',Elmasa:'#6b7280'};
+const CT_COL   = {'Green 5.5 KG':'#16a34a','Black 5 KG':'#142850','Green 5 KG':'#22c55e','Green 9 KG':'#4ade80','Black 4 KG':'#1a3668','Black 9 KG':'#1e3a5f','Brown 9 KG':'#92400e','Green 4 KG':'#86efac','Brown 4 KG':'#d97706'};
+const PT_COL   = {'PUNNET K37':'#142850','PUNNET CLAMSHELL':'#DC6428','LOOSE':'#3d6fa8','PUNNET B40':'#16a34a','PUNNET K37 No Ventilation':'#d46024','PUNNET K30':'#f4a55a'};
+
+let SF={week:'',var:'',mkt:''};
+
+function filtCT(){
+  let r=CT.map(x=>({...x}));
+  if(SF.var){const m={};CT_VAR.filter(x=>x.v===SF.var).forEach(x=>m[x.ct]=(m[x.ct]||0)+x.nw);r=r.map(x=>({...x,nw:m[x.n]||0})).filter(x=>x.nw>0);}
+  if(SF.mkt){const m={};CT_MKT.filter(x=>x.m===SF.mkt).forEach(x=>m[x.ct]=(m[x.ct]||0)+x.nw);r=r.map(x=>({...x,nw:m[x.n]||0})).filter(x=>x.nw>0);}
+  if(SF.week){const m={};CT_WK.filter(x=>String(x.wk)===SF.week).forEach(x=>m[x.ct]=(m[x.ct]||0)+x.nw);r=r.map(x=>({...x,nw:m[x.n]||0})).filter(x=>x.nw>0);}
+  return r.sort((a,b)=>b.nw-a.nw);
+}
+function filtPT(){
+  let r=PT.map(x=>({...x}));
+  if(SF.var){const m={};PT_VAR.filter(x=>x.v===SF.var).forEach(x=>m[x.pt]=(m[x.pt]||0)+x.nw);r=r.map(x=>({...x,nw:m[x.n]||0})).filter(x=>x.nw>0);}
+  if(SF.mkt){const m={};PT_MKT.filter(x=>x.m===SF.mkt).forEach(x=>m[x.pt]=(m[x.pt]||0)+x.nw);r=r.map(x=>({...x,nw:m[x.n]||0})).filter(x=>x.nw>0);}
+  if(SF.week){const m={};PT_WK.filter(x=>String(x.wk)===SF.week).forEach(x=>m[x.pt]=(m[x.pt]||0)+x.nw);r=r.map(x=>({...x,nw:m[x.n]||0})).filter(x=>x.nw>0);}
+  return r.sort((a,b)=>b.nw-a.nw);
+}
+
+function yoyBadge(pct){if(pct===null||isNaN(pct))return'';const up=pct>=0;return`<span style="display:inline-flex;align-items:center;gap:2px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:${up?'#f0fdf4':'#fef2f2'};color:${up?'#16a34a':'#dc2626'};border:1px solid ${up?'#bbf7d0':'#fecaca'}">${up?'&#9650; +':'&#9660; '}${Math.abs(pct).toFixed(1)}%</span>`;}
+
+function render(){
+  const ct=filtCT(), pt=filtPT();
+  const ctTot=ct.reduce((s,x)=>s+x.nw,0), ptTot=pt.reduce((s,x)=>s+x.nw,0);
+  renderKPIs(ct,pt,ctTot,ptTot);
+  renderCT(ct,ctTot); renderPT(pt,ptTot);
+  renderBrand(); renderSize(); renderMix();
+  renderInsights();
+}
+
+function renderKPIs(ct,pt,ctTot,ptTot){
+  const ctPrior=ct.reduce((s,x)=>s+(PRIOR_CT[x.n]||0),0);
+  const ptPrior=pt.reduce((s,x)=>s+(PRIOR_PT[x.n]||0),0);
+  const ctYoy=ctPrior>0?((ctTot-ctPrior)/ctPrior*100):null;
+  const ptYoy=ptPrior>0?((ptTot-ptPrior)/ptPrior*100):null;
+  const totCartons=CT.reduce((s,x)=>s+x.cartons,0);
+  document.getElementById('kgrid').innerHTML=[
+    {l:'Total Net Weight',i:'ti-weight',v:TOTAL_NW.toFixed(2)+' T',s:'All carton & punnet types',yoy:'',bar:100},
+    {l:'Carton Types',i:'ti-box',v:CT.length+' types',s:ctTot.toFixed(1)+'T · '+yoyBadge(ctYoy),yoy:'',bar:Math.min(ctTot/13,100)},
+    {l:'Punnet Types',i:'ti-circle-dot',v:PT.length+' types',s:ptTot.toFixed(1)+'T · '+yoyBadge(ptYoy),yoy:'',bar:Math.min(ptTot/13,100)},
+    {l:'Total Cartons',i:'ti-packages',v:totCartons.toLocaleString(),s:'units packed',yoy:'',bar:60},
+    {l:'Single Variety',i:'ti-plant',v:Math.round(MIX.find(x=>x.m==='Single Variety')?.nw/TOTAL_NW*100||0)+'%',s:MIX.find(x=>x.m==='Single Variety')?.nw.toFixed(1)+'T',yoy:'',bar:Math.round(MIX.find(x=>x.m==='Single Variety')?.nw/TOTAL_NW*100||0)},
+  ].map((c,i)=>`<div class="kcard fade-in" style="animation-delay:${i*.05}s"><div class="kcard-label"><i class="ti ${c.i}"></i>${c.l}</div><div class="kcard-val">${c.v}</div><div class="kcard-sub">${c.s}</div><div class="kcard-bar"><div class="kcard-bar-fill" style="width:${c.bar}%"></div></div></div>`).join('');
+}
+
+function renderCT(ct,tot){
+  const max=ct[0]?.nw||1;
+  document.getElementById('ct-cards').innerHTML=ct.map((x,i)=>{
+    const p=PRIOR_CT[x.n]||0,yp=p>0?((x.nw-p)/p*100):null;
+    const col=CT_COL[x.n]||'#8a95b0';
+    return`<div class="item-card fade-in" style="animation-delay:${i*.04}s;border-left:3px solid ${col};cursor:pointer" onclick="drillCT('${x.n.replace(/'/g,"\\'")}')">
+      <div class="ic-name">${x.n}</div>
+      <div class="ic-nw">${x.nw.toFixed(1)} T</div>
+      <div class="ic-meta">${x.cartons.toLocaleString()} cartons · ${x.containers} ctrs</div>
+      <div style="font-size:10px;font-weight:600;margin-top:4px;color:${yp===null?'var(--text3)':yp>=0?'#16a34a':'#dc2626'}">${yp!==null?(yp>=0?'▲ +':'▼ ')+Math.abs(yp).toFixed(1)+'% YoY':'New'}</div>
+      <div class="ic-bar"><div class="ic-bar-fill" style="width:${Math.round(x.nw/max*100)}%;background:${col}"></div></div>
+    </div>`;
+  }).join('');
+
+  const TH=h=>`<th style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;padding:8px 10px;text-align:left;border-bottom:2px solid #e2e6f0;white-space:nowrap">${h}</th>`;
+  const TD=v=>`<td style="padding:8px 10px;border-bottom:1px solid #e2e6f0">${v}</td>`;
+  document.getElementById('ct-tbl').innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>${['Carton Type','Net Wt (T)','Share','YoY vs 24/25','Cartons','Containers','Specs'].map(TH).join('')}</tr></thead><tbody>
+  ${ct.map(x=>{const p=PRIOR_CT[x.n]||0,yp=p>0?((x.nw-p)/p*100):null;const sp=CT_SPECS[x.n]||{};return`<tr style="cursor:pointer" onclick="drillCT('${x.n.replace(/'/g,"\\'")}')">
+    ${TD(`<div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:50%;background:${CT_COL[x.n]||'#8a95b0'}"></div><strong>${x.n}</strong></div>`)}
+    ${TD(`<span style="font-family:var(--mono);font-size:12px;font-weight:600;color:#142850">${x.nw.toFixed(2)}</span>`)}
+    ${TD(`<span style="font-family:var(--mono);font-size:11px">${(x.nw/tot*100).toFixed(1)}%</span>`)}
+    ${TD(yp!==null?`<span style="color:${yp>=0?'#16a34a':'#dc2626'};font-family:var(--mono);font-size:10px;font-weight:600">${yp>=0?'▲ +':'▼ '}${Math.abs(yp).toFixed(1)}%</span>`:'New')}
+    ${TD(`<span style="font-family:var(--mono);font-size:11px">${x.cartons.toLocaleString()}</span>`)}
+    ${TD(`<span style="font-family:var(--mono);font-size:11px">${x.containers}</span>`)}
+    ${TD(`<span style="font-size:11px;color:#8a95b0">${sp.cnw||'—'}</span>`)}
+  </tr>`;}).join('')}</tbody></table>`;
+
+  const labels=ct.map(x=>x.n),cur=ct.map(x=>x.nw),prior=ct.map(x=>PRIOR_CT[x.n]||0),colors=labels.map(l=>CT_COL[l]||'#8a95b0');
+  const ex=Chart.getChart('ct-bar');if(ex)ex.destroy();
+  new Chart(document.getElementById('ct-bar'),{type:'bar',data:{labels,datasets:[
+    {label:'2025/26',data:cur,backgroundColor:colors,borderRadius:3,barThickness:14,order:1},
+    {label:'Season 24/25',data:prior,backgroundColor:'rgba(180,190,210,0.35)',borderColor:'rgba(180,190,210,0.7)',borderWidth:1,borderRadius:3,barThickness:14,order:2}
+  ]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,onClick:(e,el)=>{if(el.length)drillCT(labels[el[0].index]);},
+    plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false},datalabels:{display:true,anchor:'end',align:'end',formatter:(v,ctx)=>ctx.datasetIndex===0&&v>0?v.toFixed(1)+'T':null,font:{family:"'IBM Plex Mono'",size:9,weight:'600'},color:'#142850',clip:false}},
+    scales:{x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:10},color:'#8a95b0'}},y:{grid:{display:false},ticks:{font:{family:"'Plus Jakarta Sans'",size:10,weight:'500'},color:'#0e1f3d'}}},layout:{padding:{right:55}}},plugins:[ChartDataLabels]});
+  document.getElementById('ct-bar-leg').innerHTML='<div class="cl-item"><div class="cl-rect" style="background:#142850"></div>2025/26</div><div class="cl-item"><div class="cl-rect" style="background:rgba(180,190,210,0.5);border:1px solid rgba(180,190,210,.8)"></div>Season 24/25</div>';
+
+  const ex2=Chart.getChart('ct-donut');if(ex2)ex2.destroy();
+  new Chart(document.getElementById('ct-donut'),{type:'doughnut',data:{labels,datasets:[{data:cur,backgroundColor:colors,borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.label}: ${c.raw}T`}},datalabels:{display:false}},animation:{onComplete:function(){const ch=this,ctx=ch.ctx,cx=(ch.chartArea.left+ch.chartArea.right)/2,cy=(ch.chartArea.top+ch.chartArea.bottom)/2;ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.font="600 13px 'IBM Plex Mono'";ctx.fillStyle='#142850';ctx.fillText(tot.toFixed(1)+'T',cx,cy-5);ctx.font="400 9px 'Plus Jakarta Sans'";ctx.fillStyle='#8a95b0';ctx.fillText('carton NW',cx,cy+9);ctx.restore();}}}});
+  document.getElementById('ct-donut-leg').innerHTML=ct.map(x=>`<div class="cl-item"><div class="cl-rect" style="background:${CT_COL[x.n]||'#8a95b0'}"></div>${x.n.split(' ').slice(0,2).join(' ')} <span style="font-family:var(--mono);font-size:10px;color:#8a95b0">${Math.round(x.nw/tot*100)}%</span></div>`).join('');
+}
+
+function renderPT(pt,tot){
+  const max=pt[0]?.nw||1;
+  document.getElementById('pt-cards').innerHTML=pt.map((x,i)=>{
+    const p=PRIOR_PT[x.n]||0,yp=p>0?((x.nw-p)/p*100):null;
+    const col=PT_COL[x.n]||'#8a95b0';
+    return`<div class="item-card fade-in" style="animation-delay:${i*.04}s;border-left:3px solid ${col};cursor:pointer" onclick="drillPT('${x.n.replace(/'/g,"\\'")}')">
+      <div class="ic-name" style="font-size:11px">${x.n}</div>
+      <div class="ic-nw">${x.nw.toFixed(1)} T</div>
+      <div class="ic-meta">${x.cartons.toLocaleString()} cartons · ${x.containers} ctrs</div>
+      <div style="font-size:10px;font-weight:600;margin-top:4px;color:${yp===null?'var(--text3)':yp>=0?'#16a34a':'#dc2626'}">${yp!==null?(yp>=0?'▲ +':'▼ ')+Math.abs(yp).toFixed(1)+'% YoY':'New'}</div>
+      <div class="ic-bar"><div class="ic-bar-fill" style="width:${Math.round(x.nw/max*100)}%;background:${col}"></div></div>
+    </div>`;
+  }).join('');
+
+  const TH=h=>`<th style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;padding:8px 10px;text-align:left;border-bottom:2px solid #e2e6f0;white-space:nowrap">${h}</th>`;
+  const TD=v=>`<td style="padding:8px 10px;border-bottom:1px solid #e2e6f0">${v}</td>`;
+  document.getElementById('pt-tbl').innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>${['Punnet Type','Net Wt (T)','Share','YoY vs 24/25','Cartons','Containers'].map(TH).join('')}</tr></thead><tbody>
+  ${pt.map(x=>{const p=PRIOR_PT[x.n]||0,yp=p>0?((x.nw-p)/p*100):null;return`<tr style="cursor:pointer" onclick="drillPT('${x.n.replace(/'/g,"\\'")}')">
+    ${TD(`<div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:50%;background:${PT_COL[x.n]||'#8a95b0'}"></div><strong style="font-size:11px">${x.n}</strong></div>`)}
+    ${TD(`<span style="font-family:var(--mono);font-size:12px;font-weight:600;color:#142850">${x.nw.toFixed(2)}</span>`)}
+    ${TD(`<span style="font-family:var(--mono);font-size:11px">${(x.nw/tot*100).toFixed(1)}%</span>`)}
+    ${TD(yp!==null?`<span style="color:${yp>=0?'#16a34a':'#dc2626'};font-family:var(--mono);font-size:10px;font-weight:600">${yp>=0?'▲ +':'▼ '}${Math.abs(yp).toFixed(1)}%</span>`:'New')}
+    ${TD(`<span style="font-family:var(--mono);font-size:11px">${x.cartons.toLocaleString()}</span>`)}
+    ${TD(`<span style="font-family:var(--mono);font-size:11px">${x.containers}</span>`)}
+  </tr>`;}).join('')}</tbody></table>`;
+
+  const labels=pt.map(x=>x.n),cur=pt.map(x=>x.nw),prior=pt.map(x=>PRIOR_PT[x.n]||0),colors=labels.map(l=>PT_COL[l]||'#8a95b0');
+  const ex=Chart.getChart('pt-bar');if(ex)ex.destroy();
+  new Chart(document.getElementById('pt-bar'),{type:'bar',data:{labels,datasets:[
+    {label:'2025/26',data:cur,backgroundColor:colors,borderRadius:3,barThickness:14,order:1},
+    {label:'Season 24/25',data:prior,backgroundColor:'rgba(180,190,210,0.35)',borderColor:'rgba(180,190,210,0.7)',borderWidth:1,borderRadius:3,barThickness:14,order:2}
+  ]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,onClick:(e,el)=>{if(el.length)drillPT(labels[el[0].index]);},
+    plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false},datalabels:{display:true,anchor:'end',align:'end',formatter:(v,ctx)=>ctx.datasetIndex===0&&v>0?v.toFixed(1)+'T':null,font:{family:"'IBM Plex Mono'",size:9,weight:'600'},color:'#142850',clip:false}},
+    scales:{x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:10},color:'#8a95b0'}},y:{grid:{display:false},ticks:{font:{family:"'Plus Jakarta Sans'",size:10,weight:'500'},color:'#0e1f3d'}}},layout:{padding:{right:55}}},plugins:[ChartDataLabels]});
+  document.getElementById('pt-bar-leg').innerHTML='<div class="cl-item"><div class="cl-rect" style="background:#142850"></div>2025/26</div><div class="cl-item"><div class="cl-rect" style="background:rgba(180,190,210,0.5);border:1px solid rgba(180,190,210,.8)"></div>Season 24/25</div>';
+
+  const ex2=Chart.getChart('pt-donut');if(ex2)ex2.destroy();
+  new Chart(document.getElementById('pt-donut'),{type:'doughnut',data:{labels,datasets:[{data:cur,backgroundColor:colors,borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.label}: ${c.raw}T`}},datalabels:{display:false}},animation:{onComplete:function(){const ch=this,ctx=ch.ctx,cx=(ch.chartArea.left+ch.chartArea.right)/2,cy=(ch.chartArea.top+ch.chartArea.bottom)/2;ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.font="600 13px 'IBM Plex Mono'";ctx.fillStyle='#142850';ctx.fillText(tot.toFixed(1)+'T',cx,cy-5);ctx.font="400 9px 'Plus Jakarta Sans'";ctx.fillStyle='#8a95b0';ctx.fillText('punnet NW',cx,cy+9);ctx.restore();}}}});
+  document.getElementById('pt-donut-leg').innerHTML=pt.map(x=>`<div class="cl-item"><div class="cl-rect" style="background:${PT_COL[x.n]||'#8a95b0'}"></div>${x.n.split(' ').slice(0,2).join(' ')} <span style="font-family:var(--mono);font-size:10px;color:#8a95b0">${Math.round(x.nw/tot*100)}%</span></div>`).join('');
+}
+
+function renderBrand(){
+  const max=BRAND[0]?.nw||1;
+  const cols={'Green':'#16a34a','Black':'#142850','Dalia':'#d97706','Brown':'#92400e'};
+  document.getElementById('brand-bars').innerHTML=BRAND.map(b=>{const pct=Math.round(b.nw/max*100);return`<div style="margin-bottom:12px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><span style="font-size:12px;font-weight:600;color:#142850">${b.b}</span><span style="font-family:var(--mono);font-size:12px;font-weight:600;color:#142850">${b.nw.toFixed(1)}T <span style="color:#8a95b0;font-weight:400">${Math.round(b.nw/TOTAL_NW*100)}%</span></span></div><div style="height:8px;background:#e2e6f0;border-radius:4px"><div style="width:${pct}%;height:100%;border-radius:4px;background:${cols[b.b]||'#8a95b0'}"></div></div></div>`;}).join('');
+}
+function renderSize(){
+  const max=SIZE[0]?.nw||1;
+  document.getElementById('size-bars').innerHTML=SIZE.map(s=>{const pct=Math.round(s.nw/max*100);return`<div style="margin-bottom:12px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><span style="font-size:12px;font-weight:600;color:#142850">${s.s}</span><span style="font-family:var(--mono);font-size:12px;font-weight:600;color:#142850">${s.nw.toFixed(1)}T <span style="color:#8a95b0;font-weight:400">${Math.round(s.nw/TOTAL_NW*100)}%</span></span></div><div style="height:8px;background:#e2e6f0;border-radius:4px"><div style="width:${pct}%;height:100%;border-radius:4px;background:#142850"></div></div></div>`;}).join('');
+}
+function renderMix(){
+  const total=MIX.reduce((s,x)=>s+x.nw,0)||1;
+  const cols={'Single Variety':'#142850','Mix Variety':'#DC6428'};
+  document.getElementById('mix-bars').innerHTML=MIX.map(m=>{const pct=Math.round(m.nw/total*100);return`<div style="margin-bottom:14px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><span style="font-size:12px;font-weight:600;color:#142850">${m.m}</span><span style="font-family:var(--mono);font-size:12px;font-weight:600;color:#142850">${m.nw.toFixed(1)}T <span style="color:#8a95b0;font-weight:400">${pct}%</span></span></div><div style="height:8px;background:#e2e6f0;border-radius:4px"><div style="width:${pct}%;height:100%;border-radius:4px;background:${cols[m.m]||'#8a95b0'}"></div></div><div style="font-size:10px;color:#8a95b0;margin-top:3px">${m.cartons.toLocaleString()} cartons</div></div>`;}).join('');
+}
+
+function drillCT(name){
+  const r=CT.find(x=>x.n===name);if(!r) return;
+  document.getElementById('ct-drill-title').textContent=name+' — Carton Deep Dive';
+  document.getElementById('ct-drill').classList.add('vis');
+  const prior=PRIOR_CT[name]||0,yp=prior>0?((r.nw-prior)/prior*100):null;
+  const specs=CT_SPECS[name]||{};
+  const vars=CT_VAR.filter(x=>x.ct===name).sort((a,b)=>b.nw-a.nw);
+  const mkts=CT_MKT.filter(x=>x.ct===name).sort((a,b)=>b.nw-a.nw);
+  const varTotal=vars.reduce((s,v)=>s+v.nw,0)||1;
+  const mktTotal=mkts.reduce((s,m)=>s+m.nw,0)||1;
+  const priorWkly=PRIOR_CT_WEEK[name]||{};
+  const weekRows=WEEKS.map(w=>{const cur=CT_WK.find(x=>x.ct===name&&x.wk===w)?.nw||0;const pri=priorWkly[w]||0;if(cur===0&&pri===0)return null;const wy=pri>0?((cur-pri)/pri*100):null;return{w,cur,pri,wy,maxBar:Math.max(cur,pri,1)};}).filter(Boolean);
+  const el=document.getElementById('ct-drill-content');el.style.display='block';
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
+      <div style="background:#f4f6fb;border-radius:10px;padding:16px;border-left:4px solid ${CT_COL[name]||'#142850'}">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:10px;white-space:nowrap">2025/26 Net Weight</div>
+        <div style="font-family:'IBM Plex Mono';font-size:26px;font-weight:700;color:#142850;line-height:1">${r.nw.toFixed(2)} T</div>
+        <div style="font-size:11px;color:#8a95b0;margin-top:6px">${r.cartons.toLocaleString()} cartons · ${r.containers} ctrs</div>
+      </div>
+      <div style="background:#f4f6fb;border-radius:10px;padding:16px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:10px;white-space:nowrap">Season 24/25</div>
+        <div style="font-family:'IBM Plex Mono';font-size:26px;font-weight:600;color:#4a5778;line-height:1">${prior>0?prior.toFixed(2)+' T':'No data'}</div>
+        ${yp!==null?`<div style="font-size:12px;font-weight:700;margin-top:6px;color:${yp>=0?'#16a34a':'#dc2626'}">${yp>=0?'▲ +':'▼ '}${Math.abs(yp).toFixed(1)}% YoY</div>`:'<div style="font-size:11px;color:#8a95b0;margin-top:6px">No prior data</div>'}
+      </div>
+      <div style="background:#f4f6fb;border-radius:10px;padding:16px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:10px;white-space:nowrap">Share of Total</div>
+        <div style="font-family:'IBM Plex Mono';font-size:26px;font-weight:600;color:#142850;line-height:1">${Math.round(r.nw/TOTAL_NW*100)}%</div>
+        <div style="font-size:11px;color:#8a95b0;margin-top:6px">of season net weight</div>
+      </div>
+      <div style="background:#f4f6fb;border-radius:10px;padding:16px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:10px;white-space:nowrap">Carton Specs</div>
+        <div style="font-family:'IBM Plex Mono';font-size:20px;font-weight:600;color:#142850;line-height:1.2">${specs.cnw||'—'}</div>
+        <div style="font-size:11px;color:#8a95b0;margin-top:6px">Gross: ${specs.cgw||'—'} · JDE: ${specs.jde||'—'}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#142850;margin-bottom:14px;display:flex;align-items:center;gap:6px"><i class="ti ti-plant" style="color:#DC6428"></i> Variety Mix</div>
+        ${vars.map(v=>{const pct=Math.round(v.nw/varTotal*100);return`<div style="margin-bottom:12px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><div style="display:flex;align-items:center;gap:6px;min-width:0"><div style="width:8px;height:8px;border-radius:50%;background:${VAR_COL[v.v]||'#8a95b0'};flex-shrink:0"></div><span style="font-size:12px;font-weight:600;color:#142850;white-space:nowrap">${v.v}</span></div><span style="font-family:'IBM Plex Mono';font-size:12px;font-weight:600;color:#142850;white-space:nowrap;margin-left:8px">${v.nw.toFixed(1)}T <span style="color:#8a95b0;font-weight:400">${pct}%</span></span></div><div style="height:8px;background:#e2e6f0;border-radius:4px"><div style="width:${pct}%;height:100%;border-radius:4px;background:${VAR_COL[v.v]||'#142850'}"></div></div></div>`;}).join('')}
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#142850;margin-bottom:14px;display:flex;align-items:center;gap:6px"><i class="ti ti-map-pin" style="color:#DC6428"></i> Market Distribution</div>
+        ${mkts.map(m=>{const pct=Math.round(m.nw/mktTotal*100);return`<div style="margin-bottom:12px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><div style="display:flex;align-items:center;gap:6px;min-width:0"><div style="width:8px;height:8px;border-radius:50%;background:${MKT_COL[m.m]||'#8a95b0'};flex-shrink:0"></div><span style="font-size:12px;font-weight:600;color:#142850;white-space:nowrap">${m.m}</span></div><span style="font-family:'IBM Plex Mono';font-size:12px;font-weight:600;color:#142850;white-space:nowrap;margin-left:8px">${m.nw.toFixed(1)}T <span style="color:#8a95b0;font-weight:400">${pct}%</span></span></div><div style="height:8px;background:#e2e6f0;border-radius:4px"><div style="width:${pct}%;height:100%;border-radius:4px;background:${MKT_COL[m.m]||'#142850'}"></div></div></div>`;}).join('')}
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#142850;margin-bottom:14px;display:flex;align-items:center;gap:6px"><i class="ti ti-calendar" style="color:#DC6428"></i> Weekly Net Weight</div>
+        ${weekRows.length?weekRows.map(({w,cur,pri,wy,maxBar})=>{const wyCol=wy===null?'#8a95b0':wy>=0?'#16a34a':'#dc2626';return`<div style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#4a5778">Week ${w}</span><span style="font-size:11px;font-weight:700;font-family:'IBM Plex Mono';color:${wyCol}">${wy!==null?(wy>=0?'▲ +':'▼ ')+Math.abs(wy).toFixed(1)+'%':'—'}</span></div><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:10px;color:#8a95b0;width:34px;flex-shrink:0;text-align:right">25/26</span><div style="flex:1;height:9px;background:#e2e6f0;border-radius:5px;overflow:hidden"><div style="width:${Math.round(cur/maxBar*100)}%;height:100%;background:${CT_COL[name]||'#142850'};border-radius:5px"></div></div><span style="font-family:'IBM Plex Mono';font-size:11px;font-weight:700;color:#142850;width:48px;text-align:right;flex-shrink:0">${cur>0?cur.toFixed(1)+'T':'—'}</span></div>${pri>0?`<div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:#8a95b0;width:34px;flex-shrink:0;text-align:right">24/25</span><div style="flex:1;height:9px;background:#e2e6f0;border-radius:5px;overflow:hidden"><div style="width:${Math.round(pri/maxBar*100)}%;height:100%;background:rgba(180,190,210,0.7);border-radius:5px"></div></div><span style="font-family:'IBM Plex Mono';font-size:11px;color:#8a95b0;width:48px;text-align:right;flex-shrink:0">${pri.toFixed(1)}T</span></div>`:''} </div>`;}).join(''):'<div style="font-size:11px;color:#8a95b0">No weekly data</div>'}
+      </div>
+    </div>`;
+  document.getElementById('ct-drill').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function drillPT(name){
+  const r=PT.find(x=>x.n===name);if(!r) return;
+  document.getElementById('pt-drill-title').textContent=name+' — Punnet Deep Dive';
+  document.getElementById('pt-drill').classList.add('vis');
+  const prior=PRIOR_PT[name]||0,yp=prior>0?((r.nw-prior)/prior*100):null;
+  const vars=PT_VAR.filter(x=>x.pt===name).sort((a,b)=>b.nw-a.nw);
+  const mkts=PT_MKT.filter(x=>x.pt===name).sort((a,b)=>b.nw-a.nw);
+  const farms=PT_FARM.filter(x=>x.pt===name).sort((a,b)=>b.nw-a.nw);
+  const varTotal=vars.reduce((s,v)=>s+v.nw,0)||1;
+  const mktTotal=mkts.reduce((s,m)=>s+m.nw,0)||1;
+  const farmTotal=farms.reduce((s,f)=>s+f.nw,0)||1;
+  const priorWkly=PRIOR_PT_WEEK[name]||{};
+  const weekRows=WEEKS.map(w=>{const cur=PT_WK.find(x=>x.pt===name&&x.wk===w)?.nw||0;const pri=priorWkly[w]||0;if(cur===0&&pri===0)return null;const wy=pri>0?((cur-pri)/pri*100):null;return{w,cur,pri,wy,maxBar:Math.max(cur,pri,1)};}).filter(Boolean);
+  const el=document.getElementById('pt-drill-content');el.style.display='block';
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
+      <div style="background:#f4f6fb;border-radius:10px;padding:16px;border-left:4px solid ${PT_COL[name]||'#DC6428'}">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:10px;white-space:nowrap">2025/26 Net Weight</div>
+        <div style="font-family:'IBM Plex Mono';font-size:26px;font-weight:700;color:#142850;line-height:1">${r.nw.toFixed(2)} T</div>
+        <div style="font-size:11px;color:#8a95b0;margin-top:6px">${r.cartons.toLocaleString()} cartons · ${r.containers} ctrs</div>
+      </div>
+      <div style="background:#f4f6fb;border-radius:10px;padding:16px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:10px;white-space:nowrap">Season 24/25</div>
+        <div style="font-family:'IBM Plex Mono';font-size:26px;font-weight:600;color:#4a5778;line-height:1">${prior>0?prior.toFixed(2)+' T':'No data'}</div>
+        ${yp!==null?`<div style="font-size:12px;font-weight:700;margin-top:6px;color:${yp>=0?'#16a34a':'#dc2626'}">${yp>=0?'▲ +':'▼ '}${Math.abs(yp).toFixed(1)}% YoY</div>`:'<div style="font-size:11px;color:#8a95b0;margin-top:6px">No prior data</div>'}
+      </div>
+      <div style="background:#f4f6fb;border-radius:10px;padding:16px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:10px;white-space:nowrap">Share of Total</div>
+        <div style="font-family:'IBM Plex Mono';font-size:26px;font-weight:600;color:#142850;line-height:1">${Math.round(r.nw/TOTAL_NW*100)}%</div>
+        <div style="font-size:11px;color:#8a95b0;margin-top:6px">of season net weight</div>
+      </div>
+      <div style="background:#f4f6fb;border-radius:10px;padding:16px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:10px;white-space:nowrap">Avg Load</div>
+        <div style="font-family:'IBM Plex Mono';font-size:26px;font-weight:600;color:#142850;line-height:1">${r.containers>0?(r.nw/r.containers).toFixed(2):'—'} T</div>
+        <div style="font-size:11px;color:#8a95b0;margin-top:6px">per container</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#142850;margin-bottom:14px;display:flex;align-items:center;gap:6px"><i class="ti ti-plant" style="color:#DC6428"></i> Variety Mix</div>
+        ${vars.map(v=>{const pct=Math.round(v.nw/varTotal*100);return`<div style="margin-bottom:12px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><div style="display:flex;align-items:center;gap:6px;min-width:0"><div style="width:8px;height:8px;border-radius:50%;background:${VAR_COL[v.v]||'#8a95b0'};flex-shrink:0"></div><span style="font-size:12px;font-weight:600;color:#142850;white-space:nowrap">${v.v}</span></div><span style="font-family:'IBM Plex Mono';font-size:12px;font-weight:600;color:#142850;white-space:nowrap;margin-left:8px">${v.nw.toFixed(1)}T <span style="color:#8a95b0;font-weight:400">${pct}%</span></span></div><div style="height:8px;background:#e2e6f0;border-radius:4px"><div style="width:${pct}%;height:100%;border-radius:4px;background:${VAR_COL[v.v]||'#DC6428'}"></div></div></div>`;}).join('')}
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#142850;margin-bottom:14px;display:flex;align-items:center;gap:6px"><i class="ti ti-map-pin" style="color:#DC6428"></i> Market Distribution</div>
+        ${mkts.map(m=>{const pct=Math.round(m.nw/mktTotal*100);return`<div style="margin-bottom:12px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><div style="display:flex;align-items:center;gap:6px;min-width:0"><div style="width:8px;height:8px;border-radius:50%;background:${MKT_COL[m.m]||'#8a95b0'};flex-shrink:0"></div><span style="font-size:12px;font-weight:600;color:#142850;white-space:nowrap">${m.m}</span></div><span style="font-family:'IBM Plex Mono';font-size:12px;font-weight:600;color:#142850;white-space:nowrap;margin-left:8px">${m.nw.toFixed(1)}T <span style="color:#8a95b0;font-weight:400">${pct}%</span></span></div><div style="height:8px;background:#e2e6f0;border-radius:4px"><div style="width:${pct}%;height:100%;border-radius:4px;background:${MKT_COL[m.m]||'#DC6428'}"></div></div></div>`;}).join('')}
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e2e6f0">
+          <div style="font-size:12px;font-weight:700;color:#142850;margin-bottom:14px;display:flex;align-items:center;gap:6px"><i class="ti ti-building" style="color:#DC6428"></i> Farm Supply</div>
+          ${farms.map(f=>{const pct=Math.round(f.nw/farmTotal*100);return`<div style="margin-bottom:12px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><div style="display:flex;align-items:center;gap:6px;min-width:0"><div style="width:8px;height:8px;border-radius:50%;background:${FARM_COL[f.f]||'#8a95b0'};flex-shrink:0"></div><span style="font-size:12px;font-weight:600;color:#142850;white-space:nowrap">${f.f}</span></div><span style="font-family:'IBM Plex Mono';font-size:12px;font-weight:600;color:#142850;white-space:nowrap;margin-left:8px">${f.nw.toFixed(1)}T <span style="color:#8a95b0;font-weight:400">${pct}%</span></span></div><div style="height:8px;background:#e2e6f0;border-radius:4px"><div style="width:${pct}%;height:100%;border-radius:4px;background:${FARM_COL[f.f]||'#DC6428'}"></div></div></div>`;}).join('')}
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:#142850;margin-bottom:14px;display:flex;align-items:center;gap:6px"><i class="ti ti-calendar" style="color:#DC6428"></i> Weekly Net Weight</div>
+        ${weekRows.length?weekRows.map(({w,cur,pri,wy,maxBar})=>{const wyCol=wy===null?'#8a95b0':wy>=0?'#16a34a':'#dc2626';return`<div style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#4a5778">Week ${w}</span><span style="font-size:11px;font-weight:700;font-family:'IBM Plex Mono';color:${wyCol}">${wy!==null?(wy>=0?'▲ +':'▼ ')+Math.abs(wy).toFixed(1)+'%':'—'}</span></div><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:10px;color:#8a95b0;width:34px;flex-shrink:0;text-align:right">25/26</span><div style="flex:1;height:9px;background:#e2e6f0;border-radius:5px;overflow:hidden"><div style="width:${Math.round(cur/maxBar*100)}%;height:100%;background:${PT_COL[name]||'#DC6428'};border-radius:5px"></div></div><span style="font-family:'IBM Plex Mono';font-size:11px;font-weight:700;color:#142850;width:48px;text-align:right;flex-shrink:0">${cur>0?cur.toFixed(1)+'T':'—'}</span></div>${pri>0?`<div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:#8a95b0;width:34px;flex-shrink:0;text-align:right">24/25</span><div style="flex:1;height:9px;background:#e2e6f0;border-radius:5px;overflow:hidden"><div style="width:${Math.round(pri/maxBar*100)}%;height:100%;background:rgba(180,190,210,0.7);border-radius:5px"></div></div><span style="font-family:'IBM Plex Mono';font-size:11px;color:#8a95b0;width:48px;text-align:right;flex-shrink:0">${pri.toFixed(1)}T</span></div>`:''} </div>`;}).join(''):'<div style="font-size:11px;color:#8a95b0">No weekly data</div>'}
+      </div>
+    </div>`;
+  document.getElementById('pt-drill').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function showSeg(type,btn){
+  document.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
+  document.getElementById('ct-section').style.display=type==='ct'?'':'none';
+  document.getElementById('pt-section').style.display=type==='pt'?'':'none';
+}
+function applyF(){SF.week=document.getElementById('f-week').value;SF.var=document.getElementById('f-var').value;SF.mkt=document.getElementById('f-mkt').value;render();}
+function resetF(){['f-week','f-var','f-mkt'].forEach(id=>document.getElementById(id).value='');SF={week:'',var:'',mkt:''};render();}
+function doCSV(type){const items=type==='ct'?filtCT():filtPT();const tot=items.reduce((s,x)=>s+x.nw,0);const hdr='Name,NW_T,Share_pct,Cartons,Containers,Prior_T,YoY_pct'+String.fromCharCode(10);const rows=items.map(x=>{const p=type==='ct'?(PRIOR_CT[x.n]||0):(PRIOR_PT[x.n]||0);return[x.n,x.nw.toFixed(2),(x.nw/tot*100).toFixed(1),x.cartons,x.containers,p||'N/A',p>0?((x.nw-p)/p*100).toFixed(1):'N/A'].join(',');}).join(String.fromCharCode(10));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([hdr+rows],{type:'text/csv'}));a.download=type+'s.csv';a.click();}
+
+function renderInsights(){
+  const ct=filtCT(),pt=filtPT();
+  const ctTot=ct.reduce((s,x)=>s+x.nw,0);
+  const ptTot=pt.reduce((s,x)=>s+x.nw,0);
+  const topCT=ct[0],topPT=pt[0];
+  const ctYoy=ct.filter(x=>PRIOR_CT[x.n]>0).map(x=>({...x,yoy:(x.nw-PRIOR_CT[x.n])/PRIOR_CT[x.n]*100}));
+  const fastestCT=ctYoy.sort((a,b)=>b.yoy-a.yoy)[0];
+  const decliningCT=ctYoy.filter(x=>x.yoy<0);
+  const singleNw=MIX.find(x=>x.m==='Single Variety')?.nw||0;
+  const mixNw=MIX.find(x=>x.m==='Mix Variety')?.nw||0;
+  const topBrand=BRAND[0],topSize=SIZE[0];
+  const fn=(type,icon,txt)=>`<div class="insight-item"><div class="insight-icon ${type}"><i class="ti ${icon}"></i></div><div class="insight-text">${txt}</div></div>`;
+  document.getElementById('insights-list').innerHTML=[
+    topCT?fn('ii-flag','ti-trophy',`<strong>${topCT.n}</strong> is the top carton type at <strong>${topCT.nw.toFixed(1)}T</strong> (${Math.round(topCT.nw/ctTot*100)}% of carton NW · ${topCT.cartons.toLocaleString()} cartons).`):'',
+    topPT?fn('ii-ok','ti-circle-dot',`<strong>${topPT.n}</strong> is the leading punnet type at <strong>${topPT.nw.toFixed(1)}T</strong> (${Math.round(topPT.nw/ptTot*100)}% of punnet NW).`):'',
+    fastestCT?fn('ii-up','ti-trending-up',`Fastest-growing carton: <strong>${fastestCT.n}</strong> at <strong>+${fastestCT.yoy.toFixed(1)}% YoY</strong> (${fastestCT.nw.toFixed(1)}T vs ${PRIOR_CT[fastestCT.n].toFixed(1)}T prior).`):'',
+    decliningCT.length?fn('ii-warn','ti-trending-down',`<strong>Declining cartons:</strong> ${decliningCT.map(x=>x.n+' ('+x.yoy.toFixed(1)+'%)').join(', ')}.`):'',
+    fn('ii-info','ti-info-circle',`Pack type: <strong>${Math.round(singleNw/(singleNw+mixNw)*100)}% Single Variety</strong> (${singleNw.toFixed(1)}T) vs ${Math.round(mixNw/(singleNw+mixNw)*100)}% Mix (${mixNw.toFixed(1)}T).`),
+    topBrand?fn('ii-flag','ti-tag',`Top brand: <strong>${topBrand.b}</strong> at ${topBrand.nw.toFixed(1)}T (${Math.round(topBrand.nw/TOTAL_NW*100)}% of total NW).`):'',
+    topSize?fn('ii-info','ti-resize',`Dominant size: <strong>${topSize.s}</strong> at ${topSize.nw.toFixed(1)}T (${Math.round(topSize.nw/TOTAL_NW*100)}% of total).`):'',
+  ].filter(Boolean).join('');
+}
+function setQ(q){document.getElementById('ai-q').value=q;askAI();}
+document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById('ai-q');if(el)el.addEventListener('keydown',e=>{if(e.key==='Enter')askAI();});});
+async function askAI(){
+  const q=document.getElementById('ai-q').value.trim();if(!q)return;
+  document.getElementById('ai-thinking').classList.add('vis');
+  document.getElementById('ai-answer').classList.remove('vis');
+  const ct=filtCT(),pt=filtPT();
+  const ctx=`Daltex grapes 2025/26 packaging. Cartons: ${ct.map(x=>x.n+': '+x.nw.toFixed(1)+'T (prior: '+(PRIOR_CT[x.n]||0)+'T)').join(', ')}. Punnets: ${pt.map(x=>x.n+': '+x.nw.toFixed(1)+'T').join(', ')}. Brands: ${BRAND.map(b=>b.b+': '+b.nw.toFixed(1)+'T').join(', ')}. Sizes: ${SIZE.map(s=>s.s+': '+s.nw.toFixed(1)+'T').join(', ')}. Single: ${MIX.find(x=>x.m==='Single Variety')?.nw.toFixed(1)||0}T, Mix: ${MIX.find(x=>x.m==='Mix Variety')?.nw.toFixed(1)||0}T.`;
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,system:'You are a packaging analyst for Daltex. Focus on NET WEIGHT. 2-4 sentences, numbers, plain text only.',messages:[{role:'user',content:ctx+' Question: '+q}]})});
+    const d=await resp.json();
+    document.getElementById('ai-answer').textContent=d.content?.find(b=>b.type==='text')?.text||'No response.';
+    document.getElementById('ai-answer').classList.add('vis');
+  }catch(e){document.getElementById('ai-answer').textContent='AI requires internet connection.';document.getElementById('ai-answer').classList.add('vis');}
+  finally{document.getElementById('ai-thinking').classList.remove('vis');}
+}
+
+window.onload=render;
+</script>
+</body>
+</html>
