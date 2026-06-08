@@ -459,7 +459,7 @@ input, select, button { font-family: var(--font); }
 <div class="page-header">
   <div>
     <div class="page-title">Grapes Shipments <span>— Overview</span></div>
-    <div class="page-subtitle">Season 2025/26 · 12 May – 01 Jun 2026 · 97 containers · 10 markets</div>
+    <div class="page-subtitle" id="page-sub">Season 2025/26 · 12 May – 01 Jun 2026 · 97 containers · 10 markets</div>
   </div>
   <div class="season-toggle">
     <button class="s-btn on">2025/26</button>
@@ -715,6 +715,14 @@ async function loadLiveData() {
         const ff=document.getElementById('f-from'),ft=document.getElementById('f-to');
         if(ff){ff.value=DEF_FROM;ff.min=DEF_FROM;ff.max=DEF_TO;}
         if(ft){ft.value=DEF_TO;ft.min=DEF_FROM;ft.max=DEF_TO;}}
+      (function(){
+        const ctrN=new Set(curRows.map(r=>r.container_number).filter(Boolean)).size;
+        const mktN=new Set(curRows.map(r=>(r.receiving_country||'').trim()).filter(Boolean)).size;
+        const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const fmtD=s=>{const d=new Date(s+'T00:00:00');return d.getDate()+' '+MON[d.getMonth()];};
+        const sub=document.getElementById('page-sub');
+        if(sub&&lds.length){const y=new Date(lds[lds.length-1]+'T00:00:00').getFullYear();sub.textContent='Season 2025/26 · '+fmtD(lds[0])+' – '+fmtD(lds[lds.length-1])+' '+y+' · '+ctrN+' containers · '+mktN+' markets';}
+      })();
       fillSel('f-week',[...new Set(curRows.map(r=>parseInt(r.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b).map(w=>({v:String(w),t:'Week '+w})));
       fillSel('f-status',[...new Set(dn('shipping_status'))].map(x=>({v:x,t:x})));
       fillSel('f-source',[...new Set(dn('source_type'))].map(x=>({v:x,t:x})));
