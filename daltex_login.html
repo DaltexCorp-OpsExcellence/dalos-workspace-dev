@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sign in · Daltex Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0ede6;
+  --red:#b03030;--red-bg:#faeaea;--red-border:#e8a0a0;
+  --green:#1e6b3a;--green-bg:#e8f5ec;--green-border:#8ecba4;
+  --text3:#7a7668;--border:#d0cbbe;--border2:#bcb8ae;--card:#ffffff;
+  --font-display:'DM Serif Display',serif;
+  --font-body:'Instrument Sans',sans-serif;
+  --font-mono:'DM Mono',monospace;
+  --r:8px;--r2:12px;
+}
+body{font-family:var(--font-body);background:#0a120c;color:#eef0ea;}
+.form-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;display:block}
+.form-input{width:100%;padding:10px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--card);outline:none;transition:border-color .15s;font-size:15px;color:#1a1a17;font-family:var(--font-body)}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--r);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;border:1px solid transparent;white-space:nowrap;font-family:var(--font-body)}
+.btn-primary{background:#2b5c3f;color:#fff;border-color:#2b5c3f}
+
+/* ── God-mode login (copied from DalOS Vision) ── */
+@keyframes dlogin-cardin{from{opacity:0;transform:translateY(18px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes dlogin-cardout{from{opacity:1;transform:translateY(0) scale(1)}to{opacity:0;transform:translateY(-10px) scale(.94)}}
+@keyframes dlogin-welcome{0%{opacity:0;transform:translateY(14px) scale(.96)}22%{opacity:1;transform:translateY(0) scale(1)}80%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-8px) scale(1.02)}}
+@keyframes dlogin-crest{0%{opacity:0;transform:scale(.7) rotate(-8deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+.dlogin{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow:hidden;background:transparent;color:#eef0ea;}
+.dlogin>*{position:relative;z-index:5;}
+.dlogin .form-input{background:rgba(0,0,0,.26);border:1px solid rgba(255,255,255,.13);color:#f4f1e8;}
+.dlogin .form-input:focus{border-color:#6fc191;background:rgba(0,0,0,.36);box-shadow:0 0 0 3px rgba(111,193,145,.16);}
+.dlogin .form-input::placeholder{color:rgba(244,241,232,.32);}
+.dlogin .form-label{color:rgba(244,241,232,.5);}
+.dlogin .btn-primary{background:linear-gradient(135deg,#d9b86a,#f0d68a)!important;color:#3a2c0a!important;border:none!important;box-shadow:0 6px 22px rgba(217,184,106,.32);font-weight:700;}
+.dlogin .btn-primary:hover{background:linear-gradient(135deg,#e0c074,#f5dd96)!important;box-shadow:0 10px 30px rgba(217,184,106,.46);}
+.dlogin-card-exit{animation:dlogin-cardout .4s ease forwards!important;}
+.dlogin-card-in{animation:dlogin-cardin .55s cubic-bezier(.2,.8,.2,1) both;}
+
+/* ── Shared persistent backdrop (login + home) ── */
+@keyframes dbd-aurora{0%{transform:translate(0,0) scale(1)}33%{transform:translate(4%,-3%) scale(1.08)}66%{transform:translate(-3%,4%) scale(.96)}100%{transform:translate(0,0) scale(1)}}
+@keyframes dbd-breathe{0%,100%{opacity:.08;transform:translateY(-50%) scale(1) rotate(0deg)}50%{opacity:.12;transform:translateY(-50%) scale(1.04) rotate(3deg)}}
+@keyframes dbd-drift{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes dbd-twinkle{0%,100%{opacity:.15}50%{opacity:.6}}
+.dbd{position:fixed;inset:0;z-index:0;overflow:hidden;background:#0a120c;pointer-events:none}
+.dbd-aur{position:absolute;inset:-20%;filter:blur(70px);animation:dbd-aurora 22s ease-in-out infinite}
+.dbd-aur b{position:absolute;border-radius:50%;display:block}
+.dbd-vignette{position:absolute;inset:0;background:radial-gradient(ellipse 90% 80% at 50% 35%,transparent 40%,rgba(5,9,6,.55) 100%)}
+.dbd-spark{position:absolute;width:3px;height:3px;border-radius:50%;background:#cde7d8;animation:dbd-twinkle 4s ease-in-out infinite}
+.dbd-crest{position:absolute;right:-40px;top:50%;transform:translateY(-50%);width:min(46vw,560px);height:min(46vw,560px);animation:dbd-breathe 14s ease-in-out infinite}
+.dbd-fruit{position:absolute;animation:dbd-drift 10s ease-in-out infinite;filter:drop-shadow(0 6px 14px rgba(0,0,0,.3))}
+@media(max-width:760px){.dbd-crest{display:none}.dbd-fruit{display:none}}
+</style>
+</head>
+<body>
+
+<!-- Persistent backdrop -->
+<div class="dbd">
+  <div class="dbd-aur">
+    <b style="width:420px;height:420px;background:#2b5c3f;top:5%;left:8%"></b>
+    <b style="width:360px;height:360px;background:#1d6b48;top:30%;right:5%"></b>
+    <b style="width:300px;height:300px;background:#7f5ad4;bottom:5%;left:30%;opacity:.55"></b>
+    <b style="width:280px;height:280px;background:#9a6fd8;bottom:14%;right:22%;opacity:.42"></b>
+    <b style="width:240px;height:240px;background:#caa86a;top:10%;left:45%;opacity:.28"></b>
+  </div>
+  <div class="dbd-crest"><svg viewBox="0 0 200 200" width="100%" height="100%"><defs><linearGradient id="dhgold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e0bd7a"/><stop offset="1" stop-color="#8fe0ad"/></linearGradient></defs><circle cx="100" cy="100" r="74" fill="none" stroke="url(#dhgold)" stroke-width="1.5"/><circle cx="100" cy="100" r="62" fill="none" stroke="url(#dhgold)" stroke-width="2"/><circle cx="100" cy="74" r="11" fill="url(#dhgold)"/><circle cx="82" cy="90" r="11" fill="url(#dhgold)"/><circle cx="118" cy="90" r="11" fill="url(#dhgold)"/><circle cx="90" cy="108" r="11" fill="url(#dhgold)"/><circle cx="110" cy="108" r="11" fill="url(#dhgold)"/><circle cx="100" cy="126" r="11" fill="url(#dhgold)"/><circle cx="76" cy="110" r="9" fill="url(#dhgold)" opacity=".8"/><circle cx="124" cy="110" r="9" fill="url(#dhgold)" opacity=".8"/><path d="M100 63 L100 48 M100 48 Q114 44 120 54" fill="none" stroke="url(#dhgold)" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+  <div class="dbd-fruit" style="width:42px;top:13%;right:31%;opacity:.9;animation-delay:1s"><svg viewBox="0 0 64 80" width="100%" height="100%"><circle cx="32" cy="20" r="8.5" fill="#a98fe8"/><circle cx="20" cy="34" r="8.5" fill="#a98fe8"/><circle cx="44" cy="34" r="8.5" fill="#a98fe8"/><circle cx="26" cy="48" r="8.5" fill="#a98fe8"/><circle cx="38" cy="48" r="8.5" fill="#a98fe8"/><circle cx="32" cy="62" r="8.5" fill="#a98fe8"/><line x1="32" y1="11" x2="32" y2="4" stroke="#8fe0ad" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+  <div class="dbd-fruit" style="width:30px;top:62%;right:42%;opacity:.8;animation-delay:3s"><svg viewBox="0 0 64 80" width="100%" height="100%"><circle cx="32" cy="20" r="8.5" fill="#8fe0ad"/><circle cx="20" cy="34" r="8.5" fill="#8fe0ad"/><circle cx="44" cy="34" r="8.5" fill="#8fe0ad"/><circle cx="26" cy="48" r="8.5" fill="#8fe0ad"/><circle cx="38" cy="48" r="8.5" fill="#8fe0ad"/><circle cx="32" cy="62" r="8.5" fill="#8fe0ad"/><line x1="32" y1="11" x2="32" y2="4" stroke="#8fe0ad" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+  <div class="dbd-vignette"></div>
+  <div class="dbd-spark" style="top:18%;left:30%;animation-delay:0s"></div>
+  <div class="dbd-spark" style="top:60%;left:18%;animation-delay:1.2s"></div>
+  <div class="dbd-spark" style="top:40%;left:55%;animation-delay:2.4s"></div>
+  <div class="dbd-spark" style="top:72%;left:46%;animation-delay:.6s"></div>
+</div>
+
+<div class="dlogin">
+  <!-- LOGIN VIEW -->
+  <div id="loginView">
+    <div style="text-align:center">
+      <div style="font-family:var(--font-display);font-size:40px;margin-bottom:6px;letter-spacing:-1px;color:#f4f1e8">Dal<span style="color:#6fc191">OS</span> <span style="color:#7d9d88;font-size:30px">Analytics</span></div>
+      <div style="font-size:10px;font-weight:600;letter-spacing:.18em;color:#caa86a;text-transform:uppercase;margin-bottom:34px">Shipment &amp; Market Intelligence</div>
+    </div>
+    <div id="lcard" class="dlogin-card-in" style="width:100%;max-width:400px;background:rgba(255,255,255,.055);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,0.5);padding:34px 32px">
+
+      <!-- sign-in form -->
+      <div id="signinForm">
+        <div style="margin-bottom:16px">
+          <label class="form-label" style="font-size:10px;letter-spacing:2px">EMAIL ADDRESS</label>
+          <input class="form-input" id="email" type="email" autofocus placeholder="your@email.com"/>
+        </div>
+        <div style="margin-bottom:8px;position:relative">
+          <label class="form-label" style="font-size:10px;letter-spacing:2px">PASSWORD</label>
+          <input class="form-input" id="pw" type="password"/>
+          <button id="togglePw" type="button" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);font-size:11px">Show</button>
+        </div>
+        <div style="text-align:right;margin-bottom:16px">
+          <button id="forgotBtn" type="button" style="background:none;border:none;cursor:pointer;font-size:12px;color:#8fbf9f;font-weight:600;padding:0">Forgot password?</button>
+        </div>
+        <div id="err" style="display:none;background:var(--red-bg);border:1px solid var(--red-border);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--red);margin-bottom:14px"></div>
+        <button id="signinBtn" class="btn btn-primary" style="width:100%;justify-content:center;font-size:14px;padding:10px">Sign in</button>
+      </div>
+
+      <!-- reset form -->
+      <div id="resetForm" style="display:none">
+        <div id="backToSignin" style="font-size:12px;color:#8fbf9f;font-weight:600;cursor:pointer;margin-bottom:20px">&larr; Back to sign in</div>
+        <div style="font-family:var(--font-display);font-size:28px;margin-bottom:8px;color:#f4f1e8">Reset password</div>
+        <div style="font-size:15px;color:rgba(244,241,232,.5);margin-bottom:24px">Enter your email and we&rsquo;ll send you reset instructions.</div>
+        <div id="resetDone" style="display:none;background:var(--green-bg);border:1px solid var(--green-border);border-radius:8px;padding:14px 16px;font-size:13px;color:var(--green);text-align:center">Reset link sent. Check your inbox.</div>
+        <div id="resetFields">
+          <div style="margin-bottom:16px">
+            <label class="form-label" style="font-size:10px;letter-spacing:2px">EMAIL ADDRESS</label>
+            <input class="form-input" id="resetEmail" type="email"/>
+          </div>
+          <div id="resetErr" style="display:none;background:var(--red-bg);border:1px solid var(--red-border);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--red);margin-bottom:14px"></div>
+          <button id="resetBtn" class="btn btn-primary" style="width:100%;justify-content:center;padding:10px">Send reset link</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- WELCOME VIEW (revealed after sign-in) -->
+  <div id="welcomeView" style="display:none;text-align:center">
+    <div style="width:84px;height:84px;margin:0 auto 16px;animation:dlogin-crest .5s cubic-bezier(.2,.9,.3,1.3) both">
+      <svg viewBox="0 0 200 200" width="84" height="84"><defs><linearGradient id="dlwg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e0bd7a"/><stop offset="1" stop-color="#8fe0ad"/></linearGradient></defs><circle cx="100" cy="100" r="74" fill="none" stroke="url(#dlwg)" stroke-width="2"/><circle cx="100" cy="74" r="11" fill="url(#dlwg)"/><circle cx="82" cy="90" r="11" fill="url(#dlwg)"/><circle cx="118" cy="90" r="11" fill="url(#dlwg)"/><circle cx="90" cy="108" r="11" fill="url(#dlwg)"/><circle cx="110" cy="108" r="11" fill="url(#dlwg)"/><circle cx="100" cy="126" r="11" fill="url(#dlwg)"/><path d="M100 63 L100 48 M100 48 Q114 44 120 54" fill="none" stroke="url(#dlwg)" stroke-width="2.5" stroke-linecap="round"/></svg>
+    </div>
+    <div id="welcomeMsg" style="font-family:var(--font-display);font-size:30px;color:#f4f1e8;animation:dlogin-welcome 1.5s ease forwards">Welcome back</div>
+    <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#caa86a;margin-top:10px">Opening your workspace</div>
+  </div>
+</div>
+
+<script>
+var DALOS_SUPABASE_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
+var DALOS_SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
+var HOME_URL='daltex_home.html';
+var sb=window.supabase.createClient(DALOS_SUPABASE_URL,DALOS_SUPABASE_ANON);
+
+function $(id){return document.getElementById(id);}
+function setBusy(btn,on,busyText,idleText){btn.disabled=on;btn.style.opacity=on?'.7':'1';btn.textContent=on?busyText:idleText;}
+function showErr(msg){var e=$('err');e.textContent=msg;e.style.display=msg?'block':'none';}
+
+/* show/hide password */
+$('togglePw').onclick=function(){var p=$('pw');if(p.type==='password'){p.type='text';this.textContent='Hide';}else{p.type='password';this.textContent='Show';}};
+
+/* forgot password toggle */
+$('forgotBtn').onclick=function(){$('signinForm').style.display='none';$('resetForm').style.display='block';$('resetEmail').value=$('email').value;};
+$('backToSignin').onclick=function(){$('resetForm').style.display='none';$('signinForm').style.display='block';$('resetErr').style.display='none';$('resetDone').style.display='none';$('resetFields').style.display='block';};
+
+/* welcome beat → redirect */
+function beginEnter(name){
+  var first=((name||'').trim().split(' ')[0])||'';
+  if(first){$('welcomeMsg').innerHTML='Welcome back, <span style="background:linear-gradient(120deg,#8fe0ad,#b18cf0);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-style:italic">'+first+'</span>';}
+  $('lcard').classList.remove('dlogin-card-in');
+  $('lcard').classList.add('dlogin-card-exit');
+  setTimeout(function(){$('loginView').style.display='none';$('welcomeView').style.display='block';},420);
+  setTimeout(function(){window.location.href=HOME_URL;},1850);
+}
+
+/* sign in */
+function tryLogin(){
+  var email=$('email').value.trim(), pw=$('pw').value;
+  if(!email||!pw){showErr('Please enter your email and password.');return;}
+  showErr('');setBusy($('signinBtn'),true,'Signing in...','Sign in');
+  sb.auth.signInWithPassword({email:email,password:pw}).then(function(res){
+    if(res.error){
+      setBusy($('signinBtn'),false,'Signing in...','Sign in');
+      showErr(res.error.message==='Invalid login credentials'?'Incorrect email or password.':(res.error.message||'Sign in failed.'));
+      return;
+    }
+    sb.from('users').select('*').eq('id',res.data.user.id).single().then(function(pr){
+      if(pr.error||!pr.data){setBusy($('signinBtn'),false,'Signing in...','Sign in');showErr('Account not found. Contact your administrator.');sb.auth.signOut();return;}
+      if(!pr.data.active){setBusy($('signinBtn'),false,'Signing in...','Sign in');showErr('Account deactivated. Contact your administrator.');sb.auth.signOut();return;}
+      sb.from('users').update({last_login:new Date().toISOString()}).eq('id',pr.data.id).then(function(){});
+      beginEnter(pr.data.full_name);
+    });
+  }).catch(function(){setBusy($('signinBtn'),false,'Signing in...','Sign in');showErr('Network error. Please try again.');});
+}
+$('signinBtn').onclick=tryLogin;
+$('pw').addEventListener('keydown',function(e){if(e.key==='Enter')tryLogin();});
+$('email').addEventListener('keydown',function(e){if(e.key==='Enter')tryLogin();});
+
+/* reset */
+function tryReset(){
+  var em=$('resetEmail').value.trim();
+  if(!em){var r=$('resetErr');r.textContent='Please enter your email.';r.style.display='block';return;}
+  $('resetErr').style.display='none';setBusy($('resetBtn'),true,'Sending...','Send reset link');
+  sb.auth.resetPasswordForEmail(em,{redirectTo:window.location.origin+window.location.pathname}).then(function(res){
+    setBusy($('resetBtn'),false,'Sending...','Send reset link');
+    if(res.error){var r=$('resetErr');r.textContent=res.error.message||'Reset failed.';r.style.display='block';return;}
+    $('resetFields').style.display='none';$('resetDone').style.display='block';
+  }).catch(function(){setBusy($('resetBtn'),false,'Sending...','Send reset link');var r=$('resetErr');r.textContent='Network error.';r.style.display='block';});
+}
+$('resetBtn').onclick=tryReset;
+$('resetEmail').addEventListener('keydown',function(e){if(e.key==='Enter')tryReset();});
+</script>
+</body>
+</html>
