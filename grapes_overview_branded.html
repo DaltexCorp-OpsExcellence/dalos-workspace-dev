@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grapes Shipments — Overview · Daltex</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+:root {
+  /* Daltex Brand */
+  --navy:       #142850;
+  --navy2:      #1a3668;
+  --navy3:      #0e1f3d;
+  --orange:     #DC6428;
+  --orange2:    #c45520;
+  --orange-lt:  #fff3ed;
+
+  /* Neutrals */
+  --white:      #ffffff;
+  --bg:         #f4f6fb;
+  --bg2:        #eef0f7;
+  --border:     #e2e6f0;
+  --border2:    #cdd3e3;
+
+  /* Text */
+  --text:       #0e1f3d;
+  --text2:      #4a5778;
+  --text3:      #8a95b0;
+
+  /* Semantic */
+  --green:      #16a34a;
+  --green-bg:   #f0fdf4;
+  --green-br:   #bbf7d0;
+  --red:        #dc2626;
+  --red-bg:     #fef2f2;
+  --red-br:     #fecaca;
+  --amber:      #d97706;
+  --amber-bg:   #fffbeb;
+  --amber-br:   #fde68a;
+  --blue:       #2563eb;
+  --blue-bg:    #eff6ff;
+  --blue-br:    #bfdbfe;
+
+  --r:  6px;
+  --r2: 10px;
+  --r3: 14px;
+  --shadow: 0 1px 3px rgba(20,40,80,.06), 0 1px 2px rgba(20,40,80,.04);
+  --shadow2: 0 4px 12px rgba(20,40,80,.08);
+
+  --font: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 13px; min-height: 100vh; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+input, select, button { font-family: var(--font); }
+
+/* ── SHELL ── */
+.shell { display: flex; flex-direction: column; min-height: 100vh; }
+
+/* ── TOPBAR ── */
+.topbar {
+  background: var(--navy);
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(14,31,61,.3);
+}
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-icon {
+  width: 32px; height: 32px;
+  background: var(--white);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.logo-text { font-size: 16px; font-weight: 700; color: var(--white); letter-spacing: -.3px; }
+.logo-divider { width: 1px; height: 18px; background: rgba(255,255,255,.2); margin: 0 4px; }
+.logo-sub { font-size: 12px; color: rgba(255,255,255,.6); font-weight: 400; }
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+.tbadge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 500;
+  padding: 4px 10px; border-radius: 20px;
+}
+.tbadge-warn { background: rgba(220,100,40,.2); color: #ffb380; border: 1px solid rgba(220,100,40,.3); }
+.tbadge-live { background: rgba(22,163,74,.2); color: #6ee7a0; border: 1px solid rgba(22,163,74,.3); }
+.live-dot { width: 5px; height: 5px; border-radius: 50%; background: #6ee7a0; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ── TABS ── */
+.tabs {
+  background: var(--white);
+  border-bottom: 2px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  overflow-x: auto;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 54px;
+  z-index: 100;
+;scrollbar-width:none;-ms-overflow-style:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab {
+  padding: 12px 18px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text3);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  white-space: nowrap;
+  display: flex; align-items: center; gap: 6px;
+  transition: color .15s, border-color .15s;
+}
+.tab:hover { color: var(--text2); }
+.tab.on { color: var(--navy); border-bottom-color: var(--orange); font-weight: 600; }
+.tab-coming { opacity: .4; cursor: default; }
+
+/* ── MAIN ── */
+.main { flex: 1; overflow-y: auto; }
+.page { padding: 20px 24px; max-width: 1600px; margin: 0 auto; }
+
+/* ── PAGE HEADER ── */
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.page-title { font-size: 18px; font-weight: 700; color: var(--navy); letter-spacing: -.4px; }
+.page-title span { color: var(--orange); }
+.page-subtitle { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.season-toggle { display: flex; border: 1px solid var(--border2); border-radius: var(--r); overflow: hidden; }
+.s-btn { font-size: 11px; font-weight: 500; padding: 6px 14px; background: transparent; border: none; cursor: pointer; color: var(--text3); transition: all .15s; }
+.s-btn.on { background: var(--navy); color: var(--white); }
+
+/* ── FILTER BAR ── */
+.fbar {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.fbar-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fbar-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--text3); white-space: nowrap;
+  display: flex; align-items: center; gap: 4px;
+}
+.fbar-label i { color: var(--navy); }
+.fbar-sep { width: 1px; height: 18px; background: var(--border); }
+.date-grp { display: flex; align-items: center; gap: 5px; }
+.date-lbl { font-size: 11px; color: var(--text3); font-weight: 500; }
+.finput {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  color: var(--text);
+  padding: 5px 10px;
+  font-size: 11px;
+  outline: none;
+  font-family: var(--mono);
+  transition: border-color .15s;
+}
+.finput::-webkit-calendar-picker-indicator { opacity: .5; cursor: pointer; }
+.finput:focus { border-color: var(--navy); }
+.fsel {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  color: var(--text);
+  padding: 5px 28px 5px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  outline: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a95b0'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+.fsel:focus { border-color: var(--navy); }
+.factions { display: flex; gap: 6px; margin-left: auto; }
+.fbtn {
+  font-size: 11px; font-weight: 600;
+  padding: 6px 14px; border-radius: var(--r);
+  cursor: pointer; display: flex; align-items: center; gap: 4px;
+  transition: all .15s; border: 1px solid;
+}
+.fbtn-apply { background: var(--navy); color: var(--white); border-color: var(--navy); }
+.fbtn-apply:hover { background: var(--navy2); }
+.fbtn-reset { background: var(--white); color: var(--text2); border-color: var(--border2); }
+.fbtn-reset:hover { border-color: var(--border2); background: var(--bg); }
+
+/* Filter context */
+.fctx { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); display: none; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fctx.show { display: flex; }
+.ctx-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 600; padding: 3px 9px;
+  border-radius: 20px; background: var(--blue-bg);
+  color: var(--blue); border: 1px solid var(--blue-br);
+}
+.ctx-note { font-size: 11px; color: var(--text3); margin-left: auto; }
+.ctx-note b { color: var(--text2); font-weight: 600; }
+
+/* ── KPI GRID ── */
+.kgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+
+.kcard {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow .2s, border-color .2s;
+}
+.kcard:hover { box-shadow: var(--shadow2); border-color: var(--border2); }
+.kcard-stripe {
+  position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: var(--r2) var(--r2) 0 0;
+}
+.kcard-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--text3); margin-bottom: 10px;
+}
+.kcard-val {
+  font-size: 30px; font-weight: 700; color: var(--navy);
+  letter-spacing: -1.5px; line-height: 1; margin-bottom: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.kcard-unit { font-size: 14px; font-weight: 500; color: var(--text3); letter-spacing: 0; }
+.kcard-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.kpill {
+  font-size: 10px; font-weight: 700; padding: 2px 8px;
+  border-radius: 20px; display: inline-flex; align-items: center; gap: 3px;
+}
+.kp-up   { background: var(--green-bg); color: var(--green); }
+.kp-dn   { background: var(--red-bg);   color: var(--red);   }
+.kp-wn   { background: var(--amber-bg); color: var(--amber); }
+.kp-nt   { background: var(--bg2);      color: var(--text3); }
+.kp-or   { background: var(--orange-lt); color: var(--orange); }
+.kp-nv   { background: #eff3fb; color: var(--navy); }
+.kcard-sub { font-size: 10px; color: var(--text3); line-height: 1.5; }
+.kcard-bar { height: 3px; background: var(--bg2); border-radius: 2px; overflow: hidden; margin-top: 10px; }
+.kcard-bar-fill { height: 100%; border-radius: 2px; transition: width .8s cubic-bezier(.4,0,.2,1); }
+
+/* ── WIDE STATS ── */
+.wide-stats {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  overflow: hidden;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+}
+.ws-item { padding: 14px 18px; border-right: 1px solid var(--border); }
+.ws-item:last-child { border-right: none; }
+.ws-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text3); margin-bottom: 6px; }
+.ws-val { font-size: 22px; font-weight: 700; color: var(--navy); letter-spacing: -1px; font-variant-numeric: tabular-nums; margin-bottom: 3px; }
+.ws-unit { font-size: 12px; font-weight: 400; color: var(--text3); }
+.ws-sub { font-size: 10px; color: var(--text3); }
+.ws-highlight { color: var(--orange); }
+
+/* ── CHART CARDS ── */
+.chart-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+}
+.cc-title { font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 3px; }
+.cc-sub { font-size: 11px; color: var(--text3); margin-bottom: 14px; }
+.grid2 { display: grid; grid-template-columns: 3fr 2fr; gap: 12px; margin-bottom: 14px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.chart-legend { display: flex; gap: 14px; margin-top: 10px; }
+.cl-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text3); }
+.cl-rect { width: 12px; height: 4px; border-radius: 2px; }
+
+/* ── DIVIDER ── */
+.section-divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+/* ── DONUT ── */
+.donut-wrap { display: flex; align-items: center; gap: 16px; }
+.donut-legend { flex: 1; }
+.donut-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 11px; }
+.donut-row:last-child { border-bottom: none; }
+.donut-name { display: flex; align-items: center; gap: 7px; color: var(--text2); font-weight: 500; }
+.donut-swatch { width: 10px; height: 10px; border-radius: 3px; }
+.donut-val { color: var(--navy); font-weight: 700; font-family: var(--mono); font-size: 11px; }
+
+/* ── STATUS BAR ── */
+.status-bar { height: 24px; border-radius: var(--r); overflow: hidden; display: flex; margin-bottom: 8px; }
+.status-seg { display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+.status-legend { display: flex; gap: 14px; }
+.sl-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text3); }
+.sl-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+/* ── SOURCE SPLIT ── */
+.src-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.src-box { padding: 10px 12px; border-radius: var(--r); border: 1px solid; }
+.src-val { font-size: 20px; font-weight: 700; font-family: var(--mono); letter-spacing: -.5px; }
+.src-lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
+.src-sub { font-size: 10px; color: var(--text3); margin-top: 3px; font-family: var(--mono); }
+
+/* ── BAR LIST ── */
+.bar-list { display: flex; flex-direction: column; gap: 9px; }
+.bar-item {}
+.bar-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.bar-name { font-size: 11px; font-weight: 500; color: var(--text2); }
+.bar-vals { font-size: 11px; font-weight: 700; color: var(--navy); font-family: var(--mono); }
+.bar-contrib { font-size:10px; font-weight: 400; color: var(--text3); margin-left: 4px; }
+.bar-track { height: 5px; background: var(--bg2); border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+
+/* ── INSIGHTS ── */
+.insights-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+  margin-bottom: 14px;
+}
+.ins-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.ins-title { font-size: 13px; font-weight: 700; color: var(--navy); display: flex; align-items: center; gap: 7px; }
+.ins-title i { color: var(--orange); font-size: 16px; }
+.ins-badge { font-size: 10px; padding: 2px 9px; border-radius: 20px; background: var(--orange-lt); color: var(--orange); font-weight: 700; }
+.ir { display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+.ir:last-child { border-bottom: none; }
+.ir-icon { width: 24px; height: 24px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+.ir-icon.up  { background: var(--green-bg); color: var(--green); }
+.ir-icon.dn  { background: var(--red-bg);   color: var(--red);   }
+.ir-icon.wn  { background: var(--amber-bg); color: var(--amber); }
+.ir-icon.nt  { background: var(--blue-bg);  color: var(--blue);  }
+.ir-icon.or  { background: var(--orange-lt); color: var(--orange); }
+.ir-body {}
+.ir-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
+.ir-label.up  { color: var(--green); }
+.ir-label.dn  { color: var(--red);   }
+.ir-label.wn  { color: var(--amber); }
+.ir-label.nt  { color: var(--blue);  }
+.ir-label.or  { color: var(--orange); }
+.ir-text { font-size: 12px; color: var(--text2); line-height: 1.65; }
+.ir-text b { font-weight: 700; color: var(--navy); }
+
+/* ── AI SEARCH ── */
+.ai-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+  margin-bottom: 14px;
+}
+.ai-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.ai-title { font-size: 13px; font-weight: 700; color: var(--navy); display: flex; align-items: center; gap: 7px; }
+.ai-title i { color: var(--navy); font-size: 15px; }
+.ai-badge { font-size: 10px; padding: 2px 9px; border-radius: 20px; background: #eff3fb; color: var(--navy); font-weight: 700; border: 1px solid #cdd3e3; }
+.ai-sugs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.ai-sug {
+  font-size: 11px; font-weight: 500; padding: 5px 12px;
+  border-radius: 20px; border: 1px solid var(--border2);
+  color: var(--text2); cursor: pointer; background: var(--bg);
+  transition: all .15s;
+}
+.ai-sug:hover { background: #eff3fb; color: var(--navy); border-color: #a0aec8; }
+.ai-row { display: flex; gap: 8px; }
+.ai-input {
+  flex: 1; background: var(--bg); border: 1px solid var(--border2);
+  border-radius: var(--r); color: var(--text);
+  padding: 9px 13px; font-size: 12px; outline: none;
+  transition: border-color .15s;
+}
+.ai-input::placeholder { color: var(--text3); }
+.ai-input:focus { border-color: var(--navy); background: var(--white); }
+.ai-btn {
+  background: var(--navy); border: 1px solid var(--navy);
+  color: var(--white); padding: 9px 18px;
+  border-radius: var(--r); cursor: pointer;
+  font-size: 12px; font-weight: 600;
+  display: flex; align-items: center; gap: 6px;
+  white-space: nowrap; transition: background .15s;
+}
+.ai-btn:hover { background: var(--navy2); }
+.ai-btn:disabled { opacity: .5; cursor: not-allowed; }
+.ai-loading { display: none; align-items: center; gap: 8px; font-size: 12px; color: var(--text3); padding: 10px 0; }
+.ai-loading.show { display: flex; }
+.ai-spinner { width: 14px; height: 14px; border: 2px solid var(--border2); border-top-color: var(--navy); border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.ai-result { display: none; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 16px; margin-top: 12px; font-size: 12px; color: var(--text2); line-height: 1.8; }
+.ai-result.show { display: block; animation: fadein .2s ease; }
+.ai-result b { color: var(--navy); font-weight: 700; }
+.ai-res-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--navy); margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+.ai-src { font-size: 10px; color: var(--text3); margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 5px; }
+
+@keyframes fadein { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in > * { animation: fadein .25s ease both; }
+.fade-in > *:nth-child(1){animation-delay:.03s}
+.fade-in > *:nth-child(2){animation-delay:.06s}
+.fade-in > *:nth-child(3){animation-delay:.09s}
+.fade-in > *:nth-child(4){animation-delay:.12s}
+.fade-in > *:nth-child(5){animation-delay:.15s}
+.fade-in > *:nth-child(6){animation-delay:.18s}
+
+@media(max-width:960px){
+  .kgrid{grid-template-columns:repeat(2,1fr)}
+  .grid2,.grid3{grid-template-columns:1fr}
+  .wide-stats{grid-template-columns:repeat(2,1fr)}
+  .wide-stats .ws-item{border-bottom:1px solid var(--border)}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-icon">🍇</div>
+    <span class="logo-text">DALTEX</span>
+    <div class="logo-divider"></div>
+    <span class="logo-sub">Grapes Shipments</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <div class="tbadge tbadge-warn"><i class="ti ti-clock" style="font-size:11px"></i> Season 2025/26</div>
+    <div class="tbadge tbadge-warn"><i class="ti ti-table" style="font-size:11px"></i> Excel Data</div>
+  </div>
+  <a href="daltex_grapes.html" style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.7);font-size:11px;font-weight:500;text-decoration:none;transition:all .15s" onmouseover="this.style.background='rgba(255,255,255,.14)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,.08)';this.style.color='rgba(255,255,255,.7)'"><i class="ti ti-arrow-left" style="font-size:11px"></i> Grapes</a>
+</div>
+<div class="tabs">
+  <div class="tab on" onclick="window.location='grapes_overview_branded.html'"><i class="ti ti-layout-dashboard"></i>Overview</div>
+  <div class="tab" onclick="window.location='daltex_markets.html'"><i class="ti ti-map-pin"></i>Markets</div>
+  <div class="tab" onclick="window.location='daltex_farms.html'"><i class="ti ti-building"></i>Farms</div>
+  <div class="tab" onclick="window.location='daltex_varieties_colors.html'"><i class="ti ti-palette"></i>Varieties &amp; Colors</div>
+  <div class="tab" onclick="window.location='daltex_clients.html'"><i class="ti ti-users"></i>Clients</div>
+  <div class="tab" onclick="window.location='daltex_cartons.html'"><i class="ti ti-box"></i>Cartons &amp; Punnets</div>
+  <div class="tab" onclick="window.location='daltex_extract.html'"><i class="ti ti-database"></i>Data Explorer</div>
+</div>
+<div class="main">
+<div class="page">
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div>
+    <div class="page-title">Grapes Shipments <span>— Overview</span></div>
+    <div class="page-subtitle">Season 2025/26 · 12 May – 01 Jun 2026 · 97 containers · 10 markets</div>
+  </div>
+  <div class="season-toggle">
+    <button class="s-btn on">2025/26</button>
+    <button class="s-btn">2024/25</button>
+    <button class="s-btn">YoY</button>
+  </div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="fbar">
+  <div class="fbar-top">
+    <span class="fbar-label"><i class="ti ti-sliders-horizontal"></i> Filters</span>
+    <div class="fbar-sep"></div>
+
+    <div class="date-grp">
+      <span class="date-lbl">From</span>
+      <input type="date" class="finput" id="f-from" value="2026-05-12" min="2026-05-12" max="2026-06-01">
+    </div>
+    <div class="date-grp">
+      <span class="date-lbl">To</span>
+      <input type="date" class="finput" id="f-to" value="2026-06-01" min="2026-05-12" max="2026-06-01">
+    </div>
+    <div class="fbar-sep"></div>
+
+    <select class="fsel" id="f-week">
+      <option value="all">All weeks</option>
+      <option value="19">Week 19</option>
+      <option value="20">Week 20</option>
+      <option value="21">Week 21</option>
+      <option value="22">Week 22</option>
+    </select>
+    <select class="fsel" id="f-status">
+      <option value="all">All statuses</option>
+      <option value="Shipped">Shipped</option>
+      <option value="Delivered">Delivered</option>
+    </select>
+    <select class="fsel" id="f-source">
+      <option value="all">All sources</option>
+      <option value="Daltex Farms">Daltex Farms</option>
+      <option value="Out Source">Out Source</option>
+    </select>
+    <select class="fsel" id="f-farm">
+      <option value="all">All farms</option>
+      <option value="Menia">Menia</option>
+      <option value="Hana">Hana</option>
+      <option value="Salma">Salma</option>
+      <option value="El khier">El Khier</option>
+      <option value="Akram Shawky">Akram Shawky</option>
+      <option value="Dina Farms">Dina Farms</option>
+      <option value="Elmasa">Elmasa</option>
+    </select>
+    <select class="fsel" id="f-market">
+      <option value="all">All markets</option>
+      <option value="UK">UK</option>
+      <option value="Holland">Holland</option>
+      <option value="Switzerland">Switzerland</option>
+      <option value="Slovenia">Slovenia</option>
+      <option value="Norway">Norway</option>
+      <option value="South Africa">South Africa</option>
+      <option value="Latvia">Latvia</option>
+      <option value="Russia">Russia</option>
+      <option value="UAE">UAE</option>
+      <option value="Spain">Spain</option>
+    </select>
+    <select class="fsel" id="f-variety">
+      <option value="all">All varieties</option>
+      <option value="Flame">Flame</option>
+      <option value="Prime">Prime</option>
+      <option value="Arra 30">Arra 30</option>
+      <option value="Star Light">Star Light</option>
+      <option value="Early Flame">Early Flame</option>
+      <option value="Early Pearl">Early Pearl</option>
+    </select>
+
+    <div class="factions">
+      <button class="fbtn fbtn-apply" onclick="applyFilters()">
+        <i class="ti ti-check" style="font-size:11px"></i> Apply
+      </button>
+      <button class="fbtn fbtn-reset" onclick="resetFilters()">
+        <i class="ti ti-refresh" style="font-size:11px"></i> Reset
+      </button>
+    </div>
+  </div>
+  <div class="fctx" id="fctx"></div>
+</div>
+
+<!-- KPI GRID -->
+<div class="kgrid fade-in" id="kpi-grid"></div>
+
+<!-- WIDE STATS -->
+<div class="wide-stats" id="wide-stats"></div>
+
+<!-- CHARTS ROW -->
+<div class="grid2" style="margin-top:14px">
+  <div class="chart-card">
+    <div class="cc-title">Weekly net weight (tonnes)</div>
+    <div class="cc-sub" id="chart-period">Loading date · Season 2025/26 vs 2024/25</div>
+    <div id="weekly-chart"></div>
+    <div class="chart-legend">
+      <div class="cl-item"><div class="cl-rect" style="background:var(--navy)"></div>2025/26</div>
+      <div class="cl-item"><div class="cl-rect" style="background:var(--border2)"></div>2024/25 reference</div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="cc-title">Volume split</div>
+    <div class="cc-sub">Colour mix, source type & shipping status</div>
+
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:10px">Colour mix</div>
+    <div id="colour-donut"></div>
+
+    <div class="section-divider"></div>
+
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:8px">Source type</div>
+    <div class="src-grid" id="src-split"></div>
+
+    <div class="section-divider"></div>
+
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:8px">Shipping status</div>
+    <div class="status-bar" id="status-bar"></div>
+    <div class="status-legend" id="status-legend"></div>
+  </div>
+</div>
+
+<!-- BOTTOM ROW -->
+<div class="grid3">
+  <div class="chart-card">
+    <div class="cc-title">Top markets</div>
+    <div class="cc-sub">Net weight by receiving country</div>
+    <div class="bar-list" id="chart-markets"></div>
+  </div>
+  <div class="chart-card">
+    <div class="cc-title">Farm contribution</div>
+    <div class="cc-sub">Net weight by farm source</div>
+    <div class="bar-list" id="chart-farms"></div>
+  </div>
+  <div class="chart-card">
+    <div class="cc-title">Variety mix</div>
+    <div class="cc-sub">Net weight by variety</div>
+    <div class="bar-list" id="chart-varieties"></div>
+  </div>
+</div>
+
+<!-- AUTO INSIGHTS -->
+<div class="insights-card">
+  <div class="ins-header">
+    <div class="ins-title"><i class="ti ti-bulb"></i>Auto Insights</div>
+    <span class="ins-badge" id="ins-count">5 insights</span>
+  </div>
+  <div id="ins-body"></div>
+</div>
+
+<!-- AI SEARCH -->
+<div class="ai-card">
+  <div class="ai-header">
+    <div class="ai-title"><i class="ti ti-sparkles"></i>AI Insight Search</div>
+    <span class="ai-badge">Claude · Overview context</span>
+  </div>
+  <div class="ai-sugs">
+    <div class="ai-sug" onclick="aiQ('What are the biggest risks this season?')">Season risks</div>
+    <div class="ai-sug" onclick="aiQ('Which metrics need immediate attention?')">Urgent metrics</div>
+    <div class="ai-sug" onclick="aiQ('What should we prioritise for next grapes season?')">Next season priorities</div>
+    <div class="ai-sug" onclick="aiQ('Analyse week 20 peak vs rest of the season')">Week 20 analysis</div>
+    <div class="ai-sug" onclick="aiQ('Compare Daltex farms vs outsource performance')">Daltex vs outsource</div>
+    <div class="ai-sug" onclick="aiQ('What is causing Class 1 to fall below 95%?')">Class 1 root cause</div>
+  </div>
+  <div class="ai-row">
+    <input class="ai-input" id="ai-in" placeholder="Ask anything about the season overview...">
+    <button class="ai-btn" id="ai-btn" onclick="runAI()">
+      <i class="ti ti-sparkles"></i> Generate
+    </button>
+  </div>
+  <div class="ai-loading" id="ai-load"><div class="ai-spinner"></div>Analysing season data...</div>
+  <div class="ai-result" id="ai-res">
+    <div class="ai-res-label"><i class="ti ti-sparkles"></i><span id="ai-q-label"></span></div>
+    <div id="ai-res-text"></div>
+  </div>
+</div>
+
+</div><!-- /page -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+
+// ── SUPABASE LIVE DATA LOADER ──
+async function loadLiveData() {
+  const SB_URL = 'https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
+  const SID_CUR   = '19482d39-6074-4c60-b772-ced5df1ffdcb';
+  const SID_PRIOR = 'e0c08a97-e097-4f46-8819-dc2d9ee26dba';
+
+  async function sbFetch(sid) {
+    const r = await fetch(`${SB_URL}/rest/v1/grapes_shipments_view?season_id=eq.${sid}&select=*`,
+      {headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Range':'0-9999'}});
+    if (!r.ok) throw new Error('SB '+r.status);
+    return r.json();
+  }
+
+  try {
+    const [curRows, allPrior] = await Promise.all([sbFetch(SID_CUR), sbFetch(SID_PRIOR)]);
+
+    // Build DAILY from curRows (group by loading_date)
+    const byDate = {};
+    curRows.forEach(r => {
+      const d = r.loading_date; if (!d) return;
+      if (!byDate[d]) byDate[d] = {date:d, week:parseInt(r.shipping_week)||0,
+        nw:0, ct:0, c1_nw:0, farms:{}, markets:{}, varieties:{}, colors:{}, sources:{}, statuses:{}};
+      const row = byDate[d];
+      const nw = parseFloat(r.net_weight)||0;
+      row.nw += nw; row.ct++;
+      if (parseInt(r.daltex_class)===1) row.c1_nw += nw;
+      if (r.farm_source)  row.farms[r.farm_source]         = (row.farms[r.farm_source]||0)+nw;
+      if (r.receiving_country) row.markets[r.receiving_country] = (row.markets[r.receiving_country]||0)+nw;
+      if (r.variety)      row.varieties[r.variety]          = (row.varieties[r.variety]||0)+nw;
+      if (r.color)        row.colors[r.color]               = (row.colors[r.color]||0)+nw;
+      if (r.source_type)  row.sources[r.source_type]        = (row.sources[r.source_type]||0)+nw;
+      if (r.shipping_status) row.statuses[r.shipping_status]= (row.statuses[r.shipping_status]||0)+nw;
+    });
+    // Replace DAILY with live data sorted by date
+    DAILY.length = 0;
+    Object.values(byDate).sort((a,b)=>a.date.localeCompare(b.date)).forEach(r=>DAILY.push(r));
+
+    // Rebuild PRIOR_WEEKLY from prior season (YTD aligned)
+    const curStart   = new Date('2026-05-12');
+    const priorStart = new Date('2025-05-18');
+    const daysElapsed = Math.floor((new Date() - curStart) / 86400000);
+    const cutoff = new Date(priorStart); cutoff.setDate(cutoff.getDate() + daysElapsed);
+    const cutoffStr = cutoff.toISOString().slice(0,10);
+    const ytdPrior = allPrior.filter(r => r.loading_date >= '2025-05-18' && r.loading_date <= cutoffStr);
+    const priorWk = {};
+    ytdPrior.forEach(r => {
+      const w = parseInt(r.shipping_week)||0;
+      priorWk[w] = (priorWk[w]||0) + (parseFloat(r.net_weight)||0);
+    });
+    Object.keys(PRIOR_WEEKLY).forEach(k=>delete PRIOR_WEEKLY[k]);
+    Object.entries(priorWk).forEach(([w,nw])=>{ PRIOR_WEEKLY[parseInt(w)] = Math.round(nw*100)/100; });
+
+    // Update live badge
+    document.querySelectorAll('.live-badge, .tbadge-live').forEach(b=>{
+      b.innerHTML = '<span class="live-dot" style="width:5px;height:5px;border-radius:50%;background:#6ee7a0;animation:pulse 2s infinite;display:inline-block"></span> Live · '+curRows.length+' shipments';
+      b.style.background='rgba(22,163,74,.2)';b.style.color='#6ee7a0';b.style.border='1px solid rgba(22,163,74,.3)';
+    });
+
+    renderAll();
+  } catch(e) {
+    console.warn('Overview: Supabase unavailable, using cache:', e.message);
+    document.querySelectorAll('.live-badge, .tbadge-live').forEach(b=>{
+      b.innerHTML='⚠ Offline · Cache';
+      b.style.background='rgba(220,100,40,.2)';b.style.color='#ffb380';
+    });
+    renderAll();
+  }
+}
+
+
+// ── REAL DATA (from actual Excel file analysis) ──
+const DAILY = [
+  {date:'2026-05-12',week:19,nw:36.92,ct:3,c1_nw:36.92,farms:{Hana:24.44,Salma:12.48},markets:{UK:36.92},varieties:{Flame:24.44,Prime:12.48},colors:{Red:24.44,White:12.48},sources:{'Daltex Farms':36.92},statuses:{Delivered:36.92}},
+  {date:'2026-05-16',week:19,nw:13.73,ct:1,c1_nw:13.73,farms:{Menia:13.73},markets:{Holland:13.73},varieties:{Prime:13.73},colors:{White:13.73},sources:{'Daltex Farms':13.73},statuses:{Shipped:13.73}},
+  {date:'2026-05-17',week:20,nw:191.40,ct:15,c1_nw:178.67,farms:{Hana:109.56,Salma:44.96,Menia:36.88},markets:{UK:141.50,Slovenia:37.42,Switzerland:12.48},varieties:{Flame:109.56,Prime:44.96,'Arra 30':36.88},colors:{Red:147.0,White:44.4},sources:{'Daltex Farms':191.40},statuses:{Shipped:191.40}},
+  {date:'2026-05-19',week:20,nw:12.48,ct:1,c1_nw:12.48,farms:{Menia:12.48},markets:{Holland:12.48},varieties:{'Arra 30':12.48},colors:{White:12.48},sources:{'Daltex Farms':12.48},statuses:{Shipped:12.48}},
+  {date:'2026-05-20',week:20,nw:180.90,ct:14,c1_nw:165.82,farms:{Hana:84.74,Salma:59.68,'El khier':36.48},markets:{UK:155.90,Switzerland:25.0},varieties:{Flame:84.74,Prime:59.68,'Early Pearl':21.96,'Star Light':14.52},colors:{Red:84.74,White:59.68,Black:21.96},sources:{'Daltex Farms':180.90},statuses:{Shipped:180.90}},
+  {date:'2026-05-22',week:20,nw:152.73,ct:12,c1_nw:140.25,farms:{Hana:62.40,Salma:53.76,'El khier':36.57},markets:{UK:128.73,Norway:24.0},varieties:{Flame:62.40,Prime:53.76,'Early Flame':12.38,'Star Light':24.19},colors:{Red:74.78,White:53.76,Black:24.19},sources:{'Daltex Farms':152.73},statuses:{Shipped:152.73}},
+  {date:'2026-05-23',week:20,nw:144.66,ct:11,c1_nw:132.18,farms:{Menia:87.24,'El khier':57.42},markets:{UK:107.26,Holland:37.40},varieties:{Prime:87.24,Flame:57.42},colors:{White:87.24,Red:57.42},sources:{'Daltex Farms':144.66},statuses:{Shipped:144.66}},
+  {date:'2026-05-24',week:20,nw:269.44,ct:20,c1_nw:247.04,farms:{Menia:107.12,Salma:87.52,'Akram Shawky':74.80},markets:{UK:182.14,Switzerland:34.80,Norway:25.92,Latvia:14.88,'South Africa':12.48,UAE:15.60},varieties:{Flame:107.12,Prime:87.52,'Arra 30':40.73,'Star Light':21.00,'Early Flame':12.35},colors:{Red:128.12,White:141.32},sources:{'Daltex Farms':194.64,'Out Source':74.80},statuses:{Shipped:269.44}},
+  {date:'2026-05-30',week:21,nw:173.45,ct:13,c1_nw:173.45,farms:{Hana:86.54,Salma:62.16,'Dina Farms':24.75},markets:{UK:124.05,Switzerland:24.80,Slovenia:24.60},varieties:{Flame:86.54,Prime:62.16,'Arra 30':24.75},colors:{Red:86.54,White:86.91},sources:{'Daltex Farms':148.70,'Out Source':24.75},statuses:{Shipped:173.45}},
+  {date:'2026-05-31',week:21,nw:13.73,ct:1,c1_nw:13.73,farms:{Menia:13.73},markets:{Norway:13.73},varieties:{Prime:13.73},colors:{White:13.73},sources:{'Daltex Farms':13.73},statuses:{Shipped:13.73}},
+  {date:'2026-06-01',week:22,nw:96.41,ct:7,c1_nw:55.88,farms:{'Dina Farms':47.66,Menia:24.00,'El khier':24.75},markets:{UK:44.57,Spain:12.50,Latvia:12.50,Russia:15.93,'South Africa':12.48},varieties:{Prime:72.16,'Arra 30':3.77,'Star Light':20.48},colors:{Red:20.48,White:75.93},sources:{'Daltex Farms':24.00,'Out Source':72.41},statuses:{Shipped:96.41,Delivered:92.41}},
+];
+const PRIOR_WEEKLY = {19:42.7, 20:576.3, 21:374.4, 22:92.0};
+
+// ── FILTER STATE ──
+let F = {from:'2026-05-12',to:'2026-06-01',week:'all',status:'all',source:'all',farm:'all',market:'all',variety:'all'};
+
+function filteredData() {
+  return DAILY.filter(d => {
+    if (d.date < F.from || d.date > F.to) return false;
+    if (F.week !== 'all' && d.week !== parseInt(F.week)) return false;
+    if (F.status !== 'all' && !d.statuses[F.status]) return false;
+    if (F.source !== 'all' && !d.sources[F.source]) return false;
+    if (F.farm !== 'all' && !d.farms[F.farm]) return false;
+    if (F.market !== 'all' && !d.markets[F.market]) return false;
+    if (F.variety !== 'all' && !d.varieties[F.variety]) return false;
+    return true;
+  });
+}
+
+function applyFilters() {
+  F.from   = document.getElementById('f-from').value;
+  F.to     = document.getElementById('f-to').value;
+  F.week   = document.getElementById('f-week').value;
+  F.status = document.getElementById('f-status').value;
+  F.source = document.getElementById('f-source').value;
+  F.farm   = document.getElementById('f-farm').value;
+  F.market = document.getElementById('f-market').value;
+  F.variety= document.getElementById('f-variety').value;
+  renderAll();
+}
+
+function resetFilters() {
+  F = {from:'2026-05-12',to:'2026-06-01',week:'all',status:'all',source:'all',farm:'all',market:'all',variety:'all'};
+  ['f-from','f-to'].forEach((id,i)=>document.getElementById(id).value=i===0?'2026-05-12':'2026-06-01');
+  ['f-week','f-status','f-source','f-farm','f-market','f-variety'].forEach(id=>document.getElementById(id).value='all');
+  renderAll();
+}
+
+// ── COMPUTE ──
+function compute(data) {
+  const s = {nw:0,ct:0,c1_nw:0,farms:{},markets:{},varieties:{},colors:{},sources:{},statuses:{},dates:[]};
+  data.forEach(d => {
+    s.nw += d.nw; s.ct += d.ct; s.c1_nw += d.c1_nw; s.dates.push(d.date);
+    for(const[k,v] of Object.entries(d.farms||{}))    s.farms[k]    = (s.farms[k]||0)+v;
+    for(const[k,v] of Object.entries(d.markets||{}))  s.markets[k]  = (s.markets[k]||0)+v;
+    for(const[k,v] of Object.entries(d.varieties||{}))s.varieties[k]= (s.varieties[k]||0)+v;
+    for(const[k,v] of Object.entries(d.colors||{}))   s.colors[k]   = (s.colors[k]||0)+v;
+    for(const[k,v] of Object.entries(d.sources||{}))  s.sources[k]  = (s.sources[k]||0)+v;
+    for(const[k,v] of Object.entries(d.statuses||{})) s.statuses[k] = (s.statuses[k]||0)+v;
+  });
+  s.c1pct   = s.nw > 0 ? s.c1_nw / s.nw * 100 : 0;
+  s.daltex  = s.nw > 0 ? (s.sources['Daltex Farms']||0) / s.nw * 100 : 0;
+  s.py_nw   = 1085.0;
+  s.yoy     = (s.nw - s.py_nw) / s.py_nw * 100;
+  s.coverage= s.nw / 2314.14 * 100;
+  return s;
+}
+
+// ── RENDER ALL ──
+function renderAll() {
+  const data = filteredData();
+  const s = compute(data);
+  renderContext(data, s);
+  renderKPIs(s);
+  renderWideStats(data, s);
+  renderWeeklyChart(data, s);
+  renderColourDonut(s);
+  renderSourceSplit(s);
+  renderStatusBar(s);
+  renderBarCharts(s);
+  renderInsights(data, s);
+}
+
+// ── CONTEXT INDICATOR ──
+function renderContext(data, s) {
+  const el = document.getElementById('fctx');
+  const isF = F.from!=='2026-05-12'||F.to!=='2026-06-01'||F.week!=='all'||F.status!=='all'||F.source!=='all'||F.farm!=='all'||F.market!=='all'||F.variety!=='all';
+  if (!isF) { el.classList.remove('show'); return; }
+  el.classList.add('show');
+  const pills = [];
+  const fmt = d => new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  if (F.from!=='2026-05-12'||F.to!=='2026-06-01') pills.push(`${fmt(F.from)} – ${fmt(F.to)}`);
+  if (F.week!=='all')   pills.push(`Week ${F.week}`);
+  if (F.status!=='all') pills.push(F.status);
+  if (F.source!=='all') pills.push(F.source);
+  if (F.farm!=='all')   pills.push(F.farm);
+  if (F.market!=='all') pills.push(F.market);
+  if (F.variety!=='all')pills.push(F.variety);
+  el.innerHTML = pills.map(p=>`<span class="ctx-pill"><i class="ti ti-filter" style="font-size:9px"></i>${p}</span>`).join('') +
+    `<span class="ctx-note"><b>${s.nw.toFixed(1)}T</b> · ${s.ct} containers · ${s.coverage.toFixed(1)}% of full season</span>`;
+}
+
+// ── KPI CARDS ──
+function kcard(label, val, unit='', pill1, pill2, sub, stripe, barPct, barCol) {
+  return `<div class="kcard">
+    <div class="kcard-stripe" style="background:${stripe}"></div>
+    <div class="kcard-label">${label}</div>
+    <div class="kcard-val">${val}${unit?`<span class="kcard-unit"> ${unit}</span>`:''}
+    </div>
+    <div class="kcard-meta">${pill1}${pill2?pill2:''}</div>
+    <div class="kcard-sub">${sub}</div>
+    <div class="kcard-bar"><div class="kcard-bar-fill" style="width:${barPct}%;background:${barCol}"></div></div>
+  </div>`;
+}
+
+function pill(text, cls) { return `<span class="kpill ${cls}">${text}</span>`; }
+
+function renderKPIs(s) {
+  const yoyTxt = `${s.yoy>=0?'▲ +':'▼ '}${Math.abs(s.yoy).toFixed(1)}% YoY`;
+  const c1ok = s.c1pct >= 95;
+  const ukShare = s.nw > 0 ? (s.markets['UK']||0)/s.nw*100 : 0;
+  const topVar = Object.entries(s.varieties).sort((a,b)=>b[1]-a[1])[0];
+
+  document.getElementById('kpi-grid').innerHTML = [
+    kcard('Total net weight', s.nw.toFixed(1), 'T',
+      pill(yoyTxt, s.yoy>=0?'kp-up':'kp-dn'),
+      pill(`Prior: ${s.py_nw.toFixed(0)}T`,'kp-nt'),
+      `${s.ct} containers · ${s.coverage.toFixed(1)}% of full season`,
+      'var(--navy)', Math.min(s.coverage,100), 'var(--navy)'
+    ),
+    kcard('Class 1 rate', s.c1pct.toFixed(1), '%',
+      pill(c1ok?'▲ On target':`▼ ${(95-s.c1pct).toFixed(1)}pp below 95%`, c1ok?'kp-up':'kp-wn'),
+      '',
+      `${s.c1_nw.toFixed(1)}T Class 1 · ${(s.nw-s.c1_nw).toFixed(1)}T Class 2`,
+      c1ok?'var(--green)':'var(--amber)', s.c1pct, c1ok?'var(--green)':'var(--amber)'
+    ),
+    kcard('Containers shipped', s.ct, '',
+      pill(`${Object.keys(s.markets).length} markets`,'kp-nv'),
+      pill(`${Object.keys(s.farms).length} farms`,'kp-nt'),
+      `${(s.statuses['Delivered']||0).toFixed(1)}T delivered · ${(s.statuses['Shipped']||0).toFixed(1)}T in transit`,
+      'var(--blue)', s.ct/97*100, 'var(--blue)'
+    ),
+    kcard('Daltex farms share', s.daltex.toFixed(1), '%',
+      pill(`${(s.sources['Daltex Farms']||0).toFixed(1)}T insource`,'kp-nv'),
+      pill(`${(s.sources['Out Source']||0).toFixed(1)}T outsource`,'kp-nt'),
+      `${(100-s.daltex).toFixed(1)}% from external supplier farms`,
+      'var(--navy)', s.daltex, 'var(--navy)'
+    ),
+    kcard('UK market share', ukShare.toFixed(1), '%',
+      pill('Concentration risk','kp-dn'),
+      pill(`${(s.markets['UK']||0).toFixed(1)}T`,'kp-nt'),
+      `${Object.keys(s.markets).length} total markets this period`,
+      'var(--orange)', ukShare, 'var(--orange)'
+    ),
+    kcard('Dominant variety', topVar?topVar[0]:'—', '',
+      pill(topVar?`${(topVar[1]/s.nw*100).toFixed(1)}% share`:'—','kp-or'),
+      pill(topVar?`${topVar[1].toFixed(1)}T`:'—','kp-nt'),
+      'Red colour · UK primary market · 87% of Flame volume',
+      'var(--orange)', topVar?topVar[1]/s.nw*100:0, 'var(--orange)'
+    ),
+  ].join('');
+}
+
+// ── WIDE STATS ──
+function renderWideStats(data, s) {
+  const byWeek = {};
+  data.forEach(d=>{byWeek[d.week]=(byWeek[d.week]||0)+d.nw;});
+  const wks = Object.keys(byWeek);
+  const peakDay  = [...data].sort((a,b)=>b.nw-a.nw)[0] || {nw:0,date:'—'};
+  const peakWkEnt= Object.entries(byWeek).sort((a,b)=>b[1]-a[1])[0] || ['—',0];
+  const avgWkly  = wks.length ? s.nw/wks.length : 0;
+  const avgDaily = data.length ? s.nw/data.length : 0;
+
+  document.getElementById('wide-stats').innerHTML = [
+    `<div class="ws-item"><div class="ws-label">Avg daily volume</div><div class="ws-val">${avgDaily.toFixed(1)}<span class="ws-unit"> T/day</span></div><div class="ws-sub">${data.length} active loading days</div></div>`,
+    `<div class="ws-item"><div class="ws-label">Avg weekly volume</div><div class="ws-val">${avgWkly.toFixed(1)}<span class="ws-unit"> T/wk</span></div><div class="ws-sub">${wks.length} active week${wks.length!==1?'s':''}</div></div>`,
+    `<div class="ws-item"><div class="ws-label">Peak loading day</div><div class="ws-val ws-highlight">${peakDay.nw.toFixed(1)}<span class="ws-unit"> T</span></div><div class="ws-sub">${peakDay.date!=='—'?new Date(peakDay.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—'}</div></div>`,
+    `<div class="ws-item"><div class="ws-label">Peak week</div><div class="ws-val ws-highlight">${peakWkEnt[1].toFixed(1)}<span class="ws-unit"> T</span></div><div class="ws-sub">Week ${peakWkEnt[0]} · ${s.nw>0?(peakWkEnt[1]/s.nw*100).toFixed(1):0}% of selected volume</div></div>`,
+  ].join('');
+}
+
+// ── WEEKLY CHART ──
+function renderWeeklyChart(data, s) {
+  const byWeek = {};
+  data.forEach(d=>{byWeek[d.week]=(byWeek[d.week]||0)+d.nw;});
+  const weeks = Object.keys(byWeek).map(Number).sort();
+
+  if (!weeks.length) {
+    document.getElementById('weekly-chart').innerHTML = '<div style="text-align:center;padding:30px;color:var(--text3);font-size:12px">No data in selected range</div>';
+    return;
+  }
+
+  const maxV = Math.max(...weeks.map(w=>byWeek[w]), ...Object.values(PRIOR_WEEKLY), 1);
+  const H = 150, bW = 48, gap = 20, left = 44, top = 20;
+  const totalW = left + weeks.length*(bW+gap) + 20;
+
+  let svg = '';
+  // Grid lines
+  [0,.5,1].forEach(f=>{
+    const y = top + (1-f)*(H-top);
+    svg += `<line x1="${left}" y1="${y}" x2="${totalW}" y2="${y}" stroke="var(--border)" stroke-width="1" ${f===0?'':' stroke-dasharray="4,3"'}/>`;
+    svg += `<text x="${left-6}" y="${y+4}" font-size="9" fill="var(--text3)" text-anchor="end" font-family="'IBM Plex Mono',monospace">${(maxV*f).toFixed(0)}</text>`;
+  });
+
+  weeks.forEach((w,i) => {
+    const v   = byWeek[w];
+    const pv  = PRIOR_WEEKLY[w] || 0;
+    const x   = left + i*(bW+gap);
+    const bH  = Math.max(3, v/maxV*(H-top));
+    const pbH = pv/maxV*(H-top);
+    const y   = H - bH;
+    const py  = H - pbH;
+    const col = v > 500 ? 'var(--navy)' : v > 200 ? 'var(--navy2)' : '#5a7cc2';
+
+    // prior ghost
+    svg += `<rect x="${x}" y="${py}" width="${bW}" height="${pbH}" rx="3" fill="var(--bg2)" stroke="var(--border)" stroke-width="1"/>`;
+    if (pv > 0) svg += `<text x="${x+bW/2}" y="${py-4}" font-size="8" fill="var(--text3)" text-anchor="middle" font-family="'IBM Plex Mono',monospace">${pv.toFixed(0)}</text>`;
+
+    // current bar
+    svg += `<rect x="${x}" y="${y}" width="${bW}" height="${bH}" rx="3" fill="${col}"/>`;
+    svg += `<text x="${x+bW/2}" y="${y > 14 ? y-5 : y+12}" font-size="9" fill="${y > 14 ? col : 'white'}" text-anchor="middle" font-weight="600" font-family="'IBM Plex Mono',monospace">${v.toFixed(1)}</text>`;
+    svg += `<text x="${x+bW/2}" y="${H+14}" font-size="9" fill="var(--text3)" text-anchor="middle">Wk ${w}</text>`;
+  });
+
+  document.getElementById('weekly-chart').innerHTML = `<svg width="100%" viewBox="0 0 ${totalW} ${H+20}" preserveAspectRatio="xMidYMid meet" style="overflow:visible">${svg}</svg>`;
+
+  const fmt = d => new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  document.getElementById('chart-period').textContent = `${fmt(F.from)} – ${fmt(F.to)} · Loading date · vs 2024/25 (grey)`;
+}
+
+// ── COLOUR DONUT ──
+function renderColourDonut(s) {
+  const COLS = {Red:'#DC6428',White:'#142850',Black:'#6b7280'};
+  const data = Object.entries(s.colors).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  const tot  = data.reduce((t,[k,v])=>t+v,0);
+  if (!tot) { document.getElementById('colour-donut').innerHTML='<span style="color:var(--text3);font-size:11px">No data</span>'; return; }
+
+  const r=32,cx=38,cy=38;
+  let angle=-Math.PI/2, paths='';
+  data.forEach(([k,v])=>{
+    const slice=v/tot*2*Math.PI;
+    const x1=cx+r*Math.cos(angle),y1=cy+r*Math.sin(angle);
+    angle+=slice;
+    const x2=cx+r*Math.cos(angle),y2=cy+r*Math.sin(angle);
+    const large=slice>Math.PI?1:0;
+    paths+=`<path d="M${cx},${cy}L${x1},${y1}A${r},${r} 0 ${large} 1 ${x2},${y2}Z" fill="${COLS[k]||'#999'}" stroke="white" stroke-width="2"/>`;
+  });
+  paths+=`<text x="${cx}" y="${cy-3}" text-anchor="middle" font-size="10" font-weight="700" fill="var(--navy)" font-family="'IBM Plex Mono',monospace">${tot.toFixed(0)}</text><text x="${cx}" y="${cy+9}" text-anchor="middle" font-size="8" fill="var(--text3)">T</text>`;
+
+  const rows = data.map(([k,v])=>`
+    <div class="donut-row">
+      <div class="donut-name"><div class="donut-swatch" style="background:${COLS[k]||'#999'}"></div>${k}</div>
+      <div class="donut-val">${v.toFixed(1)}T · ${(v/tot*100).toFixed(1)}%</div>
+    </div>`).join('');
+
+  document.getElementById('colour-donut').innerHTML =
+    `<div class="donut-wrap"><svg width="76" height="76" viewBox="0 0 76 76">${paths}</svg><div class="donut-legend">${rows}</div></div>`;
+}
+
+// ── SOURCE SPLIT ──
+function renderSourceSplit(s) {
+  const d  = s.sources['Daltex Farms'] || 0;
+  const o  = s.sources['Out Source']   || 0;
+  const tot= d+o;
+  document.getElementById('src-split').innerHTML = `
+    <div class="src-box" style="background:#eff3fb;border-color:#cdd3e3">
+      <div class="src-val" style="color:var(--navy)">${tot>0?(d/tot*100).toFixed(1):0}%</div>
+      <div class="src-lbl" style="color:var(--navy)">Daltex Farms</div>
+      <div class="src-sub">${d.toFixed(1)} T</div>
+    </div>
+    <div class="src-box" style="background:var(--orange-lt);border-color:#f4c9af">
+      <div class="src-val" style="color:var(--orange)">${tot>0?(o/tot*100).toFixed(1):0}%</div>
+      <div class="src-lbl" style="color:var(--orange)">Out Source</div>
+      <div class="src-sub">${o.toFixed(1)} T</div>
+    </div>`;
+}
+
+// ── STATUS BAR ──
+function renderStatusBar(s) {
+  const sh = s.statuses['Shipped']   || 0;
+  const dl = s.statuses['Delivered'] || 0;
+  const tot= sh+dl;
+  if (!tot) return;
+  const sp = sh/tot*100, dp = dl/tot*100;
+  document.getElementById('status-bar').innerHTML =
+    `<div class="status-seg" style="flex:${sp};background:var(--blue-bg);color:var(--blue)">${sp.toFixed(0)}%</div>
+     <div class="status-seg" style="flex:${dp};background:var(--green-bg);color:var(--green)">${dp.toFixed(0)}%</div>`;
+  document.getElementById('status-legend').innerHTML =
+    `<div class="sl-item"><div class="sl-dot" style="background:var(--blue)"></div>Shipped · ${sh.toFixed(1)}T</div>
+     <div class="sl-item"><div class="sl-dot" style="background:var(--green)"></div>Delivered · ${dl.toFixed(1)}T</div>`;
+}
+
+// ── BAR CHARTS ──
+function renderBarList(elId, entries, accent) {
+  const sorted = [...entries].sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const maxV = sorted[0]?.[1] || 1;
+  const tot  = entries.reduce((s,[k,v])=>s+v, 0);
+  document.getElementById(elId).innerHTML = sorted.map(([k,v])=>`
+    <div class="bar-item">
+      <div class="bar-row">
+        <span class="bar-name">${k}</span>
+        <span class="bar-vals">${v.toFixed(1)}T<span class="bar-contrib">${tot>0?'('+( v/tot*100).toFixed(1)+'%)':''}</span></span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${v/maxV*100}%;background:${accent}"></div></div>
+    </div>`).join('');
+}
+
+function renderBarCharts(s) {
+  renderBarList('chart-markets',   Object.entries(s.markets),   'var(--navy)');
+  renderBarList('chart-farms',     Object.entries(s.farms),     'var(--orange)');
+  renderBarList('chart-varieties', Object.entries(s.varieties), '#5a7cc2');
+}
+
+// ── AUTO INSIGHTS ──
+function renderInsights(data, s) {
+  const ins = [];
+  const c1ok = s.c1pct >= 95;
+
+  if (!c1ok) {
+    ins.push({t:'wn',i:'ti-alert-triangle',lbl:'Quality alert',
+      txt:`<b>Class 1 rate at ${s.c1pct.toFixed(1)}% — ${(95-s.c1pct).toFixed(1)}pp below the 95% target.</b> ${(s.nw-s.c1_nw).toFixed(1)}T shipped as Class 2. Menia farm (79.2% Class 1) is the primary driver — addressing Menia's grading process would bring the overall rate to approximately 95.5%.`});
+  } else {
+    ins.push({t:'up',i:'ti-check',lbl:'Quality on target',
+      txt:`<b>Class 1 rate at ${s.c1pct.toFixed(1)}% — meeting the 95% target.</b> ${s.c1_nw.toFixed(1)}T shipped as premium Class 1 product across ${s.ct} containers.`});
+  }
+
+  const ukPct = s.nw > 0 ? (s.markets['UK']||0)/s.nw*100 : 0;
+  if (ukPct > 60) {
+    ins.push({t:'wn',i:'ti-alert-triangle',lbl:'Market concentration',
+      txt:`<b>UK at ${ukPct.toFixed(1)}% of selected volume — single-market dependency.</b> ${(s.markets['UK']||0).toFixed(1)}T of ${s.nw.toFixed(1)}T in one market via one client (Daltex UK). A 10% UK reduction = ~${((s.markets['UK']||0)*0.1).toFixed(0)}T at risk with no ready replacement at current allocation.`});
+  }
+
+  ins.push({t: s.yoy >= 0 ? 'up':'dn', i: s.yoy >= 0 ? 'ti-trending-up':'ti-trending-down', lbl:'Season YoY',
+    txt:`<b>Volume ${s.yoy>=0?'up':'down'} ${Math.abs(s.yoy).toFixed(1)}% year-on-year (${s.nw.toFixed(1)}T vs ${s.py_nw.toFixed(0)}T prior season same period).</b> Peak week was Week 20 at 682.2T — representing 53% of the full season in a single week.`});
+
+  if (s.markets['UAE'] && s.nw > 0) {
+    ins.push({t:'or',i:'ti-star',lbl:'Growth opportunity',
+      txt:`<b>UAE at ${((s.markets['UAE']||0)/s.nw*100).toFixed(1)}% (${(s.markets['UAE']||0).toFixed(1)}T) — 100% Class 1, Arra 30 only via Majed Alfuttaim.</b> Fastest-growing market at +73% YoY. Currently underweight relative to demand trajectory — priority lane for next season allocation.`});
+  }
+
+  ins.push({t:'nt',i:'ti-info-circle',lbl:'Supply source',
+    txt:`<b>${s.daltex.toFixed(1)}% of volume from Daltex-owned farms — strong supply control.</b> Outsource at ${(100-s.daltex).toFixed(1)}% (${(s.sources['Out Source']||0).toFixed(1)}T) across Akram Shawky, Dina Farms, Elmasa — all three at 100% Class 1.`});
+
+  document.getElementById('ins-count').textContent = `${ins.length} insights`;
+  document.getElementById('ins-body').innerHTML = ins.map(x=>`
+    <div class="ir">
+      <div class="ir-icon ${x.t}"><i class="ti ${x.i}"></i></div>
+      <div class="ir-body">
+        <div class="ir-label ${x.t}">${x.lbl}</div>
+        <div class="ir-text">${x.txt}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── AI SEARCH ──
+function buildCtx(s) {
+  return `You are an analytical assistant for Daltex, an Egyptian grape exporter. Answer concisely with specific numbers. Max 6 bullet points. Focus on actionable insights for directors and C-level executives.
+
+CURRENT FILTER: ${F.from} to ${F.to}${F.week!=='all'?' · Week '+F.week:''}${F.status!=='all'?' · '+F.status:''}${F.farm!=='all'?' · '+F.farm:''}${F.market!=='all'?' · '+F.market:''}${F.variety!=='all'?' · '+F.variety:''}
+
+SELECTED PERIOD:
+- Net weight: ${s.nw.toFixed(1)}T (${s.coverage.toFixed(1)}% of full season · ${s.ct} containers)
+- Class 1 rate: ${s.c1pct.toFixed(1)}% → ${s.c1_nw.toFixed(1)}T Class 1 / ${(s.nw-s.c1_nw).toFixed(1)}T Class 2
+- YoY: ${s.yoy>=0?'+':''}${s.yoy.toFixed(1)}% vs prior season (${s.py_nw.toFixed(0)}T)
+- Daltex farms: ${s.daltex.toFixed(1)}% | Out Source: ${(100-s.daltex).toFixed(1)}%
+- Top markets: ${Object.entries(s.markets).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`${k} ${v.toFixed(1)}T`).join(', ')}
+- Top farms: ${Object.entries(s.farms).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v.toFixed(1)}T`).join(', ')}
+- Varieties: ${Object.entries(s.varieties).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v.toFixed(1)}T`).join(', ')}
+- Colours: ${Object.entries(s.colors).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v.toFixed(1)}T (${(v/s.nw*100).toFixed(1)}%)`).join(', ')}
+
+FULL SEASON CONTEXT (2025/26): 1,285.85T · 97 containers · 10 markets · 7 farms · 6 varieties · 4 weeks (19-22)
+KEY ALERTS: Menia farm 79.2% Class 1 (critical quality issue) · Russia 0% Class 1 (verify) · Early Flame 63.9% Class 1 (worst variety) · UK 71.6% concentration risk
+KEY OPPORTUNITIES: UAE +73% YoY · Star Light +78% YoY · Arra 30 100% Class 1`;
+}
+
+async function runAI() {
+  const inp = document.getElementById('ai-in');
+  const q = inp.value.trim();
+  if (!q) { inp.focus(); return; }
+  const btn  = document.getElementById('ai-btn');
+  const load = document.getElementById('ai-load');
+  const res  = document.getElementById('ai-res');
+  const txt  = document.getElementById('ai-res-text');
+  btn.disabled=true; load.classList.add('show'); res.classList.remove('show');
+  document.getElementById('ai-q-label').textContent = `"${q}"`;
+  const s = compute(filteredData());
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
+        system: buildCtx(s), messages:[{role:'user',content:q}]})
+    });
+    const d = await r.json();
+    const response = d.content?.[0]?.text || 'No response.';
+    txt.innerHTML = response
+      .replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')
+      .replace(/\n-\s/g,'<br><br>• ')
+      .replace(/\n•/g,'<br><br>•')
+      .replace(/\n\n/g,'<br><br>')
+      .replace(/\n/g,'<br>') +
+      `<div class="ai-src"><i class="ti ti-database"></i> Based on real Daltex 2025/26 grapes shipments · ${s.nw.toFixed(1)}T selected · Last entry 01 Jun 2026</div>`;
+    res.classList.add('show');
+  } catch(e) {
+    txt.innerHTML='<span style="color:var(--red)">Connection error. Please try again.</span>';
+    res.classList.add('show');
+  }
+  btn.disabled=false; load.classList.remove('show');
+}
+
+function aiQ(q) { document.getElementById('ai-in').value=q; runAI(); }
+
+// ── INIT ──
+renderAll();
+
+// Start with cached data, then load live
+renderAll();
+loadLiveData();
+</script>
+</body>
+</html>
