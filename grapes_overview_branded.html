@@ -704,6 +704,19 @@ async function loadLiveData() {
       b.style.background='rgba(22,163,74,.2)';b.style.color='#6ee7a0';b.style.border='1px solid rgba(22,163,74,.3)';
     });
 
+    // ── populate filter dropdowns from live data (keep "All" default) ──
+    (function(){
+      const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+      const fillSel=(id,vals)=>{const el=document.getElementById(id);if(!el||el.tagName!=='SELECT')return;const first=el.querySelector('option');const allHTML=first?first.outerHTML:'<option value="all">All</option>';const prev=el.value;el.innerHTML=allHTML+vals.map(v=>`<option value="${esc(v.v)}">${esc(v.t)}</option>`).join('');el.value=prev;};
+      const dn=k=>[...new Set(curRows.map(r=>r[k]).filter(x=>x!=null&&String(x).trim()!==''))].map(x=>String(x).trim()).sort();
+      fillSel('f-week',[...new Set(curRows.map(r=>parseInt(r.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b).map(w=>({v:String(w),t:'Week '+w})));
+      fillSel('f-status',[...new Set(dn('shipping_status'))].map(x=>({v:x,t:x})));
+      fillSel('f-source',[...new Set(dn('source_type'))].map(x=>({v:x,t:x})));
+      fillSel('f-farm',[...new Set(dn('farm_source'))].map(x=>({v:x,t:x})));
+      fillSel('f-market',[...new Set(dn('receiving_country'))].map(x=>({v:x,t:x})));
+      fillSel('f-variety',[...new Set(dn('variety'))].map(x=>({v:x,t:x})));
+    })();
+
     renderAll();
   } catch(e) {
     console.warn('Overview: Supabase unavailable, using cache:', e.message);
