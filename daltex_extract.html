@@ -358,6 +358,7 @@ const COLS = [
 
 // Default visible columns
 let visibleCols = new Set(['ld','wk','st','mkt','cl','var','col','farm','ctr','cls','nw','ctns','pal']);
+let __LDF='2026-05-12', __LDT='2026-06-01';
 let SF = {week:'',mkt:'',cl:'',var:'',col:'',farm:'',src:'',cls:'',st:'',ctr:'',ldFrom:'2026-05-12',ldTo:'2026-06-01',arrFrom:'',arrTo:''};
 let sortCol = 'ld', sortDir = -1, page = 1;
 
@@ -428,6 +429,12 @@ async function loadLiveData(){
       .forEach(([id,k])=>fillSel(id,distinct(mapped,k).sort().map(x=>({v:x,t:x}))));
     fillSel('f-cls',[...new Set(mapped.map(r=>r.cls).filter(x=>x!=='—'))].sort().map(x=>({v:x,t:'Class '+x})));
 
+    // default date window spans all live data (was hardcoded to Jun 1)
+    const __lds=mapped.map(r=>r.ld).filter(x=>x&&x!=='\u2014').sort();
+    if(__lds.length){__LDF=__lds[0];__LDT=__lds[__lds.length-1];SF.ldFrom=__LDF;SF.ldTo=__LDT;
+      const __ff=document.getElementById('f-ld-from'),__ft=document.getElementById('f-ld-to');
+      if(__ff){__ff.value=__LDF;__ff.min=__LDF;__ff.max=__LDT;}
+      if(__ft){__ft.value=__LDT;__ft.min=__LDF;__ft.max=__LDT;}}
     document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='<div class="live-dot"></div> Live &middot; '+RAW.length+' records';});
     renderColToggle(); render();
   }catch(e){
@@ -443,7 +450,8 @@ function render(){
   const totNw = rows.reduce((s,r)=>s+r.nw,0);
   const totCtns = rows.reduce((s,r)=>s+r.ctns,0);
   const totPal = rows.reduce((s,r)=>s+r.pal,0);
-  const uniqCtrs = new Set(rows.map(r=>r.ctr)).size;
+  const __cm={}; rows.forEach(r=>{const cn=(r.ctr||'').replace(/\s+/g,' ').trim(); if(!cn||cn==='\u2014')return; (__cm[cn]=__cm[cn]||[]).push(r.ld);});
+  let uniqCtrs=0; for(const __k in __cm){const ds=__cm[__k].filter(x=>x&&x!=='\u2014').map(d=>+new Date(d+'T00:00:00')).sort((a,b)=>a-b); if(!ds.length){uniqCtrs++;continue;} let c=1,pp=ds[0]; for(let i=1;i<ds.length;i++){if((ds[i]-pp)/86400000>7)c++;pp=ds[i];} uniqCtrs+=c;}
   const uniqMkts = new Set(rows.map(r=>r.mkt)).size;
 
   // KPIs
@@ -551,11 +559,11 @@ function applyF(){
 function resetF(){
   ['f-week','f-mkt','f-cl','f-var','f-col','f-farm','f-src','f-cls','f-st'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-ctr').value='';
-  document.getElementById('f-ld-from').value='2026-05-12';
-  document.getElementById('f-ld-to').value='2026-06-01';
+  document.getElementById('f-ld-from').value=__LDF;
+  document.getElementById('f-ld-to').value=__LDT;
   document.getElementById('f-arr-from').value='';
   document.getElementById('f-arr-to').value='';
-  SF={week:'',mkt:'',cl:'',var:'',col:'',farm:'',src:'',cls:'',st:'',ctr:'',ldFrom:'2026-05-12',ldTo:'2026-06-01',arrFrom:'',arrTo:''};
+  SF={week:'',mkt:'',cl:'',var:'',col:'',farm:'',src:'',cls:'',st:'',ctr:'',ldFrom:__LDF,ldTo:__LDT,arrFrom:'',arrTo:''};
   page=1;
   document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('on'));
   render();
