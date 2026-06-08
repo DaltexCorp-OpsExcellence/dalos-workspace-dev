@@ -220,7 +220,7 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
         <div class="app-watermark"><svg viewBox="0 0 48 48" width="100%" height="100%"><g fill="currentColor"><rect x="8" y="27" width="7" height="13" rx="2"/><rect x="20" y="21" width="7" height="19" rx="2"/><rect x="32" y="14" width="7" height="26" rx="2"/></g><path d="M9 19 L20 14 L31 9 L40 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M34 5 L40 5 L40 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <div class="app-head"><span class="app-eyebrow">Insights</span><span class="app-status">New</span></div>
         <div class="app-emblem"><svg viewBox="0 0 48 48" width="100%" height="100%"><g fill="currentColor"><rect x="8" y="27" width="7" height="13" rx="2"/><rect x="20" y="21" width="7" height="19" rx="2"/><rect x="32" y="14" width="7" height="26" rx="2"/></g><path d="M9 19 L20 14 L31 9 L40 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M34 5 L40 5 L40 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <div class="app-name">Daltex Analytics</div>
+        <div class="app-name">DalOS Analytics</div>
         <div class="app-tag">Live shipment &amp; market intelligence across the whole season.</div>
         <div class="app-chips"><span class="app-chip">Markets</span><span class="app-chip">Farms</span><span class="app-chip">Varieties</span><span class="app-chip">Clients</span><span class="app-chip">Cartons</span><span class="app-chip">Explorer</span></div>
         <div class="app-foot"><span class="app-go">Open Analytics <b>→</b></span></div>
@@ -265,7 +265,7 @@ function showChooser(u,animate){
   else{$('loginStage').style.display='none';$('chooserStage').style.display='flex';}
 }
 function openProduct(which){
-  var c=which==='vision'?{icon:'✓',label:'DalOS Vision',glow:'#6fc191',url:VISION_URL}:{icon:'📊',label:'Daltex Analytics',glow:'#b18cf0',url:ANALYTICS_URL};
+  var c=which==='vision'?{icon:'✓',label:'DalOS Vision',glow:'#6fc191',url:VISION_URL}:{icon:'📊',label:'DalOS Analytics',glow:'#b18cf0',url:ANALYTICS_URL};
   var v=document.createElement('div');v.className='dh-veil';
   v.style.background='radial-gradient(circle at 50% 46%, '+c.glow+'55 0%, #0b1510 55%, #0a120c 100%)';
   v.innerHTML='<div class="dh-veil-ring" style="border-top-color:'+c.glow+'"></div><div class="dh-veil-icon" style="color:'+c.glow+'">'+c.icon+'</div><div class="dh-veil-label">'+c.label+'</div><div class="dh-veil-sub">Opening…</div>';
