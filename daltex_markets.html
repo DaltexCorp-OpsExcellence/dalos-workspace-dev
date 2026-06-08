@@ -514,6 +514,10 @@ function inDateRange(ld){ return ld>=S.fromDate && ld<=S.toDate; }
 function inWeek(wk){ return !S.week || String(wk)===S.week; }
 
 // ── SUPABASE LIVE DATA LOADER (markets) ──
+// container count: unique container# + loading-date, gap >7d = new instance
+function __ctWS(s){return (s||'').replace(/\s+/g,' ').trim();}
+function __ctAdd(o,r){const cn=__ctWS(r.container_number); if(!cn)return; if(!o.ctr||o.ctr.add)o.ctr={}; (o.ctr[cn]=o.ctr[cn]||[]).push(r.loading_date);}
+function __ctClusters(m){let t=0;for(const cn in m){const ds=m[cn].filter(Boolean).map(d=>+new Date(d+'T00:00:00')).sort((a,b)=>a-b);if(!ds.length){t++;continue;}let c=1,p=ds[0];for(let i=1;i<ds.length;i++){if((ds[i]-p)/86400000>7)c++;p=ds[i];}t+=c;}return t;}
 async function loadLiveData(){
   const SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
   const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
@@ -532,8 +536,8 @@ async function loadLiveData(){
 
     // by_mkt: nw, pallets, containers
     const mm={};
-    cur.forEach(r=>{const c=norm(r.receiving_country);if(!c)return;if(!mm[c])mm[c]={c,nw:0,pallets:0,ctr:new Set()};mm[c].nw+=num(r.net_weight);mm[c].pallets+=num(r.pallet_count);if(r.container_number)mm[c].ctr.add(r.container_number);});
-    const by_mkt=Object.values(mm).map(o=>({c:o.c,nw:r2(o.nw),pallets:Math.round(o.pallets),containers:o.ctr.size})).sort((a,b)=>b.nw-a.nw);
+    cur.forEach(r=>{const c=norm(r.receiving_country);if(!c)return;if(!mm[c])mm[c]={c,nw:0,pallets:0,ctr:{}};mm[c].nw+=num(r.net_weight);mm[c].pallets+=num(r.pallet_count);if(r.container_number)__ctAdd(mm[c],r);});
+    const by_mkt=Object.values(mm).map(o=>({c:o.c,nw:r2(o.nw),pallets:Math.round(o.pallets),containers:__ctClusters(o.ctr)})).sort((a,b)=>b.nw-a.nw);
 
     const by_mkt_variety=sum2N(cur,r=>norm(r.receiving_country),r=>norm(r.variety)).map(o=>({c:o.a,v:o.b,nw:r2(o.nw)}));
     const by_mkt_color  =sum2N(cur,r=>norm(r.receiving_country),r=>norm(r.color)).map(o=>({c:o.a,col:o.b,nw:r2(o.nw)}));
@@ -541,8 +545,8 @@ async function loadLiveData(){
     const by_mkt_cls    =sum2N(cur,r=>norm(r.receiving_country),r=>parseInt(r.daltex_class)).filter(o=>!isNaN(o.b)).map(o=>({c:o.a,cls:o.b,nw:r2(o.nw)}));
     const by_mkt_week   =sum2N(cur,r=>norm(r.receiving_country),r=>parseInt(r.shipping_week)||0).map(o=>({c:o.a,wk:o.b,nw:r2(o.nw)}));
     const ldM={};
-    cur.forEach(r=>{const c=norm(r.receiving_country),ld=r.loading_date;if(!c||!ld)return;const k=c+'\u0001'+ld;if(!ldM[k])ldM[k]={c,ld,nw:0,ctr:new Set()};ldM[k].nw+=num(r.net_weight);if(r.container_number)ldM[k].ctr.add(r.container_number);});
-    const by_mkt_ld=Object.values(ldM).map(o=>({c:o.c,ld:o.ld,nw:r2(o.nw),ctr:o.ctr.size})).sort((a,b)=>a.ld.localeCompare(b.ld));
+    cur.forEach(r=>{const c=norm(r.receiving_country),ld=r.loading_date;if(!c||!ld)return;const k=c+'\u0001'+ld;if(!ldM[k])ldM[k]={c,ld,nw:0,ctr:{}};ldM[k].nw+=num(r.net_weight);if(r.container_number)__ctAdd(ldM[k],r);});
+    const by_mkt_ld=Object.values(ldM).map(o=>({c:o.c,ld:o.ld,nw:r2(o.nw),ctr:__ctClusters(o.ctr)})).sort((a,b)=>a.ld.localeCompare(b.ld));
 
     const portM={};
     cur.forEach(r=>{const c=norm(r.receiving_country),p=norm(r.receiving_port);if(!c||!p)return;(portM[c]=portM[c]||{})[p]=(portM[c][p]||0)+num(r.net_weight);});
