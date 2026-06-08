@@ -325,14 +325,14 @@ input,select,button,textarea{font-family:var(--font)}
 </div></div></div>
 <script>
 
-const FARMS_ALL = [{"f":"Hana","nw":657.37,"pallets":1017.75,"containers":72,"shipments":72,"src":"Daltex Farms"},{"f":"Salma","nw":585.87,"pallets":925.25,"containers":74,"shipments":75,"src":"Daltex Farms"},{"f":"El khier","nw":404.49,"pallets":646.75,"containers":56,"shipments":56,"src":"Daltex Farms"},{"f":"Menia","nw":321.38,"pallets":520.5,"containers":27,"shipments":27,"src":"Daltex Farms"},{"f":"Dina Farms","nw":183.93,"pallets":298.0,"containers":36,"shipments":36,"src":"Out Source"},{"f":"Akram Shawky","nw":87.92,"pallets":137.5,"containers":8,"shipments":8,"src":"Out Source"},{"f":"Elmasa","nw":69.5,"pallets":112.5,"containers":15,"shipments":15,"src":"Out Source"},{"f":"Abu Dhabi","nw":3.68,"pallets":6.0,"containers":1,"shipments":1,"src":"Out Source"}];
-const FV = [{"f":"Abu Dhabi","v":"Star Light","nw":3.68},{"f":"Akram Shawky","v":"Flame","nw":48.05},{"f":"Akram Shawky","v":"Prime","nw":39.87},{"f":"Dina Farms","v":"Prime","nw":167.56},{"f":"Dina Farms","v":"Star Light","nw":16.37},{"f":"El khier","v":"Early Pearl","nw":22.96},{"f":"El khier","v":"Exotic Pearl","nw":14.4},{"f":"El khier","v":"Flame","nw":290.04},{"f":"El khier","v":"Prime","nw":13.68},{"f":"El khier","v":"Star Light","nw":28.48},{"f":"El khier","v":"Sugraone","nw":34.92},{"f":"Elmasa","v":"Prime","nw":69.5},{"f":"Hana","v":"Flame","nw":643.64},{"f":"Hana","v":"Sugraone","nw":13.73},{"f":"Menia","v":"Arra 30","nw":66.48},{"f":"Menia","v":"Flame","nw":26.81},{"f":"Menia","v":"Prime","nw":228.09},{"f":"Salma","v":"Arra 30","nw":15.91},{"f":"Salma","v":"Early Flame","nw":24.77},{"f":"Salma","v":"Flame","nw":300.01},{"f":"Salma","v":"Prime","nw":173.78},{"f":"Salma","v":"Star Light","nw":71.4}];
-const FM = [{"f":"Abu Dhabi","m":"South Africa","nw":3.68},{"f":"Akram Shawky","m":"Holland","nw":10.1},{"f":"Akram Shawky","m":"UK","nw":77.81},{"f":"Dina Farms","m":"Belarus","nw":4.05},{"f":"Dina Farms","m":"Holland","nw":7.7},{"f":"Dina Farms","m":"Lativia","nw":7.04},{"f":"Dina Farms","m":"Norway","nw":12.48},{"f":"Dina Farms","m":"Poland","nw":1.02},{"f":"Dina Farms","m":"Russia","nw":13.26},{"f":"Dina Farms","m":"South Africa","nw":10.84},{"f":"Dina Farms","m":"Spain","nw":12.48},{"f":"Dina Farms","m":"UK","nw":115.06},{"f":"El khier","m":"Holland","nw":11.25},{"f":"El khier","m":"Norway","nw":4.04},{"f":"El khier","m":"Poland","nw":0.55},{"f":"El khier","m":"Russia","nw":0.37},{"f":"El khier","m":"Slovenia","nw":19.82},{"f":"El khier","m":"South Africa","nw":14.12},{"f":"El khier","m":"Spain","nw":8.46},{"f":"El khier","m":"Switzerland","nw":10.18},{"f":"El khier","m":"UAE","nw":15.4},{"f":"El khier","m":"UK","nw":320.31},{"f":"Elmasa","m":"Belarus","nw":11.86},{"f":"Elmasa","m":"Holland","nw":7.31},{"f":"Elmasa","m":"Lativia","nw":16.93},{"f":"Elmasa","m":"Poland","nw":2.9},{"f":"Elmasa","m":"Russia","nw":5.98},{"f":"Elmasa","m":"UK","nw":24.53},{"f":"Hana","m":"Holland","nw":23.24},{"f":"Hana","m":"Norway","nw":6.94},{"f":"Hana","m":"Poland","nw":5.94},{"f":"Hana","m":"Russia","nw":5.97},{"f":"Hana","m":"Slovenia","nw":17.62},{"f":"Hana","m":"Spain","nw":14.48},{"f":"Hana","m":"Switzerland","nw":2.33},{"f":"Hana","m":"UK","nw":580.86},{"f":"Menia","m":"Holland","nw":64.25},{"f":"Menia","m":"Lativia","nw":12.48},{"f":"Menia","m":"Norway","nw":12.48},{"f":"Menia","m":"Russia","nw":16.89},{"f":"Menia","m":"Slovenia","nw":24.96},{"f":"Menia","m":"Switzerland","nw":47.84},{"f":"Menia","m":"UAE","nw":15.6},{"f":"Menia","m":"UK","nw":126.87},{"f":"Salma","m":"Holland","nw":12.38},{"f":"Salma","m":"Lativia","nw":13.48},{"f":"Salma","m":"Norway","nw":13.98},{"f":"Salma","m":"Poland","nw":2.08},{"f":"Salma","m":"Russia","nw":5.27},{"f":"Salma","m":"South Africa","nw":46.24},{"f":"Salma","m":"Spain","nw":2.02},{"f":"Salma","m":"Switzerland","nw":11.94},{"f":"Salma","m":"UK","nw":478.48}];
-const FWK = [{"f":"Abu Dhabi","wk":22,"nw":3.68},{"f":"Akram Shawky","wk":19,"nw":6.8},{"f":"Akram Shawky","wk":20,"nw":23.83},{"f":"Akram Shawky","wk":21,"nw":8.45},{"f":"Akram Shawky","wk":22,"nw":48.83},{"f":"Dina Farms","wk":20,"nw":49.42},{"f":"Dina Farms","wk":21,"nw":33.41},{"f":"Dina Farms","wk":22,"nw":101.1},{"f":"El khier","wk":19,"nw":2.52},{"f":"El khier","wk":20,"nw":91.56},{"f":"El khier","wk":21,"nw":138.78},{"f":"El khier","wk":22,"nw":171.63},{"f":"Elmasa","wk":21,"nw":5.11},{"f":"Elmasa","wk":22,"nw":51.91},{"f":"Elmasa","wk":23,"nw":12.48},{"f":"Hana","wk":19,"nw":0.07},{"f":"Hana","wk":20,"nw":134.48},{"f":"Hana","wk":21,"nw":208.76},{"f":"Hana","wk":22,"nw":314.06},{"f":"Menia","wk":19,"nw":24.44},{"f":"Menia","wk":20,"nw":146.02},{"f":"Menia","wk":21,"nw":76.73},{"f":"Menia","wk":22,"nw":74.19},{"f":"Salma","wk":19,"nw":16.81},{"f":"Salma","wk":20,"nw":236.86},{"f":"Salma","wk":21,"nw":96.15},{"f":"Salma","wk":22,"nw":236.05}];
-const PFARM = {"Menia":266.6,"Hana":261.0,"Salma":236.2,"El khier":196.2,"Akram Shawky":62.5,"Dina Farms":61.0,"Elmasa":0};
-const PFWK  = {"Menia":{"19":0,"20":168.4,"21":68.6,"22":29.6},"Hana":{"19":22.4,"20":165.0,"21":58.3,"22":15.3},"Salma":{"19":12.5,"20":128.6,"21":73.4,"22":21.7},"El khier":{"19":8.0,"20":82.1,"21":82.1,"22":24.0},"Akram Shawky":{"20":25.0,"21":26.0,"22":11.5},"Dina Farms":{"20":21.4,"21":25.4,"22":14.2}};
-const WEEKS = [19,20,21,22];
-const TOTAL_NW = 1285.85;
+let FARMS_ALL = [{"f":"Hana","nw":657.37,"pallets":1017.75,"containers":72,"shipments":72,"src":"Daltex Farms"},{"f":"Salma","nw":585.87,"pallets":925.25,"containers":74,"shipments":75,"src":"Daltex Farms"},{"f":"El khier","nw":404.49,"pallets":646.75,"containers":56,"shipments":56,"src":"Daltex Farms"},{"f":"Menia","nw":321.38,"pallets":520.5,"containers":27,"shipments":27,"src":"Daltex Farms"},{"f":"Dina Farms","nw":183.93,"pallets":298.0,"containers":36,"shipments":36,"src":"Out Source"},{"f":"Akram Shawky","nw":87.92,"pallets":137.5,"containers":8,"shipments":8,"src":"Out Source"},{"f":"Elmasa","nw":69.5,"pallets":112.5,"containers":15,"shipments":15,"src":"Out Source"},{"f":"Abu Dhabi","nw":3.68,"pallets":6.0,"containers":1,"shipments":1,"src":"Out Source"}];
+let FV = [{"f":"Abu Dhabi","v":"Star Light","nw":3.68},{"f":"Akram Shawky","v":"Flame","nw":48.05},{"f":"Akram Shawky","v":"Prime","nw":39.87},{"f":"Dina Farms","v":"Prime","nw":167.56},{"f":"Dina Farms","v":"Star Light","nw":16.37},{"f":"El khier","v":"Early Pearl","nw":22.96},{"f":"El khier","v":"Exotic Pearl","nw":14.4},{"f":"El khier","v":"Flame","nw":290.04},{"f":"El khier","v":"Prime","nw":13.68},{"f":"El khier","v":"Star Light","nw":28.48},{"f":"El khier","v":"Sugraone","nw":34.92},{"f":"Elmasa","v":"Prime","nw":69.5},{"f":"Hana","v":"Flame","nw":643.64},{"f":"Hana","v":"Sugraone","nw":13.73},{"f":"Menia","v":"Arra 30","nw":66.48},{"f":"Menia","v":"Flame","nw":26.81},{"f":"Menia","v":"Prime","nw":228.09},{"f":"Salma","v":"Arra 30","nw":15.91},{"f":"Salma","v":"Early Flame","nw":24.77},{"f":"Salma","v":"Flame","nw":300.01},{"f":"Salma","v":"Prime","nw":173.78},{"f":"Salma","v":"Star Light","nw":71.4}];
+let FM = [{"f":"Abu Dhabi","m":"South Africa","nw":3.68},{"f":"Akram Shawky","m":"Holland","nw":10.1},{"f":"Akram Shawky","m":"UK","nw":77.81},{"f":"Dina Farms","m":"Belarus","nw":4.05},{"f":"Dina Farms","m":"Holland","nw":7.7},{"f":"Dina Farms","m":"Lativia","nw":7.04},{"f":"Dina Farms","m":"Norway","nw":12.48},{"f":"Dina Farms","m":"Poland","nw":1.02},{"f":"Dina Farms","m":"Russia","nw":13.26},{"f":"Dina Farms","m":"South Africa","nw":10.84},{"f":"Dina Farms","m":"Spain","nw":12.48},{"f":"Dina Farms","m":"UK","nw":115.06},{"f":"El khier","m":"Holland","nw":11.25},{"f":"El khier","m":"Norway","nw":4.04},{"f":"El khier","m":"Poland","nw":0.55},{"f":"El khier","m":"Russia","nw":0.37},{"f":"El khier","m":"Slovenia","nw":19.82},{"f":"El khier","m":"South Africa","nw":14.12},{"f":"El khier","m":"Spain","nw":8.46},{"f":"El khier","m":"Switzerland","nw":10.18},{"f":"El khier","m":"UAE","nw":15.4},{"f":"El khier","m":"UK","nw":320.31},{"f":"Elmasa","m":"Belarus","nw":11.86},{"f":"Elmasa","m":"Holland","nw":7.31},{"f":"Elmasa","m":"Lativia","nw":16.93},{"f":"Elmasa","m":"Poland","nw":2.9},{"f":"Elmasa","m":"Russia","nw":5.98},{"f":"Elmasa","m":"UK","nw":24.53},{"f":"Hana","m":"Holland","nw":23.24},{"f":"Hana","m":"Norway","nw":6.94},{"f":"Hana","m":"Poland","nw":5.94},{"f":"Hana","m":"Russia","nw":5.97},{"f":"Hana","m":"Slovenia","nw":17.62},{"f":"Hana","m":"Spain","nw":14.48},{"f":"Hana","m":"Switzerland","nw":2.33},{"f":"Hana","m":"UK","nw":580.86},{"f":"Menia","m":"Holland","nw":64.25},{"f":"Menia","m":"Lativia","nw":12.48},{"f":"Menia","m":"Norway","nw":12.48},{"f":"Menia","m":"Russia","nw":16.89},{"f":"Menia","m":"Slovenia","nw":24.96},{"f":"Menia","m":"Switzerland","nw":47.84},{"f":"Menia","m":"UAE","nw":15.6},{"f":"Menia","m":"UK","nw":126.87},{"f":"Salma","m":"Holland","nw":12.38},{"f":"Salma","m":"Lativia","nw":13.48},{"f":"Salma","m":"Norway","nw":13.98},{"f":"Salma","m":"Poland","nw":2.08},{"f":"Salma","m":"Russia","nw":5.27},{"f":"Salma","m":"South Africa","nw":46.24},{"f":"Salma","m":"Spain","nw":2.02},{"f":"Salma","m":"Switzerland","nw":11.94},{"f":"Salma","m":"UK","nw":478.48}];
+let FWK = [{"f":"Abu Dhabi","wk":22,"nw":3.68},{"f":"Akram Shawky","wk":19,"nw":6.8},{"f":"Akram Shawky","wk":20,"nw":23.83},{"f":"Akram Shawky","wk":21,"nw":8.45},{"f":"Akram Shawky","wk":22,"nw":48.83},{"f":"Dina Farms","wk":20,"nw":49.42},{"f":"Dina Farms","wk":21,"nw":33.41},{"f":"Dina Farms","wk":22,"nw":101.1},{"f":"El khier","wk":19,"nw":2.52},{"f":"El khier","wk":20,"nw":91.56},{"f":"El khier","wk":21,"nw":138.78},{"f":"El khier","wk":22,"nw":171.63},{"f":"Elmasa","wk":21,"nw":5.11},{"f":"Elmasa","wk":22,"nw":51.91},{"f":"Elmasa","wk":23,"nw":12.48},{"f":"Hana","wk":19,"nw":0.07},{"f":"Hana","wk":20,"nw":134.48},{"f":"Hana","wk":21,"nw":208.76},{"f":"Hana","wk":22,"nw":314.06},{"f":"Menia","wk":19,"nw":24.44},{"f":"Menia","wk":20,"nw":146.02},{"f":"Menia","wk":21,"nw":76.73},{"f":"Menia","wk":22,"nw":74.19},{"f":"Salma","wk":19,"nw":16.81},{"f":"Salma","wk":20,"nw":236.86},{"f":"Salma","wk":21,"nw":96.15},{"f":"Salma","wk":22,"nw":236.05}];
+let PFARM = {"Menia":266.6,"Hana":261.0,"Salma":236.2,"El khier":196.2,"Akram Shawky":62.5,"Dina Farms":61.0,"Elmasa":0};
+let PFWK  = {"Menia":{"19":0,"20":168.4,"21":68.6,"22":29.6},"Hana":{"19":22.4,"20":165.0,"21":58.3,"22":15.3},"Salma":{"19":12.5,"20":128.6,"21":73.4,"22":21.7},"El khier":{"19":8.0,"20":82.1,"21":82.1,"22":24.0},"Akram Shawky":{"20":25.0,"21":26.0,"22":11.5},"Dina Farms":{"20":21.4,"21":25.4,"22":14.2}};
+let WEEKS = [19,20,21,22];
+let TOTAL_NW = 1285.85;
 
 const PAL_FARM={Menia:'#142850',Hana:'#DC6428',Salma:'#1a3668','El khier':'#d46024','Akram Shawky':'#3d6fa8','Dina Farms':'#f4a55a',Elmasa:'#6b7280'};
 const PAL_MKT={UK:'#142850',Holland:'#DC6428',Switzerland:'#1a3668',Slovenia:'#d46024',Norway:'#3d6fa8',Lativia:'#f4a55a','South Africa':'#16a34a',Russia:'#6b7280',UAE:'#5c8fc9',Spain:'#d97706'};
@@ -354,6 +354,48 @@ function yoyBadge(pct){
   const up=pct>=0;
   return`<span style="display:inline-flex;align-items:center;gap:2px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:${up?'#f0fdf4':'#fef2f2'};color:${up?'#16a34a':'#dc2626'};border:1px solid ${up?'#bbf7d0':'#fecaca'}">${up?'&#9650; +':'&#9660; '}${Math.abs(pct).toFixed(1)}%</span>`;
 }
+
+// ── SUPABASE LIVE DATA LOADER (farms) ──
+async function loadLiveData(){
+  const SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
+  const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
+  const SID_CUR='19482d39-6074-4c60-b772-ced5df1ffdcb', SID_PRIOR='e0c08a97-e097-4f46-8819-dc2d9ee26dba';
+  const num=v=>{const n=parseFloat(v);return isNaN(n)?0:n;};
+  const r2=x=>Math.round(x*100)/100;
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  const mode=o=>{let b=null,c=-1;for(const k in o){if(o[k]>c){c=o[k];b=k;}}return b;};
+  const sumBy=(rows,kf)=>{const m={};rows.forEach(r=>{const k=kf(r);if(k===null||k===undefined||k==='')return;m[k]=(m[k]||0)+num(r.net_weight);});return m;};
+  const sum2=(rows,ka,kb)=>{const m={};rows.forEach(r=>{const a=r[ka],b=r[kb];if(a==null||a===''||b==null||b==='')return;const key=a+'\u0001'+b;if(!m[key])m[key]={a,b,nw:0};m[key].nw+=num(r.net_weight);});return Object.values(m);};
+  const mk2=(rows,kt,kd,oa,ob)=>sum2(rows,kt,kd).map(o=>{const x={};x[oa]=o.a;x[ob]=o.b;x.nw=r2(o.nw);return x;});
+  const nestWk=(rows,tf)=>{const m={};rows.forEach(r=>{const t=r[tf];if(!t)return;const w=parseInt(r.shipping_week)||0;if(!m[t])m[t]={};m[t][w]=(m[t][w]||0)+num(r.net_weight);});Object.keys(m).forEach(t=>Object.keys(m[t]).forEach(w=>m[t][w]=r2(m[t][w])));return m;};
+  const fillSel=(id,vals)=>{const el=document.getElementById(id);if(!el||el.tagName!=='SELECT')return;const first=el.querySelector('option');const allHTML=first?first.outerHTML:'<option value="">All</option>';const prev=el.value;el.innerHTML=allHTML+vals.map(v=>`<option value="${esc(v.v)}">${esc(v.t)}</option>`).join('');el.value=prev;};
+  async function sbFetch(sid){const r=await fetch(`${SB_URL}/rest/v1/grapes_shipments_view?season_id=eq.${sid}&select=*`,{headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Range':'0-99999'}});if(!r.ok)throw new Error('SB '+r.status);return r.json();}
+  try{
+    const [cur,prior]=await Promise.all([sbFetch(SID_CUR),sbFetch(SID_PRIOR)]);
+    function farmAgg(rows){const m={};rows.forEach(r=>{const f=r.farm_source;if(!f)return;if(!m[f])m[f]={f,nw:0,pallets:0,ctr:new Set(),sc:new Set(),src:{}};const o=m[f];o.nw+=num(r.net_weight);o.pallets+=num(r.pallet_count);if(r.container_number)o.ctr.add(r.container_number);o.sc.add((r.container_number||'')+'\u0001'+(r.carta||''));const s=r.source_type||'';if(s)o.src[s]=(o.src[s]||0)+1;});return Object.values(m).map(o=>({f:o.f,nw:r2(o.nw),pallets:r2(o.pallets),containers:o.ctr.size,shipments:o.sc.size,src:mode(o.src)||''})).sort((a,b)=>b.nw-a.nw);}
+    FARMS_ALL=farmAgg(cur);
+    FV=mk2(cur,'farm_source','variety','f','v');
+    FM=mk2(cur,'farm_source','receiving_country','f','m');
+    FWK=sum2(cur,'farm_source','shipping_week').map(o=>({f:o.a,wk:parseInt(o.b)||0,nw:r2(o.nw)}));
+    PFARM=sumBy(prior,r=>r.farm_source); Object.keys(PFARM).forEach(k=>PFARM[k]=r2(PFARM[k]));
+    PFWK=nestWk(prior,'farm_source');
+    WEEKS=[...new Set(cur.map(r=>parseInt(r.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b);
+    TOTAL_NW=r2(cur.reduce((s,r)=>s+num(r.net_weight),0));
+
+    fillSel('f-week',WEEKS.map(w=>({v:w,t:'W'+w})));
+    fillSel('f-farm',FARMS_ALL.map(x=>x.f).sort().map(x=>({v:x,t:x})));
+    fillSel('f-mkt',[...new Set(cur.map(r=>r.receiving_country).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+    fillSel('f-src',[...new Set(cur.map(r=>r.source_type).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+
+    document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='<div class="live-dot"></div> Live &middot; '+FARMS_ALL.length+' farms';});
+    render();
+  }catch(e){
+    console.warn('Farms: Supabase unavailable, using cache:',e.message);
+    document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='&#9888; Offline &middot; Cache';b.style.opacity='.7';});
+    render();
+  }
+}
+
 
 function render(){
   const r=filt(), tot=r.reduce((s,x)=>s+x.nw,0);
@@ -703,7 +745,7 @@ async function askAI(){
   }finally{document.getElementById('ai-thinking').classList.remove('vis');}
 }
 
-window.onload=render;
+window.onload=loadLiveData;
 
 </script>
 </body>
