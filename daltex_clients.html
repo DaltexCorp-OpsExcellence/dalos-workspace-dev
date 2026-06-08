@@ -403,6 +403,10 @@ let S={client:'',market:'',variety:'',week:'',fromDate:'2026-05-12',toDate:'2026
 let barChart,donutChart,weeklyChart;
 
 // ── SUPABASE LIVE DATA LOADER (clients) ──
+// container count: unique container# + loading-date, gap >7d = new instance
+function __ctWS(s){return (s||'').replace(/\s+/g,' ').trim();}
+function __ctAdd(o,r){const cn=__ctWS(r.container_number); if(!cn)return; if(!o.ctr||o.ctr.add)o.ctr={}; (o.ctr[cn]=o.ctr[cn]||[]).push(r.loading_date);}
+function __ctClusters(m){let t=0;for(const cn in m){const ds=m[cn].filter(Boolean).map(d=>+new Date(d+'T00:00:00')).sort((a,b)=>a-b);if(!ds.length){t++;continue;}let c=1,p=ds[0];for(let i=1;i<ds.length;i++){if((ds[i]-p)/86400000>7)c++;p=ds[i];}t+=c;}return t;}
 async function loadLiveData(){
   const SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
   const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
@@ -423,14 +427,14 @@ async function loadLiveData(){
     // primary client aggregate
     const cm={};
     cur.forEach(r=>{const cl=norm(r.client);if(!cl)return;
-      if(!cm[cl])cm[cl]={cl,nw:0,pallets:0,ctr:new Set(),sc:new Set(),mkt:{},port:{},agent:{},line:{}};
+      if(!cm[cl])cm[cl]={cl,nw:0,pallets:0,ctr:{},sc:new Set(),mkt:{},port:{},agent:{},line:{}};
       const o=cm[cl];o.nw+=num(r.net_weight);o.pallets+=num(r.pallet_count);
-      if(r.container_number)o.ctr.add(r.container_number);
+      if(r.container_number)__ctAdd(o,r);
       o.sc.add((r.container_number||'')+'\u0001'+(r.carta||''));
       const acc=(obj,v)=>{v=norm(v);if(v)obj[v]=(obj[v]||0)+num(r.net_weight);};
       acc(o.mkt,r.receiving_country);acc(o.port,r.receiving_port);acc(o.agent,r.agent);acc(o.line,r.shipping_line);
     });
-    CLIENTS=Object.values(cm).map(o=>({cl:o.cl,nw:r2(o.nw),pallets:r2(o.pallets),containers:o.ctr.size,shipments:o.sc.size,mkt:mode(o.mkt)||'',port:mode(o.port)||'',agent:mode(o.agent)||'',line:mode(o.line)||''})).sort((a,b)=>b.nw-a.nw);
+    CLIENTS=Object.values(cm).map(o=>({cl:o.cl,nw:r2(o.nw),pallets:r2(o.pallets),containers:__ctClusters(o.ctr),shipments:o.sc.size,mkt:mode(o.mkt)||'',port:mode(o.port)||'',agent:mode(o.agent)||'',line:mode(o.line)||''})).sort((a,b)=>b.nw-a.nw);
 
     CL_VARIETY=sum2N(cur,r=>norm(r.client),r=>norm(r.variety)).map(o=>({cl:o.a,v:o.b,nw:r2(o.nw)}));
     CL_FARM   =sum2N(cur,r=>norm(r.client),r=>norm(r.farm_source)).map(o=>({cl:o.a,f:o.b,nw:r2(o.nw)}));
@@ -438,16 +442,16 @@ async function loadLiveData(){
     CL_CLS    =sum2N(cur,r=>norm(r.client),r=>parseInt(r.daltex_class)).filter(o=>!isNaN(o.b)).map(o=>({cl:o.a,cls:o.b,nw:r2(o.nw)}));
 
     const ldM={};
-    cur.forEach(r=>{const cl=norm(r.client),ld=r.loading_date;if(!cl||!ld)return;const k=cl+'\u0001'+ld;if(!ldM[k])ldM[k]={cl,ld,nw:0,ctr:new Set()};ldM[k].nw+=num(r.net_weight);if(r.container_number)ldM[k].ctr.add(r.container_number);});
-    CL_LD=Object.values(ldM).map(o=>({cl:o.cl,ld:o.ld,nw:r2(o.nw),ctr:o.ctr.size})).sort((a,b)=>a.ld.localeCompare(b.ld));
+    cur.forEach(r=>{const cl=norm(r.client),ld=r.loading_date;if(!cl||!ld)return;const k=cl+'\u0001'+ld;if(!ldM[k])ldM[k]={cl,ld,nw:0,ctr:{}};ldM[k].nw+=num(r.net_weight);if(r.container_number)__ctAdd(ldM[k],r);});
+    CL_LD=Object.values(ldM).map(o=>({cl:o.cl,ld:o.ld,nw:r2(o.nw),ctr:__ctClusters(o.ctr)})).sort((a,b)=>a.ld.localeCompare(b.ld));
 
     CL_AGENTS=Object.entries(sumByN(cur,r=>norm(r.agent))).map(([agent,nw])=>({agent,nw:r2(nw)})).sort((a,b)=>b.nw-a.nw);
     CL_LINES =Object.entries(sumByN(cur,r=>norm(r.shipping_line))).map(([line,nw])=>({line,nw:r2(nw)})).sort((a,b)=>b.nw-a.nw);
 
     // Daltex UK subclients
     const subM={};
-    cur.filter(r=>norm(r.client)==='Daltex UK').forEach(r=>{const s=norm(r.subclient);if(!s)return;if(!subM[s])subM[s]={sub:s,nw:0,ctr:new Set(),sc:new Set()};subM[s].nw+=num(r.net_weight);if(r.container_number)subM[s].ctr.add(r.container_number);subM[s].sc.add((r.container_number||'')+'\u0001'+(r.carta||''));});
-    const subArr=Object.values(subM).map(o=>({sub:o.sub,nw:r2(o.nw),containers:o.ctr.size,shipments:o.sc.size})).sort((a,b)=>b.nw-a.nw);
+    cur.filter(r=>norm(r.client)==='Daltex UK').forEach(r=>{const s=norm(r.subclient);if(!s)return;if(!subM[s])subM[s]={sub:s,nw:0,ctr:{},sc:new Set()};subM[s].nw+=num(r.net_weight);if(r.container_number)__ctAdd(subM[s],r);subM[s].sc.add((r.container_number||'')+'\u0001'+(r.carta||''));});
+    const subArr=Object.values(subM).map(o=>({sub:o.sub,nw:r2(o.nw),containers:__ctClusters(o.ctr),shipments:o.sc.size})).sort((a,b)=>b.nw-a.nw);
     if(subArr.length) SUBCLIENTS=subArr;
 
     PRIOR_CL=sumByN(prior,r=>norm(r.client)); Object.keys(PRIOR_CL).forEach(k=>PRIOR_CL[k]=r2(PRIOR_CL[k]));
