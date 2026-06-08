@@ -248,7 +248,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     if(!r.ok)throw new Error('SB '+r.status);
     const rows=await r.json();
     const total=rows.reduce((s,x)=>s+num(x.net_weight),0);
-    const ctr=new Set(rows.map(x=>x.container_number).filter(Boolean)).size;
+    const __g={};rows.forEach(x=>{const cn=(x.container_number||'').replace(/\s+/g,' ').trim();if(!cn)return;(__g[cn]=__g[cn]||[]).push(x.loading_date);});let ctr=0;for(const k in __g){const ds=__g[k].filter(Boolean).map(d=>+new Date(d+'T00:00:00')).sort((a,b)=>a-b);if(!ds.length){ctr++;continue;}let c=1,pp=ds[0];for(let i=1;i<ds.length;i++){if((ds[i]-pp)/86400000>7)c++;pp=ds[i];}ctr+=c;}
     const mkts={},vars={};
     rows.forEach(x=>{const m=(x.receiving_country||'').trim();if(m)mkts[m]=(mkts[m]||0)+num(x.net_weight);const v=(x.variety||'').trim();if(v)vars[v]=(vars[v]||0)+num(x.net_weight);});
     const top=o=>{let k=null,b=-1;for(const x in o){if(o[x]>b){b=o[x];k=x;}}return [k,b];};
