@@ -152,7 +152,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="hero-stats">
       <div class="hstat"><div class="hstat-val">1</div><div class="hstat-lbl">Live Product</div></div>
       <div class="hstat"><div class="hstat-val">4</div><div class="hstat-lbl">Products Planned</div></div>
-      <div class="hstat"><div class="hstat-val">2.3kT</div><div class="hstat-lbl">Season NW</div></div>
+      <div class="hstat"><div class="hstat-val" id="h-nw">2.3kT</div><div class="hstat-lbl">Season NW</div></div>
       <div class="hstat"><div class="hstat-val">2025/26</div><div class="hstat-lbl">Active Season</div></div>
     </div>
   </div>
@@ -447,6 +447,21 @@ function updateDate(){
   document.getElementById('topbar-date').textContent = now.toLocaleDateString('en-GB', opts);
 }
 updateDate();
+</script>
+
+<script>
+(async function(){
+  const SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
+  const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
+  const SID='19482d39-6074-4c60-b772-ced5df1ffdcb';
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/grapes_shipments_view?season_id=eq.${SID}&select=net_weight`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Range':'0-99999'}});
+    if(!r.ok)throw new Error('SB '+r.status);
+    const rows=await r.json();
+    const total=rows.reduce((s,x)=>s+(parseFloat(x.net_weight)||0),0);
+    const el=document.getElementById('h-nw');if(el)el.textContent=(total/1000).toFixed(1)+'kT';
+  }catch(e){console.warn('Home: live NW unavailable',e.message);}
+})();
 </script>
 </body>
 </html>
