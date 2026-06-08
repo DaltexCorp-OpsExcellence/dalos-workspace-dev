@@ -709,6 +709,12 @@ async function loadLiveData() {
       const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
       const fillSel=(id,vals)=>{const el=document.getElementById(id);if(!el||el.tagName!=='SELECT')return;const first=el.querySelector('option');const allHTML=first?first.outerHTML:'<option value="all">All</option>';const prev=el.value;el.innerHTML=allHTML+vals.map(v=>`<option value="${esc(v.v)}">${esc(v.t)}</option>`).join('');el.value=prev;};
       const dn=k=>[...new Set(curRows.map(r=>r[k]).filter(x=>x!=null&&String(x).trim()!==''))].map(x=>String(x).trim()).sort();
+      // expand default date window to cover all live data (keeps overview = full season)
+      const lds=curRows.map(r=>r.loading_date).filter(Boolean).sort();
+      if(lds.length){DEF_FROM=lds[0];DEF_TO=lds[lds.length-1];F.from=DEF_FROM;F.to=DEF_TO;
+        const ff=document.getElementById('f-from'),ft=document.getElementById('f-to');
+        if(ff){ff.value=DEF_FROM;ff.min=DEF_FROM;ff.max=DEF_TO;}
+        if(ft){ft.value=DEF_TO;ft.min=DEF_FROM;ft.max=DEF_TO;}}
       fillSel('f-week',[...new Set(curRows.map(r=>parseInt(r.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b).map(w=>({v:String(w),t:'Week '+w})));
       fillSel('f-status',[...new Set(dn('shipping_status'))].map(x=>({v:x,t:x})));
       fillSel('f-source',[...new Set(dn('source_type'))].map(x=>({v:x,t:x})));
@@ -746,7 +752,8 @@ const DAILY = [
 const PRIOR_WEEKLY = {19:42.7, 20:576.3, 21:374.4, 22:92.0};
 
 // ── FILTER STATE ──
-let F = {from:'2026-05-12',to:'2026-06-01',week:'all',status:'all',source:'all',farm:'all',market:'all',variety:'all'};
+let DEF_FROM='2026-05-12', DEF_TO='2026-06-01';
+let F = {from:DEF_FROM,to:DEF_TO,week:'all',status:'all',source:'all',farm:'all',market:'all',variety:'all'};
 
 function filteredData() {
   return DAILY.filter(d => {
@@ -774,8 +781,8 @@ function applyFilters() {
 }
 
 function resetFilters() {
-  F = {from:'2026-05-12',to:'2026-06-01',week:'all',status:'all',source:'all',farm:'all',market:'all',variety:'all'};
-  ['f-from','f-to'].forEach((id,i)=>document.getElementById(id).value=i===0?'2026-05-12':'2026-06-01');
+  F = {from:DEF_FROM,to:DEF_TO,week:'all',status:'all',source:'all',farm:'all',market:'all',variety:'all'};
+  document.getElementById('f-from').value=DEF_FROM;document.getElementById('f-to').value=DEF_TO;
   ['f-week','f-status','f-source','f-farm','f-market','f-variety'].forEach(id=>document.getElementById(id).value='all');
   renderAll();
 }
@@ -818,12 +825,12 @@ function renderAll() {
 // ── CONTEXT INDICATOR ──
 function renderContext(data, s) {
   const el = document.getElementById('fctx');
-  const isF = F.from!=='2026-05-12'||F.to!=='2026-06-01'||F.week!=='all'||F.status!=='all'||F.source!=='all'||F.farm!=='all'||F.market!=='all'||F.variety!=='all';
+  const isF = F.from!==DEF_FROM||F.to!==DEF_TO||F.week!=='all'||F.status!=='all'||F.source!=='all'||F.farm!=='all'||F.market!=='all'||F.variety!=='all';
   if (!isF) { el.classList.remove('show'); return; }
   el.classList.add('show');
   const pills = [];
   const fmt = d => new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-  if (F.from!=='2026-05-12'||F.to!=='2026-06-01') pills.push(`${fmt(F.from)} – ${fmt(F.to)}`);
+  if (F.from!==DEF_FROM||F.to!==DEF_TO) pills.push(`${fmt(F.from)} – ${fmt(F.to)}`);
   if (F.week!=='all')   pills.push(`Week ${F.week}`);
   if (F.status!=='all') pills.push(F.status);
   if (F.source!=='all') pills.push(F.source);
