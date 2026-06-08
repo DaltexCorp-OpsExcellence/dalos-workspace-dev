@@ -360,7 +360,8 @@ function yoyBadge(pct){
 function __ctWS(s){return (s||'').replace(/\s+/g,' ').trim();}
 function __ctAdd(o,r){const cn=__ctWS(r.container_number); if(!cn)return; if(!o.ctr||o.ctr.add)o.ctr={}; (o.ctr[cn]=o.ctr[cn]||[]).push(r.loading_date);}
 function __ctClusters(m){let t=0;for(const cn in m){const ds=m[cn].filter(Boolean).map(d=>+new Date(d+'T00:00:00')).sort((a,b)=>a-b);if(!ds.length){t++;continue;}let c=1,p=ds[0];for(let i=1;i<ds.length;i++){if((ds[i]-p)/86400000>7)c++;p=ds[i];}t+=c;}return t;}
-async function loadLiveData(){
+let __ROWS=[];
+    async function loadLiveData(){
   const SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
   const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
   const SID_CUR='19482d39-6074-4c60-b772-ced5df1ffdcb', SID_PRIOR='e0c08a97-e097-4f46-8819-dc2d9ee26dba';
@@ -378,6 +379,7 @@ async function loadLiveData(){
     const [cur,prior]=await Promise.all([sbFetch(SID_CUR),sbFetch(SID_PRIOR)]);
     function farmAgg(rows){const m={};rows.forEach(r=>{const f=r.farm_source;if(!f)return;if(!m[f])m[f]={f,nw:0,pallets:0,ctr:{},sc:new Set(),src:{}};const o=m[f];o.nw+=num(r.net_weight);o.pallets+=num(r.pallet_count);if(r.container_number)__ctAdd(o,r);o.sc.add((r.container_number||'')+'\u0001'+(r.carta||''));const s=r.source_type||'';if(s)o.src[s]=(o.src[s]||0)+1;});return Object.values(m).map(o=>({f:o.f,nw:r2(o.nw),pallets:r2(o.pallets),containers:__ctClusters(o.ctr),shipments:o.sc.size,src:mode(o.src)||''})).sort((a,b)=>b.nw-a.nw);}
     FARMS_ALL=farmAgg(cur);
+    __ROWS=cur;
     FV=mk2(cur,'farm_source','variety','f','v');
     FM=mk2(cur,'farm_source','receiving_country','f','m');
     FWK=sum2(cur,'farm_source','shipping_week').map(o=>({f:o.a,wk:parseInt(o.b)||0,nw:r2(o.nw)}));
@@ -412,7 +414,10 @@ function render(){
 function renderKPIs(r,tot){
   const prior=r.reduce((s,x)=>s+(PFARM[x.f]||0),0);
   const yoy=prior>0?((tot-prior)/prior*100):null;
-  const top=r[0], ctrs=r.reduce((s,x)=>s+x.containers,0);
+  const top=r[0];
+  const __shown=new Set(r.map(x=>x.f));
+  const __cm={}; __ROWS.forEach(x=>{ if(!__shown.has(x.farm_source)) return; const cn=__ctWS(x.container_number); if(!cn) return; (__cm[cn]=__cm[cn]||[]).push(x.loading_date); });
+  const ctrs=__ctClusters(__cm);
   const ownNw=r.filter(x=>x.src==='Daltex Farms').reduce((s,x)=>s+x.nw,0);
   document.getElementById('kgrid').innerHTML=[
     {l:'Total Net Weight',i:'ti-weight',v:tot.toFixed(2)+' T',s:'Season 24/25: '+prior.toFixed(0)+'T',yoy:yoyBadge(yoy),bar:Math.min(tot/13,100)},
