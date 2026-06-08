@@ -356,6 +356,10 @@ function yoyBadge(pct){
 }
 
 // ── SUPABASE LIVE DATA LOADER (farms) ──
+// container count: unique container# + loading-date, gap >7d = new instance
+function __ctWS(s){return (s||'').replace(/\s+/g,' ').trim();}
+function __ctAdd(o,r){const cn=__ctWS(r.container_number); if(!cn)return; if(!o.ctr||o.ctr.add)o.ctr={}; (o.ctr[cn]=o.ctr[cn]||[]).push(r.loading_date);}
+function __ctClusters(m){let t=0;for(const cn in m){const ds=m[cn].filter(Boolean).map(d=>+new Date(d+'T00:00:00')).sort((a,b)=>a-b);if(!ds.length){t++;continue;}let c=1,p=ds[0];for(let i=1;i<ds.length;i++){if((ds[i]-p)/86400000>7)c++;p=ds[i];}t+=c;}return t;}
 async function loadLiveData(){
   const SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
   const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
@@ -372,7 +376,7 @@ async function loadLiveData(){
   async function sbFetch(sid){const r=await fetch(`${SB_URL}/rest/v1/grapes_shipments_view?season_id=eq.${sid}&select=*`,{headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Range':'0-99999'}});if(!r.ok)throw new Error('SB '+r.status);return r.json();}
   try{
     const [cur,prior]=await Promise.all([sbFetch(SID_CUR),sbFetch(SID_PRIOR)]);
-    function farmAgg(rows){const m={};rows.forEach(r=>{const f=r.farm_source;if(!f)return;if(!m[f])m[f]={f,nw:0,pallets:0,ctr:new Set(),sc:new Set(),src:{}};const o=m[f];o.nw+=num(r.net_weight);o.pallets+=num(r.pallet_count);if(r.container_number)o.ctr.add(r.container_number);o.sc.add((r.container_number||'')+'\u0001'+(r.carta||''));const s=r.source_type||'';if(s)o.src[s]=(o.src[s]||0)+1;});return Object.values(m).map(o=>({f:o.f,nw:r2(o.nw),pallets:r2(o.pallets),containers:o.ctr.size,shipments:o.sc.size,src:mode(o.src)||''})).sort((a,b)=>b.nw-a.nw);}
+    function farmAgg(rows){const m={};rows.forEach(r=>{const f=r.farm_source;if(!f)return;if(!m[f])m[f]={f,nw:0,pallets:0,ctr:{},sc:new Set(),src:{}};const o=m[f];o.nw+=num(r.net_weight);o.pallets+=num(r.pallet_count);if(r.container_number)__ctAdd(o,r);o.sc.add((r.container_number||'')+'\u0001'+(r.carta||''));const s=r.source_type||'';if(s)o.src[s]=(o.src[s]||0)+1;});return Object.values(m).map(o=>({f:o.f,nw:r2(o.nw),pallets:r2(o.pallets),containers:__ctClusters(o.ctr),shipments:o.sc.size,src:mode(o.src)||''})).sort((a,b)=>b.nw-a.nw);}
     FARMS_ALL=farmAgg(cur);
     FV=mk2(cur,'farm_source','variety','f','v');
     FM=mk2(cur,'farm_source','receiving_country','f','m');
