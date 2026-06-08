@@ -478,24 +478,24 @@ input,select,button{font-family:var(--font)}
 
 <script>
 /* ── MASTER DATA ── */
-const VARIETIES = [{"v":"Flame","nw":1308.55,"pallets":2039.5,"containers":111,"shipments":112,"color":"Red"},{"v":"Prime","nw":692.49,"pallets":1120.25,"containers":65,"shipments":65,"color":"White"},{"v":"Star Light","nw":119.93,"pallets":198.0,"containers":11,"shipments":11,"color":"Red"},{"v":"Arra 30","nw":82.39,"pallets":128.0,"containers":6,"shipments":6,"color":"White"},{"v":"Sugraone","nw":48.65,"pallets":71.0,"containers":5,"shipments":5,"color":"White"},{"v":"Early Flame","nw":24.77,"pallets":39.5,"containers":5,"shipments":5,"color":"Red"},{"v":"Early Pearl","nw":22.96,"pallets":44.0,"containers":3,"shipments":3,"color":"Black"},{"v":"Exotic Pearl","nw":14.4,"pallets":24.0,"containers":1,"shipments":1,"color":"Red"}];
-const COLORS = [{"c":"Red","nw":1467.65,"pallets":2301.0,"containers":121,"shipments":122},{"c":"White","nw":823.53,"pallets":1319.25,"containers":74,"shipments":74},{"c":"Black","nw":22.96,"pallets":44.0,"containers":3,"shipments":3}];
-const VAR_MKT = [{"v":"Arra 30","m":"Holland","nw":24.96},{"v":"Arra 30","m":"Lativia","nw":12.48},{"v":"Arra 30","m":"UAE","nw":15.6},{"v":"Arra 30","m":"UK","nw":29.35},{"v":"Early Flame","m":"UK","nw":24.77},{"v":"Early Pearl","m":"UAE","nw":1.0},{"v":"Early Pearl","m":"UK","nw":21.96},{"v":"Exotic Pearl","m":"UAE","nw":14.4},{"v":"Flame","m":"Holland","nw":43.94},{"v":"Flame","m":"Norway","nw":12.48},{"v":"Flame","m":"Poland","nw":6.49},{"v":"Flame","m":"Russia","nw":9.18},{"v":"Flame","m":"Slovenia","nw":37.44},{"v":"Flame","m":"Spain","nw":24.96},{"v":"Flame","m":"Switzerland","nw":24.46},{"v":"Flame","m":"UK","nw":1149.6},{"v":"Prime","m":"Belarus","nw":15.91},{"v":"Prime","m":"Holland","nw":67.34},{"v":"Prime","m":"Lativia","nw":37.44},{"v":"Prime","m":"Norway","nw":37.44},{"v":"Prime","m":"Poland","nw":6.0},{"v":"Prime","m":"Russia","nw":38.56},{"v":"Prime","m":"Slovenia","nw":24.96},{"v":"Prime","m":"Spain","nw":12.48},{"v":"Prime","m":"Switzerland","nw":47.82},{"v":"Prime","m":"UK","nw":404.54},{"v":"Star Light","m":"South Africa","nw":74.88},{"v":"Star Light","m":"UK","nw":45.05},{"v":"Sugraone","m":"UK","nw":48.65}];
-const COL_MKT = [{"c":"Black","m":"UAE","nw":1.0},{"c":"Black","m":"UK","nw":21.96},{"c":"Red","m":"Holland","nw":43.94},{"c":"Red","m":"Norway","nw":12.48},{"c":"Red","m":"Poland","nw":6.49},{"c":"Red","m":"Russia","nw":9.18},{"c":"Red","m":"Slovenia","nw":37.44},{"c":"Red","m":"South Africa","nw":74.88},{"c":"Red","m":"Spain","nw":24.96},{"c":"Red","m":"Switzerland","nw":24.46},{"c":"Red","m":"UAE","nw":14.4},{"c":"Red","m":"UK","nw":1219.42},{"c":"White","m":"Belarus","nw":15.91},{"c":"White","m":"Holland","nw":92.3},{"c":"White","m":"Lativia","nw":49.92},{"c":"White","m":"Norway","nw":37.44},{"c":"White","m":"Poland","nw":6.0},{"c":"White","m":"Russia","nw":38.56},{"c":"White","m":"Slovenia","nw":24.96},{"c":"White","m":"Spain","nw":12.48},{"c":"White","m":"Switzerland","nw":47.82},{"c":"White","m":"UAE","nw":15.6},{"c":"White","m":"UK","nw":482.54}];
-const VAR_FARM = [{"v":"Arra 30","f":"Menia","nw":66.48},{"v":"Arra 30","f":"Salma","nw":15.91},{"v":"Early Flame","f":"Salma","nw":24.77},{"v":"Early Pearl","f":"El khier","nw":22.96},{"v":"Exotic Pearl","f":"El khier","nw":14.4},{"v":"Flame","f":"Akram Shawky","nw":48.05},{"v":"Flame","f":"El khier","nw":290.04},{"v":"Flame","f":"Hana","nw":643.64},{"v":"Flame","f":"Menia","nw":26.81},{"v":"Flame","f":"Salma","nw":300.01},{"v":"Prime","f":"Akram Shawky","nw":39.87},{"v":"Prime","f":"Dina Farms","nw":167.56},{"v":"Prime","f":"El khier","nw":13.68},{"v":"Prime","f":"Elmasa","nw":69.5},{"v":"Prime","f":"Menia","nw":228.09},{"v":"Prime","f":"Salma","nw":173.78},{"v":"Star Light","f":"Abu Dhabi","nw":3.68},{"v":"Star Light","f":"Dina Farms","nw":16.37},{"v":"Star Light","f":"El khier","nw":28.48},{"v":"Star Light","f":"Salma","nw":71.4},{"v":"Sugraone","f":"El khier","nw":34.92},{"v":"Sugraone","f":"Hana","nw":13.73}];
-const COL_FARM = [{"c":"Black","f":"El khier","nw":22.96},{"c":"Red","f":"Abu Dhabi","nw":3.68},{"c":"Red","f":"Akram Shawky","nw":48.05},{"c":"Red","f":"Dina Farms","nw":16.37},{"c":"Red","f":"El khier","nw":332.92},{"c":"Red","f":"Hana","nw":643.64},{"c":"Red","f":"Menia","nw":26.81},{"c":"Red","f":"Salma","nw":396.18},{"c":"White","f":"Akram Shawky","nw":39.87},{"c":"White","f":"Dina Farms","nw":167.56},{"c":"White","f":"El khier","nw":48.6},{"c":"White","f":"Elmasa","nw":69.5},{"c":"White","f":"Hana","nw":13.73},{"c":"White","f":"Menia","nw":294.57},{"c":"White","f":"Salma","nw":189.69}];
-const VAR_WEEK = [{"v":"Arra 30","wk":21,"nw":12.48},{"v":"Arra 30","wk":22,"nw":69.91},{"v":"Early Flame","wk":20,"nw":24.71},{"v":"Early Flame","wk":21,"nw":0.06},{"v":"Early Pearl","wk":21,"nw":21.96},{"v":"Early Pearl","wk":22,"nw":1.0},{"v":"Exotic Pearl","wk":22,"nw":14.4},{"v":"Flame","wk":19,"nw":6.84},{"v":"Flame","wk":20,"nw":359.3},{"v":"Flame","wk":21,"nw":378.19},{"v":"Flame","wk":22,"nw":564.23},{"v":"Prime","wk":19,"nw":43.81},{"v":"Prime","wk":20,"nw":273.21},{"v":"Prime","wk":21,"nw":144.13},{"v":"Prime","wk":22,"nw":218.86},{"v":"Prime","wk":23,"nw":12.48},{"v":"Star Light","wk":20,"nw":24.96},{"v":"Star Light","wk":21,"nw":10.56},{"v":"Star Light","wk":22,"nw":84.41},{"v":"Sugraone","wk":22,"nw":48.65}];
-const COL_WEEK = [{"c":"Black","wk":21,"nw":21.96},{"c":"Black","wk":22,"nw":1.0},{"c":"Red","wk":19,"nw":6.84},{"c":"Red","wk":20,"nw":408.97},{"c":"Red","wk":21,"nw":388.81},{"c":"Red","wk":22,"nw":663.04},{"c":"White","wk":19,"nw":43.81},{"c":"White","wk":20,"nw":273.21},{"c":"White","wk":21,"nw":156.61},{"c":"White","wk":22,"nw":337.42},{"c":"White","wk":23,"nw":12.48}];
-const VAR_CLS = [{"v":"Arra 30","cls":"1","nw":82.39},{"v":"Early Flame","cls":"1","nw":15.83},{"v":"Early Flame","cls":"2","nw":8.94},{"v":"Early Pearl","cls":"1","nw":22.96},{"v":"Exotic Pearl","cls":"1","nw":14.4},{"v":"Flame","cls":"1","nw":1222.15},{"v":"Flame","cls":"2","nw":86.4},{"v":"Prime","cls":"1","nw":588.1},{"v":"Prime","cls":"2","nw":104.39},{"v":"Star Light","cls":"1","nw":119.33},{"v":"Star Light","cls":"2","nw":0.6},{"v":"Sugraone","cls":"1","nw":48.65}];
-const COL_CLS = [
+let VARIETIES = [{"v":"Flame","nw":1308.55,"pallets":2039.5,"containers":111,"shipments":112,"color":"Red"},{"v":"Prime","nw":692.49,"pallets":1120.25,"containers":65,"shipments":65,"color":"White"},{"v":"Star Light","nw":119.93,"pallets":198.0,"containers":11,"shipments":11,"color":"Red"},{"v":"Arra 30","nw":82.39,"pallets":128.0,"containers":6,"shipments":6,"color":"White"},{"v":"Sugraone","nw":48.65,"pallets":71.0,"containers":5,"shipments":5,"color":"White"},{"v":"Early Flame","nw":24.77,"pallets":39.5,"containers":5,"shipments":5,"color":"Red"},{"v":"Early Pearl","nw":22.96,"pallets":44.0,"containers":3,"shipments":3,"color":"Black"},{"v":"Exotic Pearl","nw":14.4,"pallets":24.0,"containers":1,"shipments":1,"color":"Red"}];
+let COLORS = [{"c":"Red","nw":1467.65,"pallets":2301.0,"containers":121,"shipments":122},{"c":"White","nw":823.53,"pallets":1319.25,"containers":74,"shipments":74},{"c":"Black","nw":22.96,"pallets":44.0,"containers":3,"shipments":3}];
+let VAR_MKT = [{"v":"Arra 30","m":"Holland","nw":24.96},{"v":"Arra 30","m":"Lativia","nw":12.48},{"v":"Arra 30","m":"UAE","nw":15.6},{"v":"Arra 30","m":"UK","nw":29.35},{"v":"Early Flame","m":"UK","nw":24.77},{"v":"Early Pearl","m":"UAE","nw":1.0},{"v":"Early Pearl","m":"UK","nw":21.96},{"v":"Exotic Pearl","m":"UAE","nw":14.4},{"v":"Flame","m":"Holland","nw":43.94},{"v":"Flame","m":"Norway","nw":12.48},{"v":"Flame","m":"Poland","nw":6.49},{"v":"Flame","m":"Russia","nw":9.18},{"v":"Flame","m":"Slovenia","nw":37.44},{"v":"Flame","m":"Spain","nw":24.96},{"v":"Flame","m":"Switzerland","nw":24.46},{"v":"Flame","m":"UK","nw":1149.6},{"v":"Prime","m":"Belarus","nw":15.91},{"v":"Prime","m":"Holland","nw":67.34},{"v":"Prime","m":"Lativia","nw":37.44},{"v":"Prime","m":"Norway","nw":37.44},{"v":"Prime","m":"Poland","nw":6.0},{"v":"Prime","m":"Russia","nw":38.56},{"v":"Prime","m":"Slovenia","nw":24.96},{"v":"Prime","m":"Spain","nw":12.48},{"v":"Prime","m":"Switzerland","nw":47.82},{"v":"Prime","m":"UK","nw":404.54},{"v":"Star Light","m":"South Africa","nw":74.88},{"v":"Star Light","m":"UK","nw":45.05},{"v":"Sugraone","m":"UK","nw":48.65}];
+let COL_MKT = [{"c":"Black","m":"UAE","nw":1.0},{"c":"Black","m":"UK","nw":21.96},{"c":"Red","m":"Holland","nw":43.94},{"c":"Red","m":"Norway","nw":12.48},{"c":"Red","m":"Poland","nw":6.49},{"c":"Red","m":"Russia","nw":9.18},{"c":"Red","m":"Slovenia","nw":37.44},{"c":"Red","m":"South Africa","nw":74.88},{"c":"Red","m":"Spain","nw":24.96},{"c":"Red","m":"Switzerland","nw":24.46},{"c":"Red","m":"UAE","nw":14.4},{"c":"Red","m":"UK","nw":1219.42},{"c":"White","m":"Belarus","nw":15.91},{"c":"White","m":"Holland","nw":92.3},{"c":"White","m":"Lativia","nw":49.92},{"c":"White","m":"Norway","nw":37.44},{"c":"White","m":"Poland","nw":6.0},{"c":"White","m":"Russia","nw":38.56},{"c":"White","m":"Slovenia","nw":24.96},{"c":"White","m":"Spain","nw":12.48},{"c":"White","m":"Switzerland","nw":47.82},{"c":"White","m":"UAE","nw":15.6},{"c":"White","m":"UK","nw":482.54}];
+let VAR_FARM = [{"v":"Arra 30","f":"Menia","nw":66.48},{"v":"Arra 30","f":"Salma","nw":15.91},{"v":"Early Flame","f":"Salma","nw":24.77},{"v":"Early Pearl","f":"El khier","nw":22.96},{"v":"Exotic Pearl","f":"El khier","nw":14.4},{"v":"Flame","f":"Akram Shawky","nw":48.05},{"v":"Flame","f":"El khier","nw":290.04},{"v":"Flame","f":"Hana","nw":643.64},{"v":"Flame","f":"Menia","nw":26.81},{"v":"Flame","f":"Salma","nw":300.01},{"v":"Prime","f":"Akram Shawky","nw":39.87},{"v":"Prime","f":"Dina Farms","nw":167.56},{"v":"Prime","f":"El khier","nw":13.68},{"v":"Prime","f":"Elmasa","nw":69.5},{"v":"Prime","f":"Menia","nw":228.09},{"v":"Prime","f":"Salma","nw":173.78},{"v":"Star Light","f":"Abu Dhabi","nw":3.68},{"v":"Star Light","f":"Dina Farms","nw":16.37},{"v":"Star Light","f":"El khier","nw":28.48},{"v":"Star Light","f":"Salma","nw":71.4},{"v":"Sugraone","f":"El khier","nw":34.92},{"v":"Sugraone","f":"Hana","nw":13.73}];
+let COL_FARM = [{"c":"Black","f":"El khier","nw":22.96},{"c":"Red","f":"Abu Dhabi","nw":3.68},{"c":"Red","f":"Akram Shawky","nw":48.05},{"c":"Red","f":"Dina Farms","nw":16.37},{"c":"Red","f":"El khier","nw":332.92},{"c":"Red","f":"Hana","nw":643.64},{"c":"Red","f":"Menia","nw":26.81},{"c":"Red","f":"Salma","nw":396.18},{"c":"White","f":"Akram Shawky","nw":39.87},{"c":"White","f":"Dina Farms","nw":167.56},{"c":"White","f":"El khier","nw":48.6},{"c":"White","f":"Elmasa","nw":69.5},{"c":"White","f":"Hana","nw":13.73},{"c":"White","f":"Menia","nw":294.57},{"c":"White","f":"Salma","nw":189.69}];
+let VAR_WEEK = [{"v":"Arra 30","wk":21,"nw":12.48},{"v":"Arra 30","wk":22,"nw":69.91},{"v":"Early Flame","wk":20,"nw":24.71},{"v":"Early Flame","wk":21,"nw":0.06},{"v":"Early Pearl","wk":21,"nw":21.96},{"v":"Early Pearl","wk":22,"nw":1.0},{"v":"Exotic Pearl","wk":22,"nw":14.4},{"v":"Flame","wk":19,"nw":6.84},{"v":"Flame","wk":20,"nw":359.3},{"v":"Flame","wk":21,"nw":378.19},{"v":"Flame","wk":22,"nw":564.23},{"v":"Prime","wk":19,"nw":43.81},{"v":"Prime","wk":20,"nw":273.21},{"v":"Prime","wk":21,"nw":144.13},{"v":"Prime","wk":22,"nw":218.86},{"v":"Prime","wk":23,"nw":12.48},{"v":"Star Light","wk":20,"nw":24.96},{"v":"Star Light","wk":21,"nw":10.56},{"v":"Star Light","wk":22,"nw":84.41},{"v":"Sugraone","wk":22,"nw":48.65}];
+let COL_WEEK = [{"c":"Black","wk":21,"nw":21.96},{"c":"Black","wk":22,"nw":1.0},{"c":"Red","wk":19,"nw":6.84},{"c":"Red","wk":20,"nw":408.97},{"c":"Red","wk":21,"nw":388.81},{"c":"Red","wk":22,"nw":663.04},{"c":"White","wk":19,"nw":43.81},{"c":"White","wk":20,"nw":273.21},{"c":"White","wk":21,"nw":156.61},{"c":"White","wk":22,"nw":337.42},{"c":"White","wk":23,"nw":12.48}];
+let VAR_CLS = [{"v":"Arra 30","cls":"1","nw":82.39},{"v":"Early Flame","cls":"1","nw":15.83},{"v":"Early Flame","cls":"2","nw":8.94},{"v":"Early Pearl","cls":"1","nw":22.96},{"v":"Exotic Pearl","cls":"1","nw":14.4},{"v":"Flame","cls":"1","nw":1222.15},{"v":"Flame","cls":"2","nw":86.4},{"v":"Prime","cls":"1","nw":588.1},{"v":"Prime","cls":"2","nw":104.39},{"v":"Star Light","cls":"1","nw":119.33},{"v":"Star Light","cls":"2","nw":0.6},{"v":"Sugraone","cls":"1","nw":48.65}];
+let COL_CLS = [
   {c:'Red',  cls:1,nw:696.95},{c:'Red',  cls:2,nw:49.32},
   {c:'White',cls:1,nw:451.79},{c:'White',cls:2,nw:65.83},
   {c:'Black',cls:1,nw:21.96},
 ];
 // Prior season estimates
-const PRIOR_VAR = {Flame:583.0, Prime:391.0,'Arra 30':56.0,'Star Light':30.0,'Early Flame':15.0,'Early Pearl':10.0};
-const PRIOR_COL = {Red:628.0, White:447.0, Black:10.0};
-const PRIOR_VAR_WEEKLY = {
+let PRIOR_VAR = {Flame:583.0, Prime:391.0,'Arra 30':56.0,'Star Light':30.0,'Early Flame':15.0,'Early Pearl':10.0};
+let PRIOR_COL = {Red:628.0, White:447.0, Black:10.0};
+let PRIOR_VAR_WEEKLY = {
   Flame:      {19:5.5,20:308.0,21:234.0,22:35.5},
   Prime:      {19:37.5,20:234.0,21:107.0,22:12.5},
   'Arra 30':  {21:10.0,22:46.0},
@@ -503,7 +503,7 @@ const PRIOR_VAR_WEEKLY = {
   'Early Flame':{20:10.0},
   'Early Pearl':{21:10.0},
 };
-const PRIOR_COL_WEEKLY = {
+let PRIOR_COL_WEEKLY = {
   Red:  {19:5.5,20:342.0,21:244.0,22:36.5},
   White:{19:37.5,20:234.0,21:117.0,22:55.5},
   Black:{21:10.0},
@@ -511,12 +511,67 @@ const PRIOR_COL_WEEKLY = {
 
 const VCOL = {Flame:'#DC6428',Prime:'#142850','Arra 30':'#3d6fa8','Star Light':'#16a34a','Early Flame':'#e8872e','Early Pearl':'#6b7280'};
 const CCOL = {Red:'#DC6428',White:'#8a95b0',Black:'#142850'};
-const TOTAL_NW = 1285.85;
+let TOTAL_NW = 1285.85;
 
 let S={variety:'',color:'',market:'',farm:'',week:'',fromDate:'2026-05-12',toDate:'2026-06-01',varSortCol:'nw',varSortDir:-1,colSortCol:'nw',colSortDir:-1,varWeekView:'stacked',colWeekView:'stacked'};
 let barVarChart,barColChart,donutVarChart,donutColChart,varWkChart,colWkChart;
 
 /* ── FILTER ── */
+// ── SUPABASE LIVE DATA LOADER (varieties & colors) ──
+async function loadLiveData(){
+  const SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
+  const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
+  const SID_CUR='19482d39-6074-4c60-b772-ced5df1ffdcb', SID_PRIOR='e0c08a97-e097-4f46-8819-dc2d9ee26dba';
+  const num=v=>{const n=parseFloat(v);return isNaN(n)?0:n;};
+  const r2=x=>Math.round(x*100)/100;
+  const norm=s=>s==null?'':String(s).trim();
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  const mode=o=>{let b=null,c=-1;for(const k in o){if(o[k]>c){c=o[k];b=k;}}return b;};
+  const sumByN=(rows,kf)=>{const m={};rows.forEach(r=>{const k=kf(r);if(!k)return;m[k]=(m[k]||0)+num(r.net_weight);});return m;};
+  const sum2N=(rows,fa,fb)=>{const m={};rows.forEach(r=>{const a=fa(r),b=fb(r);if((!a&&a!==0)||b===''||b==null)return;const key=a+'\u0001'+b;if(!m[key])m[key]={a,b,nw:0};m[key].nw+=num(r.net_weight);});return Object.values(m);};
+  const nestWkN=(rows,kf)=>{const m={};rows.forEach(r=>{const t=kf(r);if(!t)return;const w=parseInt(r.shipping_week)||0;if(!m[t])m[t]={};m[t][w]=(m[t][w]||0)+num(r.net_weight);});Object.keys(m).forEach(t=>Object.keys(m[t]).forEach(w=>m[t][w]=r2(m[t][w])));return m;};
+  const fillSel=(id,vals)=>{const el=document.getElementById(id);if(!el||el.tagName!=='SELECT')return;const first=el.querySelector('option');const allHTML=first?first.outerHTML:'<option value="">All</option>';const prev=el.value;el.innerHTML=allHTML+vals.map(v=>`<option value="${esc(v.v)}">${esc(v.t)}</option>`).join('');el.value=prev;};
+  async function sbFetch(sid){const r=await fetch(`${SB_URL}/rest/v1/grapes_shipments_view?season_id=eq.${sid}&select=*`,{headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Range':'0-99999'}});if(!r.ok)throw new Error('SB '+r.status);return r.json();}
+  function dimAgg(rows,kf,withColor){const m={};rows.forEach(r=>{const k=kf(r);if(!k)return;if(!m[k])m[k]={k,nw:0,pallets:0,ctr:new Set(),sc:new Set(),col:{}};const o=m[k];o.nw+=num(r.net_weight);o.pallets+=num(r.pallet_count);if(r.container_number)o.ctr.add(r.container_number);o.sc.add((r.container_number||'')+'\u0001'+(r.carta||''));if(withColor){const c=norm(r.color);if(c)o.col[c]=(o.col[c]||0)+num(r.net_weight);}});return m;}
+  try{
+    const [cur,prior]=await Promise.all([sbFetch(SID_CUR),sbFetch(SID_PRIOR)]);
+
+    const vm=dimAgg(cur,r=>norm(r.variety),true);
+    VARIETIES=Object.values(vm).map(o=>({v:o.k,nw:r2(o.nw),pallets:r2(o.pallets),containers:o.ctr.size,shipments:o.sc.size,color:mode(o.col)||''})).sort((a,b)=>b.nw-a.nw);
+    const cm=dimAgg(cur,r=>norm(r.color),false);
+    COLORS=Object.values(cm).map(o=>({c:o.k,nw:r2(o.nw),pallets:r2(o.pallets),containers:o.ctr.size,shipments:o.sc.size})).sort((a,b)=>b.nw-a.nw);
+
+    VAR_MKT =sum2N(cur,r=>norm(r.variety),r=>norm(r.receiving_country)).map(o=>({v:o.a,m:o.b,nw:r2(o.nw)}));
+    COL_MKT =sum2N(cur,r=>norm(r.color),r=>norm(r.receiving_country)).map(o=>({c:o.a,m:o.b,nw:r2(o.nw)}));
+    VAR_FARM=sum2N(cur,r=>norm(r.variety),r=>norm(r.farm_source)).map(o=>({v:o.a,f:o.b,nw:r2(o.nw)}));
+    COL_FARM=sum2N(cur,r=>norm(r.color),r=>norm(r.farm_source)).map(o=>({c:o.a,f:o.b,nw:r2(o.nw)}));
+    VAR_WEEK=sum2N(cur,r=>norm(r.variety),r=>parseInt(r.shipping_week)||0).map(o=>({v:o.a,wk:o.b,nw:r2(o.nw)}));
+    COL_WEEK=sum2N(cur,r=>norm(r.color),r=>parseInt(r.shipping_week)||0).map(o=>({c:o.a,wk:o.b,nw:r2(o.nw)}));
+    VAR_CLS =sum2N(cur,r=>norm(r.variety),r=>parseInt(r.daltex_class)).filter(o=>!isNaN(o.b)).map(o=>({v:o.a,cls:String(o.b),nw:r2(o.nw)}));
+    COL_CLS =sum2N(cur,r=>norm(r.color),r=>parseInt(r.daltex_class)).filter(o=>!isNaN(o.b)).map(o=>({c:o.a,cls:o.b,nw:r2(o.nw)}));
+
+    PRIOR_VAR=sumByN(prior,r=>norm(r.variety)); Object.keys(PRIOR_VAR).forEach(k=>PRIOR_VAR[k]=r2(PRIOR_VAR[k]));
+    PRIOR_COL=sumByN(prior,r=>norm(r.color));   Object.keys(PRIOR_COL).forEach(k=>PRIOR_COL[k]=r2(PRIOR_COL[k]));
+    PRIOR_VAR_WEEKLY=nestWkN(prior,r=>norm(r.variety));
+    PRIOR_COL_WEEKLY=nestWkN(prior,r=>norm(r.color));
+    TOTAL_NW=r2(cur.reduce((s,r)=>s+num(r.net_weight),0));
+
+    fillSel('f-week',[...new Set(cur.map(r=>parseInt(r.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b).map(w=>({v:w,t:'W'+w})));
+    fillSel('f-variety',VARIETIES.map(x=>x.v).sort().map(x=>({v:x,t:x})));
+    fillSel('f-color',COLORS.map(x=>x.c).sort().map(x=>({v:x,t:x})));
+    fillSel('f-market',[...new Set(cur.map(r=>norm(r.receiving_country)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+    fillSel('f-farm',[...new Set(cur.map(r=>norm(r.farm_source)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+
+    document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='<div class="live-dot"></div> Live &middot; '+VARIETIES.length+' varieties';});
+    render();
+  }catch(e){
+    console.warn('Varieties/Colors: Supabase unavailable, using cache:',e.message);
+    document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='&#9888; Offline &middot; Cache';b.style.opacity='.7';});
+    render();
+  }
+}
+
+
 function filteredVarieties(){
   let base=VARIETIES.map(r=>({...r}));
   if(S.variety) base=base.filter(r=>r.v===S.variety);
@@ -1370,7 +1425,7 @@ function exportCSV(type){
   }
 }
 
-render();
+loadLiveData();
 </script>
 </body>
 </html>
