@@ -464,6 +464,15 @@ async function loadLiveData(){
     const _TOTAL=r2(cur.reduce((s,r)=>s+num(r.net_weight),0));
     const _WEEKS=[...new Set(cur.map(r=>parseInt(r.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b);
 
+    // ---- populate filter dropdowns from live data (keep current selection) ----
+    const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+    const fillSel=(id,allLabel,opts)=>{const el=document.getElementById(id);if(!el)return;const prev=el.value;el.innerHTML='<option value="">'+allLabel+'</option>'+opts.map(o=>`<option value="${esc(o.v)}">${esc(o.t)}</option>`).join('');el.value=prev;};
+    const varsL=[...new Set(cur.map(r=>r.variety).filter(Boolean))].sort();
+    const mktsL=[...new Set(cur.map(r=>r.receiving_country).filter(Boolean))].sort();
+    fillSel('f-week','All Weeks',_WEEKS.map(w=>({v:w,t:'W'+w})));
+    fillSel('f-var','All Varieties',varsL.map(v=>({v:v,t:v})));
+    fillSel('f-mkt','All Markets',mktsL.map(m=>({v:m,t:m})));
+
     // assign into module-scope (now declared with let)
     CT=_CT; PT=_PT; CT_VAR=_CT_VAR; CT_MKT=_CT_MKT; CT_WK=_CT_WK;
     PT_VAR=_PT_VAR; PT_MKT=_PT_MKT; PT_FARM=_PT_FARM; PT_WK=_PT_WK;
