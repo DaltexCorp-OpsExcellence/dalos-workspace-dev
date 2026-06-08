@@ -682,6 +682,7 @@ async function loadLiveData() {
     // Replace DAILY with live data sorted by date
     DAILY.length = 0;
     Object.values(byDate).sort((a,b)=>a.date.localeCompare(b.date)).forEach(r=>DAILY.push(r));
+    __ROWS=curRows; __FULL_CT=__ctCount(curRows);
 
     // Rebuild PRIOR_WEEKLY from prior season (YTD aligned)
     const curStart   = new Date('2026-05-12');
@@ -716,7 +717,7 @@ async function loadLiveData() {
         if(ff){ff.value=DEF_FROM;ff.min=DEF_FROM;ff.max=DEF_TO;}
         if(ft){ft.value=DEF_TO;ft.min=DEF_FROM;ft.max=DEF_TO;}}
       (function(){
-        const ctrN=new Set(curRows.map(r=>r.container_number).filter(Boolean)).size;
+        const ctrN=__ctCount(curRows);
         const mktN=new Set(curRows.map(r=>(r.receiving_country||'').trim()).filter(Boolean)).size;
         const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
         const fmtD=s=>{const d=new Date(s+'T00:00:00');return d.getDate()+' '+MON[d.getMonth()];};
@@ -763,6 +764,35 @@ const PRIOR_WEEKLY = {19:42.7, 20:576.3, 21:374.4, 22:92.0};
 let DEF_FROM='2026-05-12', DEF_TO='2026-06-01';
 let F = {from:DEF_FROM,to:DEF_TO,week:'all',status:'all',source:'all',farm:'all',market:'all',variety:'all'};
 
+// ── CONTAINER COUNT (unique container# + loading-date, ±7d tolerance) ──
+let __ROWS=[], __FULL_CT=0;
+function __ctWS(s){return (s||'').replace(/\s+/g,' ').trim();}
+function __ctCount(rows){
+  const g={};
+  (rows||[]).forEach(r=>{const cn=__ctWS(r.container_number); if(!cn)return; (g[cn]=g[cn]||[]).push(r.loading_date);});
+  let t=0;
+  for(const cn in g){
+    const ds=g[cn].filter(Boolean).map(d=>+new Date(d+'T00:00:00')).sort((a,b)=>a-b);
+    if(!ds.length){t++;continue;}
+    let c=1,prev=ds[0];
+    for(let i=1;i<ds.length;i++){ if((ds[i]-prev)/86400000>7) c++; prev=ds[i]; }
+    t+=c;
+  }
+  return t;
+}
+function __filteredRows(){
+  return __ROWS.filter(r=>{
+    const d=r.loading_date||'';
+    if(d<F.from||d>F.to) return false;
+    if(F.week!=='all'   && (parseInt(r.shipping_week)||0)!==parseInt(F.week)) return false;
+    if(F.status!=='all' && __ctWS(r.shipping_status)!==F.status) return false;
+    if(F.source!=='all' && __ctWS(r.source_type)!==F.source) return false;
+    if(F.farm!=='all'   && __ctWS(r.farm_source)!==F.farm) return false;
+    if(F.market!=='all' && __ctWS(r.receiving_country)!==F.market) return false;
+    if(F.variety!=='all'&& __ctWS(r.variety)!==F.variety) return false;
+    return true;
+  });
+}
 function filteredData() {
   return DAILY.filter(d => {
     if (d.date < F.from || d.date > F.to) return false;
@@ -807,6 +837,7 @@ function compute(data) {
     for(const[k,v] of Object.entries(d.sources||{}))  s.sources[k]  = (s.sources[k]||0)+v;
     for(const[k,v] of Object.entries(d.statuses||{})) s.statuses[k] = (s.statuses[k]||0)+v;
   });
+  s.ct      = __ctCount(__filteredRows());
   s.c1pct   = s.nw > 0 ? s.c1_nw / s.nw * 100 : 0;
   s.daltex  = s.nw > 0 ? (s.sources['Daltex Farms']||0) / s.nw * 100 : 0;
   s.py_nw   = 1085.0;
@@ -887,7 +918,7 @@ function renderKPIs(s) {
       pill(`${Object.keys(s.markets).length} markets`,'kp-nv'),
       pill(`${Object.keys(s.farms).length} farms`,'kp-nt'),
       `${(s.statuses['Delivered']||0).toFixed(1)}T delivered · ${(s.statuses['Shipped']||0).toFixed(1)}T in transit`,
-      'var(--blue)', s.ct/97*100, 'var(--blue)'
+      'var(--blue)', (__FULL_CT?Math.min(s.ct/__FULL_CT*100,100):0), 'var(--blue)'
     ),
     kcard('Daltex farms share', s.daltex.toFixed(1), '%',
       pill(`${(s.sources['Daltex Farms']||0).toFixed(1)}T insource`,'kp-nv'),
