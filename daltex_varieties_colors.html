@@ -651,7 +651,7 @@ function renderKPIs(vars,cols,vTotal,cTotal){
   const totalNw=vTotal;
   const topV=vars[0];const topC=cols[0];
   const c1nw=VAR_CLS.filter(r=>r.cls===1&&vars.find(v=>v.v===r.v)).reduce((s,r)=>s+r.nw,0);
-  const priorTotal=vars.reduce((s,r)=>s+(PRIOR_VAR[r.v]||0),0);
+  const priorTotal=Object.entries(PRIOR_VAR).filter(([v])=>!S.variety||v===S.variety).reduce((s,e)=>s+e[1],0);
   const yoy=priorTotal>0?((totalNw-priorTotal)/priorTotal*100):null;
   const cards=[
     {label:'Total Net Weight',icon:'ti-weight',val:totalNw.toFixed(1)+' T',sub:`Prior: ${priorTotal.toFixed(0)} T`,yoy:yoyBadge(yoy),bar:Math.min(totalNw/13,100)},
@@ -1334,7 +1334,7 @@ function renderInsights(vars,cols,vTotal,cTotal){
   const icons={flag:'ti-flag',info:'ti-info-circle',ok:'ti-check',warn:'ti-alert-triangle',up:'ti-trending-up'};
   const ins=[];
   // 1. YoY
-  const priorTotal=vars.reduce((s,r)=>s+(PRIOR_VAR[r.v]||0),0);
+  const priorTotal=Object.entries(PRIOR_VAR).filter(([v])=>!S.variety||v===S.variety).reduce((s,e)=>s+e[1],0);
   const yoy=priorTotal>0?((vTotal-priorTotal)/priorTotal*100):null;
   if(yoy!==null) ins.push({type:yoy>=0?'up':'warn',text:`<strong>Season ${yoy>=0?'+':''}${yoy.toFixed(1)}% YoY</strong> — ${vTotal.toFixed(1)} T this season vs ${priorTotal.toFixed(0)} T in 2024/25.`});
   // 2. Variety concentration
