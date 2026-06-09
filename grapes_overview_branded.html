@@ -684,13 +684,10 @@ async function loadLiveData() {
     Object.values(byDate).sort((a,b)=>a.date.localeCompare(b.date)).forEach(r=>DAILY.push(r));
     __ROWS=curRows; __FULL_CT=__ctCount(curRows);
 
-    // Rebuild PRIOR_WEEKLY from prior season (YTD aligned)
-    const curStart   = new Date('2026-05-12');
-    const priorStart = new Date('2025-05-18');
-    const daysElapsed = Math.floor((new Date() - curStart) / 86400000);
-    const cutoff = new Date(priorStart); cutoff.setDate(cutoff.getDate() + daysElapsed);
-    const cutoffStr = cutoff.toISOString().slice(0,10);
-    const ytdPrior = allPrior.filter(r => r.loading_date >= '2025-05-18' && r.loading_date <= cutoffStr);
+    // Rebuild PRIOR_WEEKLY from prior season — YTD aligned by shipping week (same method across all tabs)
+    const __cw = Math.max(0, ...curRows.map(r => parseInt(r.shipping_week)||0));
+    const ytdPrior = allPrior.filter(r => { var w = parseInt(r.shipping_week)||0; return w>0 && w<=__cw; });
+    window.__PY_TOTAL = Math.round(ytdPrior.reduce((a,r)=>a+(parseFloat(r.net_weight)||0),0)*100)/100;
     const priorWk = {};
     ytdPrior.forEach(r => {
       const w = parseInt(r.shipping_week)||0;
@@ -840,7 +837,7 @@ function compute(data) {
   s.ct      = __ctCount(__filteredRows());
   s.c1pct   = s.nw > 0 ? s.c1_nw / s.nw * 100 : 0;
   s.daltex  = s.nw > 0 ? (s.sources['Daltex Farms']||0) / s.nw * 100 : 0;
-  s.py_nw   = 1085.0;
+  s.py_nw   = (typeof window.__PY_TOTAL==='number' && window.__PY_TOTAL>0) ? window.__PY_TOTAL : 1085.0;
   s.yoy     = (s.nw - s.py_nw) / s.py_nw * 100;
   s.coverage= s.nw / 2314.14 * 100;
   return s;
