@@ -198,7 +198,7 @@ input,select,button,textarea{font-family:var(--font)}
 <div class="shell">
 <div class="topbar">
   <div class="logo">
-    <div class="logo-icon">&#127347;</div>
+    <div class="logo-icon">&#127815;</div>
     <span class="logo-text">DALTEX</span>
     <div class="logo-divider"></div>
     <span class="logo-sub">Grapes Shipments</span>
@@ -393,7 +393,8 @@ let __ROWS=[];
     fillSel('f-mkt',[...new Set(cur.map(r=>r.receiving_country).filter(Boolean))].sort().map(x=>({v:x,t:x})));
     fillSel('f-src',[...new Set(cur.map(r=>r.source_type).filter(Boolean))].sort().map(x=>({v:x,t:x})));
 
-    document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='<div class="live-dot"></div> Live &middot; '+FARMS_ALL.length+' farms';});
+    const __maxLD=cur.reduce((m,r)=>(r.loading_date&&r.loading_date>m)?r.loading_date:m,'');const __ctc=(function(){var o={};cur.forEach(function(r){var cn=(r.container_number||'').replace(/\s+/g,' ').trim();if(!cn)return;(o[cn]=o[cn]||[]).push(r.loading_date);});var t=0;for(var k in o){var ds=o[k].filter(Boolean).map(function(d){return +new Date(d+'T00:00:00');}).sort(function(a,b){return a-b;});if(!ds.length){t++;continue;}var c=1,p=ds[0];for(var i=1;i<ds.length;i++){if((ds[i]-p)/86400000>7)c++;p=ds[i];}t+=c;}return t;})();const __fmtLD=__maxLD?new Date(__maxLD+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';
+    document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='<div class="live-dot"></div> Live &middot; '+__ctc+' containers &middot; '+__fmtLD;b.style.opacity='';});
     render();
   }catch(e){
     console.warn('Farms: Supabase unavailable, using cache:',e.message);
