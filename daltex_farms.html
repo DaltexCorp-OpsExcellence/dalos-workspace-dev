@@ -413,7 +413,7 @@ function render(){
 }
 
 function renderKPIs(r,tot){
-  const prior=r.reduce((s,x)=>s+(PFARM[x.f]||0),0);
+  const prior=Object.entries(PFARM).filter(([f])=>!S.farm||f===S.farm).reduce((s,e)=>s+e[1],0);
   const yoy=prior>0?((tot-prior)/prior*100):null;
   const top=r[0];
   const __shown=new Set(r.map(x=>x.f));
@@ -715,7 +715,7 @@ function doCSV(){const r=filt(),tot=r.reduce((s,x)=>s+x.nw,0);const hdr='Farm,So
 
 function renderInsights(){
   const r=filt(), tot=r.reduce((s,x)=>s+x.nw,0);
-  const prior=r.reduce((s,x)=>s+(PFARM[x.f]||0),0);
+  const prior=Object.entries(PFARM).filter(([f])=>!S.farm||f===S.farm).reduce((s,e)=>s+e[1],0);
   const yoy=prior>0?((tot-prior)/prior*100):null;
   const top=r[0];
   const ownNw=r.filter(x=>x.src==='Daltex Farms').reduce((s,x)=>s+x.nw,0);
