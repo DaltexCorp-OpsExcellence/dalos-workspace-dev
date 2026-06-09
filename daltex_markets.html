@@ -507,6 +507,7 @@ const VAR_COL={Prime:'#142850',Flame:'#DC6428',"Early Flame":'#e8872e',"Star Lig
 const CLR_COL={Red:'#DC6428',White:'#8a95b0',Black:'#142850'};
 
 let S={market:'',variety:'',color:'',fromDate:'2026-05-12',toDate:'2026-06-01',week:'',sortCol:'nw',sortDir:-1,mainMetric:'nw',weekView:'stacked',heatMetric:'nw'};
+let __LDF='2026-05-12',__LDT='2026-06-01';
 let barChart,donutChart,weeklyChart,classDonut;
 
 /* ── FILTER HELPERS ── */
@@ -564,8 +565,21 @@ async function loadLiveData(){
     fillSel('f-market',by_mkt.map(x=>x.c).sort().map(x=>({v:x,t:x})));
     fillSel('f-variety',[...new Set(cur.map(r=>norm(r.variety)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
     fillSel('f-color',[...new Set(cur.map(r=>norm(r.color)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+    {const __lds=cur.map(r=>r.loading_date).filter(Boolean).sort();
+     if(__lds.length){__LDF=__lds[0];__LDT=__lds[__lds.length-1];
+       const __ff=document.getElementById('f-from'),__ft=document.getElementById('f-to');
+       if(__ff){__ff.min=__LDF;__ff.max=__LDT;__ff.value=__LDF;}
+       if(__ft){__ft.min=__LDF;__ft.max=__LDT;__ft.value=__LDT;}
+       S.fromDate=__LDF;S.toDate=__LDT;}
+     const __tot=by_mkt.reduce((a,r)=>a+r.nw,0);
+     const __yo=PRIOR_TOTAL>0?((__tot-PRIOR_TOTAL)/PRIOR_TOTAL*100):null;
+     const __fmtD=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
+     let __sub='Season 2025/26 &middot; '+__fmtD(__LDF)+' \u2013 '+__fmtD(__LDT)+' &middot; '+by_mkt.length+' markets &middot; '+__tot.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1})+' T net weight';
+     if(__yo!==null) __sub+=' <span class="season-badge"><i class="ti ti-trending-'+(__yo>=0?'up':'down')+'" style="font-size:10px"></i> '+(__yo>=0?'+':'')+__yo.toFixed(1)+'% vs 2024/25</span>';
+     const __hs=document.getElementById('hdr-sub'); if(__hs) __hs.innerHTML=__sub;}
 
-    document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='<div class="live-dot"></div> Live &middot; '+by_mkt.length+' markets';});
+    const __maxLD=cur.reduce((m,r)=>(r.loading_date&&r.loading_date>m)?r.loading_date:m,'');const __ctc=(function(){var o={};cur.forEach(function(r){var cn=(r.container_number||'').replace(/\s+/g,' ').trim();if(!cn)return;(o[cn]=o[cn]||[]).push(r.loading_date);});var t=0;for(var k in o){var ds=o[k].filter(Boolean).map(function(d){return +new Date(d+'T00:00:00');}).sort(function(a,b){return a-b;});if(!ds.length){t++;continue;}var c=1,p=ds[0];for(var i=1;i<ds.length;i++){if((ds[i]-p)/86400000>7)c++;p=ds[i];}t+=c;}return t;})();const __fmtLD=__maxLD?new Date(__maxLD+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';
+    document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='<div class="live-dot"></div> Live &middot; '+__ctc+' containers &middot; '+__fmtLD;b.style.opacity='';});
     render();
   }catch(e){
     console.warn('Markets: Supabase unavailable, using cache:',e.message);
@@ -584,7 +598,7 @@ function filteredMkts(){
     const scaled={};
     RAW.by_mkt_week.filter(r=>inWeek(r.wk)).forEach(r=>{scaled[r.c]=(scaled[r.c]||0)+r.nw;});
     base=base.map(r=>({...r,nw:scaled[r.c]||0})).filter(r=>r.nw>0);
-  } else if(S.fromDate!=='2026-05-12'||S.toDate!=='2026-06-01'){
+  } else if(S.fromDate!==__LDF||S.toDate!==__LDT){
     const scaled={};
     RAW.by_mkt_ld.filter(r=>inDateRange(r.ld)).forEach(r=>{scaled[r.c]=(scaled[r.c]||0)+r.nw;});
     base=base.map(r=>({...r,nw:scaled[r.c]||0})).filter(r=>r.nw>0);
@@ -1314,9 +1328,9 @@ function applyFilters(){
 }
 function resetFilters(){
   ['f-market','f-variety','f-color','f-week'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('f-from').value='2026-05-12';
-  document.getElementById('f-to').value='2026-06-01';
-  S={...S,market:'',variety:'',color:'',fromDate:'2026-05-12',toDate:'2026-06-01',week:''};
+  document.getElementById('f-from').value=__LDF;
+  document.getElementById('f-to').value=__LDT;
+  S={...S,market:'',variety:'',color:'',fromDate:__LDF,toDate:__LDT,week:''};
   renderChips();render();
 }
 function renderChips(){
@@ -1325,7 +1339,7 @@ function renderChips(){
   if(S.variety) chips.push({label:'Variety: '+S.variety,key:'variety'});
   if(S.color) chips.push({label:'Color: '+S.color,key:'color'});
   if(S.week) chips.push({label:'Week: '+S.week,key:'week'});
-  if(S.fromDate!=='2026-05-12'||S.toDate!=='2026-06-01') chips.push({label:`${S.fromDate} → ${S.toDate}`,key:'date'});
+  if(S.fromDate!==__LDF||S.toDate!==__LDT) chips.push({label:`${S.fromDate} → ${S.toDate}`,key:'date'});
   document.getElementById('fctx').innerHTML=chips.map(c=>`<div class="fctx-chip">${c.label}<button onclick="removeChip('${c.key}')"><i class="ti ti-x" style="font-size:9px"></i></button></div>`).join('');
 }
 function removeChip(key){
@@ -1333,7 +1347,7 @@ function removeChip(key){
   if(key==='variety'){S.variety='';document.getElementById('f-variety').value='';}
   if(key==='color'){S.color='';document.getElementById('f-color').value='';}
   if(key==='week'){S.week='';document.getElementById('f-week').value='';}
-  if(key==='date'){S.fromDate='2026-05-12';S.toDate='2026-06-01';document.getElementById('f-from').value='2026-05-12';document.getElementById('f-to').value='2026-06-01';}
+  if(key==='date'){S.fromDate=__LDF;S.toDate=__LDT;document.getElementById('f-from').value=__LDF;document.getElementById('f-to').value=__LDT;}
   renderChips();render();
 }
 function setMainMetric(m,btn){
