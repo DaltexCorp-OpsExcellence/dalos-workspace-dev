@@ -422,7 +422,7 @@ async function loadLiveData(){
   const fillSel=(id,vals)=>{const el=document.getElementById(id);if(!el||el.tagName!=='SELECT')return;const first=el.querySelector('option');const allHTML=first?first.outerHTML:'<option value="">All</option>';const prev=el.value;el.innerHTML=allHTML+vals.map(v=>`<option value="${esc(v.v)}">${esc(v.t)}</option>`).join('');el.value=prev;};
   async function sbFetch(sid){const r=await fetch(`${SB_URL}/rest/v1/grapes_shipments_view?season_id=eq.${sid}&select=*`,{headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Range':'0-99999'}});if(!r.ok)throw new Error('SB '+r.status);return r.json();}
   try{
-    const [cur,prior]=await Promise.all([sbFetch(SID_CUR),sbFetch(SID_PRIOR)]);
+    const [cur,prior0]=await Promise.all([sbFetch(SID_CUR),sbFetch(SID_PRIOR)]);const __cw=Math.max(0,...cur.map(r=>parseInt(r.shipping_week)||0));const prior=prior0.filter(r=>{var w=parseInt(r.shipping_week)||0;return w>0&&w<=__cw;});/* YoY = season-to-date vs prior season through same shipping week */
 
     // primary client aggregate
     const cm={};
