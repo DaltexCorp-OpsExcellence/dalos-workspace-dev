@@ -410,7 +410,7 @@ async function loadLiveData(){
     return r.json();
   }
   try{
-    const [cur,prior]=await Promise.all([sbFetch(SID_CUR),sbFetch(SID_PRIOR)]);
+    const [cur,prior0]=await Promise.all([sbFetch(SID_CUR),sbFetch(SID_PRIOR)]);const __cw=Math.max(0,...cur.map(r=>parseInt(r.shipping_week)||0));const prior=prior0.filter(r=>{var w=parseInt(r.shipping_week)||0;return w>0&&w<=__cw;});/* YoY = season-to-date vs prior season through same shipping week */
 
     // single-key nw sum -> {key:nw}
     const sumBy=(rows,kf)=>{const m={};rows.forEach(r=>{const k=kf(r);if(k===null||k===undefined||k==='')return;m[k]=(m[k]||0)+num(r.net_weight);});return m;};
