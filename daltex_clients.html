@@ -523,7 +523,7 @@ function yoyBadge(pct){
 
 function renderKPIs(clients,total){
   const ctrs=clients.reduce((s,r)=>s+r.containers,0);
-  const priorTotal=clients.reduce((s,r)=>s+(PRIOR_CL[r.cl]||0),0);
+  const priorTotal=Object.entries(PRIOR_CL).filter(([c])=>!S.client||c===S.client).reduce((s,e)=>s+e[1],0);
   const yoy=priorTotal>0?((total-priorTotal)/priorTotal*100):null;
   const top=clients[0];
   const c1=CL_CLS.filter(r=>r.cls===1&&clients.find(c=>c.cl===r.cl)).reduce((s,r)=>s+r.nw,0);
@@ -930,7 +930,7 @@ function renderInsights(clients,total){
   if(!clients.length){el.innerHTML='<div style="font-size:11px;color:var(--text3);padding:8px 0">No data matches current filters.</div>';return;}
   const icons={flag:'ti-flag',info:'ti-info-circle',ok:'ti-check',warn:'ti-alert-triangle',up:'ti-trending-up'};
   const ins=[];
-  const priorTotal=clients.reduce((s,r)=>s+(PRIOR_CL[r.cl]||0),0);
+  const priorTotal=Object.entries(PRIOR_CL).filter(([c])=>!S.client||c===S.client).reduce((s,e)=>s+e[1],0);
   const yoy=priorTotal>0?((total-priorTotal)/priorTotal*100):null;
   if(yoy!==null) ins.push({type:yoy>=0?'up':'warn',text:'<strong>Season '+(yoy>=0?'+':'')+yoy.toFixed(1)+'% YoY</strong> -- '+total.toFixed(1)+' T across '+clients.length+' clients vs '+priorTotal.toFixed(0)+' T in 2024/25.'});
   const top=clients[0];
