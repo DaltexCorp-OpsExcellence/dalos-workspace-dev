@@ -484,7 +484,8 @@ async function loadLiveData(){
     PRIOR_CT=_PRIOR_CT; PRIOR_PT=_PRIOR_PT; PRIOR_CT_WEEK=_PRIOR_CT_WEEK; PRIOR_PT_WEEK=_PRIOR_PT_WEEK;
     TOTAL_NW=_TOTAL; WEEKS=_WEEKS;
 
-    document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='<div class="live-dot"></div> Live &middot; '+cur.length+' shipments';});
+    const __maxLD=cur.reduce((m,r)=>(r.loading_date&&r.loading_date>m)?r.loading_date:m,'');const __ctc=(function(){var o={};cur.forEach(function(r){var cn=(r.container_number||'').replace(/\s+/g,' ').trim();if(!cn)return;(o[cn]=o[cn]||[]).push(r.loading_date);});var t=0;for(var k in o){var ds=o[k].filter(Boolean).map(function(d){return +new Date(d+'T00:00:00');}).sort(function(a,b){return a-b;});if(!ds.length){t++;continue;}var c=1,p=ds[0];for(var i=1;i<ds.length;i++){if((ds[i]-p)/86400000>7)c++;p=ds[i];}t+=c;}return t;})();const __fmtLD=__maxLD?new Date(__maxLD+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';
+    document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='<div class="live-dot"></div> Live &middot; '+__ctc+' containers &middot; '+__fmtLD;b.style.opacity='';});
     render();
   }catch(e){
     console.warn('Cartons: Supabase unavailable, using cache:',e.message);
