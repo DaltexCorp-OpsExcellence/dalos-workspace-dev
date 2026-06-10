@@ -537,8 +537,8 @@ async function loadLiveData(){
 
     // by_mkt: nw, pallets, containers
     const mm={};
-    cur.forEach(r=>{const c=norm(r.receiving_country);if(!c)return;if(!mm[c])mm[c]={c,nw:0,pallets:0,ctr:{}};mm[c].nw+=num(r.net_weight);mm[c].pallets+=num(r.pallet_count);if(r.container_number)__ctAdd(mm[c],r);});
-    const by_mkt=Object.values(mm).map(o=>({c:o.c,nw:r2(o.nw),pallets:Math.round(o.pallets),containers:__ctClusters(o.ctr)})).sort((a,b)=>b.nw-a.nw);
+    cur.forEach(r=>{const c=norm(r.receiving_country);if(!c)return;if(!mm[c])mm[c]={c,nw:0,pallets:0,ctr:{}};mm[c].nw+=num(r.net_weight);mm[c].pallets+=num(r.pallet_qty)||num(r.pallet_count);if(r.container_number)__ctAdd(mm[c],r);});
+    const by_mkt=Object.values(mm).map(o=>({c:o.c,nw:r2(o.nw),pallets:r2(o.pallets),containers:__ctClusters(o.ctr)})).sort((a,b)=>b.nw-a.nw);
 
     const by_mkt_variety=sum2N(cur,r=>norm(r.receiving_country),r=>norm(r.variety)).map(o=>({c:o.a,v:o.b,nw:r2(o.nw)}));
     const by_mkt_color  =sum2N(cur,r=>norm(r.receiving_country),r=>norm(r.color)).map(o=>({c:o.a,col:o.b,nw:r2(o.nw)}));
@@ -678,7 +678,7 @@ function renderKPIs(mkts,total){
 function renderMainBar(mkts,total){
   const metric=S.mainMetric;
   const labels=mkts.map(m=>m.c);
-  const vals=mkts.map(m=>metric==='nw'?+m.nw.toFixed(2):metric==='containers'?m.containers:+m.pallets.toFixed(1));
+  const vals=mkts.map(m=>metric==='nw'?+m.nw.toFixed(2):metric==='containers'?m.containers:+m.pallets.toFixed(2));
   const lbl={nw:'Net Weight (T)',containers:'Containers',pallets:'Pallets'}[metric];
   document.getElementById('main-chart-title').textContent=lbl+' by Market';
 
@@ -861,7 +861,7 @@ function renderTable(mkts,total){
       <td><div class="pct-bar"><span class="mono" style="width:36px">${pct}%</span><div class="pct-track"><div class="pct-fill" style="width:${pct}%"></div></div></div></td>
       <td>${yoyCell}</td>
       <td><span class="mono">${m.containers}</span></td>
-      <td><span class="mono">${m.pallets.toFixed(0)}</span></td>
+      <td><span class="mono">${m.pallets.toFixed(2)}</span></td>
       <td><div style="display:flex;gap:3px;align-items:center">
         <span class="cls-badge cls1">C1 ${c1pct}%</span>
         ${c2nw>0?`<span class="cls-badge cls2">C2 ${100-c1pct}%</span>`:''}
@@ -883,7 +883,7 @@ function renderTable(mkts,total){
       <td><span class="mono">100%</span></td>
       <td>${totYoy!==null?`<span class="${totYoy>=0?'tbl-yoy-up':'tbl-yoy-dn'}">${totYoy>=0?'▲ +':'▼ '}${Math.abs(totYoy).toFixed(1)}%</span>`:'—'}</td>
       <td><span class="mono">${totC}</span></td>
-      <td><span class="mono">${totP.toFixed(0)}</span></td>
+      <td><span class="mono">${totP.toFixed(2)}</span></td>
       <td></td><td></td>
     </tr>`;
 }
@@ -1370,7 +1370,7 @@ function setHeatMetric(m,btn){
 function exportCSV(){
   const mkts=filteredMkts();const total=mkts.reduce((s,r)=>s+r.nw,0);
   const hdr='Market,Net Weight (T),NW Share %,Containers,Pallets\n';
-  const rows=mkts.map(m=>`${m.c},${m.nw.toFixed(2)},${(m.nw/total*100).toFixed(1)},${m.containers},${m.pallets.toFixed(0)}`).join('\n');
+  const rows=mkts.map(m=>`${m.c},${m.nw.toFixed(2)},${(m.nw/total*100).toFixed(1)},${m.containers},${m.pallets.toFixed(2)}`).join('\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([hdr+rows],{type:'text/csv'}));a.download='daltex_markets_nw.csv';a.click();
 }
 
