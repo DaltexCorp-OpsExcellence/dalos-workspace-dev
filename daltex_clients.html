@@ -428,7 +428,7 @@ async function loadLiveData(){
     const cm={};
     cur.forEach(r=>{const cl=norm(r.client);if(!cl)return;
       if(!cm[cl])cm[cl]={cl,nw:0,pallets:0,ctr:{},sc:new Set(),mkt:{},port:{},agent:{},line:{}};
-      const o=cm[cl];o.nw+=num(r.net_weight);o.pallets+=num(r.pallet_count);
+      const o=cm[cl];o.nw+=num(r.net_weight);o.pallets+=num(r.pallet_qty)||num(r.pallet_count);
       if(r.container_number)__ctAdd(o,r);
       o.sc.add((r.container_number||'')+'\u0001'+(r.carta||''));
       const acc=(obj,v)=>{v=norm(v);if(v)obj[v]=(obj[v]||0)+num(r.net_weight);};
@@ -569,7 +569,8 @@ function renderSubclients(){
 function renderMainBar(clients,total){
   const metric=S.mainMetric;
   const labels=clients.map(r=>r.cl);
-  const vals=clients.map(r=>metric==='nw'?+r.nw.toFixed(2):metric==='containers'?r.containers:+r.pallets.toFixed(1));
+  try{document.getElementById('bar-client').parentElement.style.height=Math.max(280,labels.length*30)+'px';}catch(e){}
+  const vals=clients.map(r=>metric==='nw'?+r.nw.toFixed(2):metric==='containers'?r.containers:+r.pallets.toFixed(2));
   const priorVals=clients.map(r=>metric==='nw'?+(PRIOR_CL[r.cl]||0).toFixed(2):0);
   const lbl={nw:'Net Weight (T)',containers:'Containers',pallets:'Pallets'}[metric];
   document.getElementById('main-chart-title').textContent=lbl+' by Client';
@@ -585,7 +586,7 @@ function renderMainBar(clients,total){
       plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){return ' '+ctx.dataset.label+': '+ctx.raw+(metric==='nw'?' T':'');}}}},
       scales:{
         x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:10},color:'#8a95b0'}},
-        y:{grid:{display:false},ticks:{font:{family:"'Plus Jakarta Sans'",size:10,weight:'500'},color:'#0e1f3d'}}
+        y:{grid:{display:false},ticks:{autoSkip:false,font:{family:"'Plus Jakarta Sans'",size:10,weight:'500'},color:'#0e1f3d'}}
       },
       animation:{onComplete:function(){
         const chart=this;const ctx=chart.ctx;ctx.save();
