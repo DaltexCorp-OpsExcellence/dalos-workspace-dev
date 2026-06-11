@@ -538,7 +538,7 @@ async function loadLiveData(){
   async function sbFetch(sid){const r=await fetch(`${SB_URL}/rest/v1/grapes_shipments_view?season_id=eq.${sid}&select=*`,{headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Range':'0-99999'}});if(!r.ok)throw new Error('SB '+r.status);return r.json();}
   function dimAgg(rows,kf,withColor){const m={};rows.forEach(r=>{const k=kf(r);if(!k)return;if(!m[k])m[k]={k,nw:0,pallets:0,ctr:{},sc:new Set(),col:{}};const o=m[k];o.nw+=num(r.net_weight);o.pallets+=num(r.pallet_count);if(r.container_number)__ctAdd(o,r);o.sc.add((r.container_number||'')+'\u0001'+(r.carta||''));if(withColor){const c=norm(r.color);if(c)o.col[c]=(o.col[c]||0)+num(r.net_weight);}});return m;}
   try{
-    const [cur,prior0]=await Promise.all([sbFetch(SID_CUR),sbFetch(SID_PRIOR)]);const __cw=Math.max(0,...cur.map(r=>parseInt(r.shipping_week)||0));const prior=prior0.filter(r=>{var w=parseInt(r.shipping_week)||0;return w>0&&w<=__cw;});/* YoY = season-to-date vs prior season through same shipping week */
+    const [cur,prior0]=await Promise.all([sbFetch(SID_CUR),sbFetch(SID_PRIOR)]);const __cmd=cur.reduce((m,r)=>(r.loading_date&&r.loading_date>m)?r.loading_date:m,'');const __pc=__cmd?((parseInt(__cmd.slice(0,4))-1)+__cmd.slice(4)):'';const prior=prior0.filter(r=>r.loading_date&&__pc&&r.loading_date<=__pc);/* YoY: prior season up to the same calendar date one year earlier *//* YoY = season-to-date vs prior season through same shipping week */
 
     const vm=dimAgg(cur,r=>norm(r.variety),true);
     VARIETIES=Object.values(vm).map(o=>({v:o.k,nw:r2(o.nw),pallets:r2(o.pallets),containers:__ctClusters(o.ctr),shipments:o.sc.size,color:mode(o.col)||''})).sort((a,b)=>b.nw-a.nw);
