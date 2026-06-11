@@ -255,6 +255,46 @@ input,select,button{font-family:var(--font)}
 .qc-table-wrap{overflow:auto;max-height:560px}
 .dim-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
 @media(max-width:900px){.dim-kpis{grid-template-columns:repeat(2,1fr)}}
+
+/* ===== Mobile-tailored layer ===== */
+.mob-ftog{display:none;align-items:center;gap:7px;width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:13px;font-weight:700;color:var(--text1);cursor:pointer;margin-bottom:10px;box-shadow:var(--shadow)}
+.mob-ftog .cnt{font-family:var(--mono);font-size:10px;background:var(--navy);color:#fff;border-radius:9px;padding:1px 7px}
+@media(max-width:820px){
+  .main{padding:10px}
+  .topbar{flex-wrap:wrap;gap:8px;padding:10px 12px}
+  .page-title{font-size:19px}
+  .page-subtitle{font-size:10.5px;line-height:1.5}
+  .tabs{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{white-space:nowrap;flex-shrink:0;padding:8px 12px}
+  .mob-ftog{display:flex}
+  #fbar{display:none}
+  #fbar.open{display:flex}
+  .fgrp{flex:1 1 45%}
+  .ms-btn{width:100%;max-width:none;padding:8px 10px;font-size:12px}
+  .fdate{width:100%;padding:7px 9px;font-size:12px}
+  .gran{width:100%}
+  .gran button{flex:1;padding:8px 4px}
+  .reset-btn{margin-left:0;flex:1 1 100%;padding:9px}
+  div[style*="grid-template-columns:repeat(5,1fr)"]{grid-template-columns:repeat(2,1fr) !important}
+  div[style*="grid-template-columns:repeat(4,1fr)"]{grid-template-columns:repeat(2,1fr) !important}
+  div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr !important}
+  div[style*="grid-template-columns:3fr 2fr"]{grid-template-columns:1fr !important}
+  div[style*="grid-template-columns:2fr 1fr"]{grid-template-columns:1fr !important}
+  .dim-kpis{grid-template-columns:repeat(2,1fr)}
+  .rc-grid{grid-template-columns:1fr 1fr}
+  .kcard-val{font-size:17px}
+  .cc{padding:12px}
+  .qc-table-wrap{max-height:420px}
+  .heat-lbl{width:84px !important;font-size:10px}
+  .xbtn{flex:1 1 46%;justify-content:center;margin-right:0}
+}
+@media(max-width:480px){
+  .fgrp{flex:1 1 100%}
+  .rc-grid{grid-template-columns:1fr}
+  div[style*="grid-template-columns:repeat(5,1fr)"]{grid-template-columns:1fr 1fr !important}
+  .logo-sub{display:none}
+}
 </style>
 </head>
 <body>
@@ -300,6 +340,7 @@ input,select,button{font-family:var(--font)}
 </div>
 
 <!-- GLOBAL FILTERS -->
+<button class="mob-ftog" id="mob-ftog" onclick="document.getElementById('fbar').classList.toggle('open')"><i class="ti ti-adjustments-horizontal"></i> Filters <span class="cnt" id="mob-fcnt" style="display:none"></span><i class="ti ti-chevron-down" style="margin-left:auto"></i></button>
 <div class="fbar" id="fbar">
   <div class="fgrp"><div class="flab">Season</div><div class="ms" data-f="season"></div></div>
   <div class="fgrp"><div class="flab">From</div><input type="date" class="fdate" id="f-from" onchange="setDate()"></div>
@@ -416,6 +457,7 @@ function renderChips(){
   MSF.forEach(f=>{if(S[f].length)out.push({f,t:(f==='wk'?'Week':f.replace(/_/g,' '))+': '+(S[f].length>2?S[f].length+' selected':S[f].join(', '))});});
   if(S.from!==LDF||S.to!==LDT)out.push({f:'date',t:'Date: '+S.from+' → '+S.to});
   document.getElementById('fchips').innerHTML=out.map(c=>'<div class="fchip" onclick="killChip(\''+c.f+'\')">'+esc(c.t)+' <i class="ti ti-x"></i></div>').join('');
+  const mc=document.getElementById('mob-fcnt');if(mc){mc.style.display=out.length?'':'none';mc.textContent=out.length;}
 }
 function killChip(f){
   if(f==='date'){S.from=LDF;S.to=LDT;document.getElementById('f-from').value=LDF;document.getElementById('f-to').value=LDT;}
