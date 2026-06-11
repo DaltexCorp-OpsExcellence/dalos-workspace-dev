@@ -685,8 +685,9 @@ async function loadLiveData() {
     __ROWS=curRows; __FULL_CT=__ctCount(curRows);
 
     // Rebuild PRIOR_WEEKLY from prior season — YTD aligned by shipping week (same method across all tabs)
-    const __cw = Math.max(0, ...curRows.map(r => parseInt(r.shipping_week)||0));
-    const ytdPrior = allPrior.filter(r => { var w = parseInt(r.shipping_week)||0; return w>0 && w<=__cw; });
+    const __cmd = curRows.reduce((m,r)=>(r.loading_date&&r.loading_date>m)?r.loading_date:m,'');
+    const __pc = __cmd ? ((parseInt(__cmd.slice(0,4))-1)+__cmd.slice(4)) : '';
+    const ytdPrior = allPrior.filter(r => r.loading_date && __pc && r.loading_date <= __pc);
     window.__PY_TOTAL = Math.round(ytdPrior.reduce((a,r)=>a+(parseFloat(r.net_weight)||0),0)*100)/100;
     const priorWk = {};
     ytdPrior.forEach(r => {
