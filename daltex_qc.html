@@ -488,13 +488,7 @@ function killCharts(){Object.values(charts).forEach(c=>{try{c.destroy()}catch(e)
 function mkChart(id,cfg){
   const el=document.getElementById(id);if(!el)return;
   if(charts[id]){try{charts[id].destroy();}catch(e){}}
-  // Remove plugins array to avoid double-registration issues
-  if(cfg.plugins) delete cfg.plugins;
   charts[id]=new Chart(el,cfg);
-}
-// Register ChartDataLabels globally once on load
-if(typeof ChartDataLabels!=='undefined'){
-  try{Chart.register(ChartDataLabels);}catch(e){}
 }
 function cc(title,sub,body,actions){return '<div class="cc"><div class="cc-header"><div><div class="cc-title">'+title+'</div><div class="cc-sub">'+sub+'</div></div>'+(actions||'')+'</div>'+body+'</div>';}
 function kcard(label,icon,val,sub,extra,bar){return '<div class="kcard fade-in"><div class="kcard-label"><i class="ti '+icon+'"></i>'+label+'</div><div class="kcard-val">'+val+'</div><div class="kcard-sub">'+sub+'</div>'+(extra||'')+'<div class="kcard-bar"><div class="kcard-bar-fill" style="width:'+Math.max(0,Math.min(100,bar||0))+'%"></div></div></div>';}
@@ -568,16 +562,16 @@ function renderOverview(rows){
   mkChart('ch-maj',{type:'bar',data:{labels:MAJ.map(d=>d[1]),datasets:[{data:majAvgs,backgroundColor:MAJC,borderRadius:4,barThickness:18,
     datalabels:{display:true,anchor:'end',align:'end',formatter:v=>v>0?v.toFixed(2)+'%':null,font:{size:11,family:"'IBM Plex Mono'",weight:'700'},color:'#dc2626',clip:false}}]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},datalabels:{}},
+      plugins:{legend:{display:false}},
       scales:{x:{ticks:{font:{family:"'IBM Plex Mono'",size:10},callback:v=>v+'%'},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{autoSkip:false,font:{size:10.5,weight:'500'}},grid:{display:false}}},
-      layout:{padding:{right:60}}}});
+      layout:{padding:{right:60}}},plugins:[ChartDataLabels]});
 
   mkChart('ch-min',{type:'bar',data:{labels:MIN.map(d=>d[1]),datasets:[{data:minAvgs,backgroundColor:MINC,borderRadius:4,barThickness:18,
     datalabels:{display:true,anchor:'end',align:'end',formatter:v=>v>0?v.toFixed(2)+'%':null,font:{size:11,family:"'IBM Plex Mono'",weight:'700'},color:'#d97706',clip:false}}]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},datalabels:{}},
+      plugins:{legend:{display:false}},
       scales:{x:{ticks:{font:{family:"'IBM Plex Mono'",size:10},callback:v=>v+'%'},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{autoSkip:false,font:{size:10.5,weight:'500'}},grid:{display:false}}},
-      layout:{padding:{right:60}}}});
+      layout:{padding:{right:60}}},plugins:[ChartDataLabels]});
 
   // pareto
   const par=ALLDEF.map(d=>({n:d[1],sev:d[2],v:avg(rows,r=>num(r[d[0]]))})).sort((a,b)=>b.v-a.v);
@@ -588,17 +582,17 @@ function renderOverview(rows){
       datalabels:{display:true,anchor:'end',align:'top',formatter:v=>v>0?v.toFixed(2)+'%':null,font:{size:11,family:"'IBM Plex Mono'"},color:'#142850',clip:false}},
     {type:'line',data:cumArr,borderColor:'#142850',backgroundColor:'#142850',pointRadius:3,tension:.3,yAxisID:'y1',datalabels:{display:false}}]},
    options:{responsive:true,maintainAspectRatio:false,
-     plugins:{legend:{display:false},datalabels:{},tooltip:{callbacks:{label:c=>c.dataset.type==='line'?(' cumulative '+c.raw+'%'):(' avg '+c.raw+'%')}}},
+     plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.type==='line'?(' cumulative '+c.raw+'%'):(' avg '+c.raw+'%')}}},
      scales:{x:{ticks:{font:{size:9},maxRotation:45,minRotation:45},grid:{display:false}},
        y:{title:{display:true,text:'avg %',font:{size:9}},grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:9},callback:v=>v+'%'}},
-       y1:{position:'right',min:0,max:100,grid:{display:false},ticks:{callback:v=>v+'%',font:{family:"'IBM Plex Mono'",size:9}}}}}});
+       y1:{position:'right',min:0,max:100,grid:{display:false},ticks:{callback:v=>v+'%',font:{family:"'IBM Plex Mono'",size:9}}}}},plugins:[ChartDataLabels]});
 
   // score donut
   const sg=groupBy(rows,r=>norm(r.sample_score)||'(none)');const sk=Object.keys(sg).sort((a,b)=>sg[b].length-sg[a].length);
   mkChart('ch-score',{type:'doughnut',data:{labels:sk,datasets:[{data:sk.map(k=>sg[k].length),backgroundColor:sk.map((k,i)=>({GREEN:'#16a34a',AMBER:'#d97706',PASS:'#2563eb',WHITE:'#94a3b8',BLUE:'#0891b2'})[k]||PAL[i%PAL.length]),borderWidth:2,borderColor:'#fff'}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
       plugins:{legend:{display:false},datalabels:{display:true,formatter:(v,ctx)=>{const total=ctx.dataset.data.reduce((a,b)=>a+b,0);const pct=Math.round(v/total*100);return pct>5?pct+'%':null;},color:'#fff',font:{size:10,weight:'700'}}},
-    }});
+    },plugins:[ChartDataLabels]});
   document.getElementById('score-leg').innerHTML=sk.map((k,i)=>'<div class="cl-item"><div class="cl-rect" style="background:'+({GREEN:'#16a34a',AMBER:'#d97706',PASS:'#2563eb',WHITE:'#94a3b8',BLUE:'#0891b2'}[k]||PAL[i%PAL.length])+'"></div>'+esc(k)+' <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">'+sg[k].length+'</span></div>').join('');
 
   renderHM(rows);
@@ -725,7 +719,6 @@ function renderDim(rows,field,label){
       options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
         plugins:{
           legend:{position:'bottom',labels:{boxWidth:12,font:{size:11},padding:12}},
-          datalabels:{},
           tooltip:{mode:'index',intersect:false,
             callbacks:{label:function(c){return ' '+c.dataset.label+': '+c.raw.toFixed(2)+'%';}}}},
         scales:{
@@ -737,7 +730,7 @@ function renderDim(rows,field,label){
         },
         layout:{padding:{right:70}}
       }
-    });
+    ,plugins:[ChartDataLabels]});
   }
   drawDimChart(chartMode);
   window._drawDimChart=drawDimChart;
@@ -771,7 +764,6 @@ function renderDim(rows,field,label){
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
       plugins:{
         legend:{position:'bottom',labels:{boxWidth:10,font:{size:10},padding:8}},
-        datalabels:{},
         tooltip:{callbacks:{label:function(c){return ' '+c.dataset.label+': '+c.raw.toFixed(2)+'%';}}}},
       scales:{
         x:{grid:{color:'rgba(0,0,0,.04)'},
@@ -782,7 +774,7 @@ function renderDim(rows,field,label){
       },
       layout:{padding:{right:55}}
     }
-  });;
+  ,plugins:[ChartDataLabels]});;
 
   const periods=[...new Set(rows.map(perKey))].sort();
   const top5=items.slice(0,5).map(o=>o.k);
