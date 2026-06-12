@@ -751,23 +751,38 @@ function renderDim(rows,field,label){
   }
   window.setDimMode=setDimMode;
 
+  // Defect reason mix - top 6 defects grouped by item
+  const topDefsChart=ALLDEF.map(function(d){return {key:d[0],label:d[1],sev:d[2],avgVal:r2(avg(rows,function(r){return num(r[d[0]]);}))};}).sort(function(a,b){return b.avgVal-a.avgVal;}).slice(0,6);
   mkChart('ch-mix',{type:'bar',
-    data:{labels:items.map(o=>o.k),datasets:ALLDEF.map((d,i)=>({
-      label:d[1],
-      data:items.map(o=>r2(avg(g[o.k],r=>num(r[d[0]])))),
-      backgroundColor:d[2]==='maj'?['#7f1d1d','#dc2626','#ef4444','#f87171','#fca5a5','#fecaca','#fee2e2'][MAJ.findIndex(m=>m[0]===d[0])]:['#92400e','#d97706','#fbbf24','#fde68a'][MIN.findIndex(m=>m[0]===d[0])],
-      stack:'s',barThickness:16,datalabels:{display:false}
-    }))},
+    data:{labels:items.map(function(o){return o.k;}),datasets:topDefsChart.map(function(d,i){
+      var baseColor=d.sev==='maj'?'220,38,38':'217,119,6';
+      var opacity=[0.9,0.75,0.6,0.5,0.4,0.3][i]||0.3;
+      return {
+        label:d.label,
+        data:items.map(function(o){return r2(avg(g[o.k],function(r){return num(r[d.key]);}));}),
+        backgroundColor:'rgba('+baseColor+','+opacity+')',
+        borderRadius:3,barThickness:10,
+        datalabels:{display:true,anchor:'end',align:'end',
+          formatter:function(v){return v>0?v.toFixed(1)+'%':null;},
+          font:{size:10,family:"'IBM Plex Mono'",weight:'600'},
+          color:d.sev==='maj'?'#dc2626':'#d97706',clip:false}
+      };
+    })},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},
-        datalabels:{display:false},
-        tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+c.raw+'%'}}},
+      plugins:{
+        legend:{position:'bottom',labels:{boxWidth:10,font:{size:10},padding:8}},
+        datalabels:{},
+        tooltip:{callbacks:{label:function(c){return ' '+c.dataset.label+': '+c.raw.toFixed(2)+'%';}}}},
       scales:{
-        x:{stacked:true,grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:10},callback:v=>v+'%'}},
-        y:{stacked:true,grid:{display:false},ticks:{autoSkip:false,font:{size:10.5,weight:'500'}}}
-      }
+        x:{grid:{color:'rgba(0,0,0,.04)'},
+           ticks:{font:{family:"'IBM Plex Mono'",size:10},callback:function(v){return v+'%';}},
+           title:{display:true,text:'Avg Defect %',font:{size:10},color:'#8a95b0'}},
+        y:{grid:{display:false},
+           ticks:{autoSkip:false,font:{size:11,weight:'500'},color:'#0e1f3d'}}
+      },
+      layout:{padding:{right:55}}
     }
-  });
+  });;
 
   const periods=[...new Set(rows.map(perKey))].sort();
   const top5=items.slice(0,5).map(o=>o.k);
