@@ -242,14 +242,14 @@ input,select,button{font-family:var(--font)}
 .reset-btn{margin-left:auto;padding:5px 11px;border-radius:7px;border:1px solid var(--line);background:#fff;font-size:11px;font-weight:600;color:var(--text2);cursor:pointer}
 .reset-btn:hover{background:var(--bg2)}
 .qtabs{display:flex;gap:4px;flex-wrap:wrap}
-.rc-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px}
+.rc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:12px}
 @media(max-width:1100px){.rc-grid{grid-template-columns:repeat(2,1fr)}}
-.rc-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:var(--shadow)}
-.rc-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px;display:flex;gap:5px;align-items:center}
-.rc-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px dashed var(--line);font-size:11.5px}
+.rc-card{background:#ffffff;border:1px solid #e2e6f0;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(20,40,80,.08)}
+.rc-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#142850;margin-bottom:12px;display:flex;gap:6px;align-items:center;padding-bottom:8px;border-bottom:2px solid #e2e6f0}
+.rc-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #e2e6f0;font-size:12px;cursor:pointer;transition:background .1s;border-radius:4px;padding-left:4px;padding-right:4px}.rc-row:hover{background:#f4f6fb}.rc-row:last-child{border-bottom:none}
 .rc-row:last-child{border-bottom:none}
-.rc-name{font-weight:600;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:62%}
-.rc-val{font-family:var(--mono);font-weight:600;font-size:11px}
+.rc-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;color:#142850;font-size:12px}
+.rc-val{font-family:var(--mono);font-size:12px;font-weight:700;margin-left:8px;flex-shrink:0}
 .sev-maj{color:#dc2626}.sev-min{color:#d97706}
 .xbtn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:11.5px;font-weight:600;color:var(--text1);cursor:pointer;margin-right:8px}
 .xbtn:hover{background:var(--bg2)}
@@ -487,13 +487,14 @@ function killChip(f){
 function killCharts(){Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}});charts={};}
 function mkChart(id,cfg){
   const el=document.getElementById(id);if(!el)return;
-  // Destroy existing
-  if(charts[id]){charts[id].destroy();}
-  // Register datalabels globally once
-  if(typeof ChartDataLabels!=='undefined'&&!Chart.registry.plugins.get('datalabels')){
-    Chart.register(ChartDataLabels);
-  }
+  if(charts[id]){try{charts[id].destroy();}catch(e){}}
+  // Remove plugins array to avoid double-registration issues
+  if(cfg.plugins) delete cfg.plugins;
   charts[id]=new Chart(el,cfg);
+}
+// Register ChartDataLabels globally once on load
+if(typeof ChartDataLabels!=='undefined'){
+  try{Chart.register(ChartDataLabels);}catch(e){}
 }
 function cc(title,sub,body,actions){return '<div class="cc"><div class="cc-header"><div><div class="cc-title">'+title+'</div><div class="cc-sub">'+sub+'</div></div>'+(actions||'')+'</div>'+body+'</div>';}
 function kcard(label,icon,val,sub,extra,bar){return '<div class="kcard fade-in"><div class="kcard-label"><i class="ti '+icon+'"></i>'+label+'</div><div class="kcard-val">'+val+'</div><div class="kcard-sub">'+sub+'</div>'+(extra||'')+'<div class="kcard-bar"><div class="kcard-bar-fill" style="width:'+Math.max(0,Math.min(100,bar||0))+'%"></div></div></div>';}
@@ -565,20 +566,18 @@ function renderOverview(rows){
   const majAvgs=MAJ.map(d=>r2(avg(rows,r=>num(r[d[0]]))));
   const minAvgs=MIN.map(d=>r2(avg(rows,r=>num(r[d[0]]))));
   mkChart('ch-maj',{type:'bar',data:{labels:MAJ.map(d=>d[1]),datasets:[{data:majAvgs,backgroundColor:MAJC,borderRadius:4,barThickness:18,
-    datalabels:{display:true,anchor:'end',align:'end',formatter:v=>v>0?v.toFixed(2)+'%':null,font:{size:9,family:"'IBM Plex Mono'",weight:'600'},color:'#dc2626',clip:false}}]},
+    datalabels:{display:true,anchor:'end',align:'end',formatter:v=>v>0?v.toFixed(2)+'%':null,font:{size:11,family:"'IBM Plex Mono'",weight:'700'},color:'#dc2626',clip:false}}]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},datalabels:{}},
       scales:{x:{ticks:{font:{family:"'IBM Plex Mono'",size:10},callback:v=>v+'%'},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{autoSkip:false,font:{size:10.5,weight:'500'}},grid:{display:false}}},
-      layout:{padding:{right:60}}},
-    plugins:[typeof ChartDataLabels!=='undefined'?ChartDataLabels:{}]});
+      layout:{padding:{right:60}}}});
 
   mkChart('ch-min',{type:'bar',data:{labels:MIN.map(d=>d[1]),datasets:[{data:minAvgs,backgroundColor:MINC,borderRadius:4,barThickness:18,
-    datalabels:{display:true,anchor:'end',align:'end',formatter:v=>v>0?v.toFixed(2)+'%':null,font:{size:9,family:"'IBM Plex Mono'",weight:'600'},color:'#d97706',clip:false}}]},
+    datalabels:{display:true,anchor:'end',align:'end',formatter:v=>v>0?v.toFixed(2)+'%':null,font:{size:11,family:"'IBM Plex Mono'",weight:'700'},color:'#d97706',clip:false}}]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},datalabels:{}},
       scales:{x:{ticks:{font:{family:"'IBM Plex Mono'",size:10},callback:v=>v+'%'},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{autoSkip:false,font:{size:10.5,weight:'500'}},grid:{display:false}}},
-      layout:{padding:{right:60}}},
-    plugins:[typeof ChartDataLabels!=='undefined'?ChartDataLabels:{}]});
+      layout:{padding:{right:60}}}});
 
   // pareto
   const par=ALLDEF.map(d=>({n:d[1],sev:d[2],v:avg(rows,r=>num(r[d[0]]))})).sort((a,b)=>b.v-a.v);
@@ -586,21 +585,20 @@ function renderOverview(rows){
   const cumArr=par.map(p=>{cum+=p.v;return r2(cum/tot*100);});
   mkChart('ch-pareto',{data:{labels:par.map(p=>p.n),datasets:[
     {type:'bar',data:par.map(p=>r2(p.v)),backgroundColor:par.map(p=>p.sev==='maj'?MAJC:MINC),borderRadius:3,yAxisID:'y',
-      datalabels:{display:true,anchor:'end',align:'top',formatter:v=>v>0?v.toFixed(2)+'%':null,font:{size:8,family:"'IBM Plex Mono'"},color:'#142850',clip:false}},
+      datalabels:{display:true,anchor:'end',align:'top',formatter:v=>v>0?v.toFixed(2)+'%':null,font:{size:11,family:"'IBM Plex Mono'"},color:'#142850',clip:false}},
     {type:'line',data:cumArr,borderColor:'#142850',backgroundColor:'#142850',pointRadius:3,tension:.3,yAxisID:'y1',datalabels:{display:false}}]},
    options:{responsive:true,maintainAspectRatio:false,
      plugins:{legend:{display:false},datalabels:{},tooltip:{callbacks:{label:c=>c.dataset.type==='line'?(' cumulative '+c.raw+'%'):(' avg '+c.raw+'%')}}},
      scales:{x:{ticks:{font:{size:9},maxRotation:45,minRotation:45},grid:{display:false}},
        y:{title:{display:true,text:'avg %',font:{size:9}},grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:9},callback:v=>v+'%'}},
-       y1:{position:'right',min:0,max:100,grid:{display:false},ticks:{callback:v=>v+'%',font:{family:"'IBM Plex Mono'",size:9}}}}},
-   plugins:[typeof ChartDataLabels!=='undefined'?ChartDataLabels:{}]});
+       y1:{position:'right',min:0,max:100,grid:{display:false},ticks:{callback:v=>v+'%',font:{family:"'IBM Plex Mono'",size:9}}}}}});
 
   // score donut
   const sg=groupBy(rows,r=>norm(r.sample_score)||'(none)');const sk=Object.keys(sg).sort((a,b)=>sg[b].length-sg[a].length);
   mkChart('ch-score',{type:'doughnut',data:{labels:sk,datasets:[{data:sk.map(k=>sg[k].length),backgroundColor:sk.map((k,i)=>({GREEN:'#16a34a',AMBER:'#d97706',PASS:'#2563eb',WHITE:'#94a3b8',BLUE:'#0891b2'})[k]||PAL[i%PAL.length]),borderWidth:2,borderColor:'#fff'}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
       plugins:{legend:{display:false},datalabels:{display:true,formatter:(v,ctx)=>{const total=ctx.dataset.data.reduce((a,b)=>a+b,0);const pct=Math.round(v/total*100);return pct>5?pct+'%':null;},color:'#fff',font:{size:10,weight:'700'}}},
-    },plugins:[typeof ChartDataLabels!=='undefined'?ChartDataLabels:{}]});
+    }});
   document.getElementById('score-leg').innerHTML=sk.map((k,i)=>'<div class="cl-item"><div class="cl-rect" style="background:'+({GREEN:'#16a34a',AMBER:'#d97706',PASS:'#2563eb',WHITE:'#94a3b8',BLUE:'#0891b2'}[k]||PAL[i%PAL.length])+'"></div>'+esc(k)+' <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">'+sg[k].length+'</span></div>').join('');
 
   renderHM(rows);
@@ -711,22 +709,34 @@ function renderDim(rows,field,label){
     const isStacked=mode==='stacked';
     mkChart('ch-dim',{type:'bar',
       data:{labels:items.map(o=>o.k),datasets:[
-        {label:'Major',data:items.map(o=>r2(o.maj)),backgroundColor:MAJC,stack:isStacked?'s':undefined,borderRadius:3,barThickness:isStacked?16:12,
-          datalabels:{display:true,anchor:'end',align:'end',formatter:v=>v>0?v.toFixed(1)+'%':null,font:{size:8,family:"'IBM Plex Mono'"},color:'#dc2626',clip:false}},
-        {label:'Minor',data:items.map(o=>r2(o.min)),backgroundColor:MINC,stack:isStacked?'s':undefined,borderRadius:3,barThickness:isStacked?16:12,
-          datalabels:{display:false}}
+        {label:'Major %',data:items.map(o=>r2(o.maj)),backgroundColor:MAJC,
+          stack:isStacked?'s':undefined,borderRadius:4,barThickness:isStacked?18:14,
+          datalabels:{display:true,anchor:'end',align:'end',
+            formatter:function(v){return v>0?v.toFixed(2)+'%':null;},
+            font:{size:11,family:"'IBM Plex Mono'",weight:'700'},
+            color:'#dc2626',clip:false,padding:{left:4}}},
+        {label:'Minor %',data:items.map(o=>r2(o.min)),backgroundColor:MINC,
+          stack:isStacked?'s':undefined,borderRadius:4,barThickness:isStacked?18:14,
+          datalabels:{display:isStacked?false:true,anchor:'end',align:'end',
+            formatter:function(v){return v>0?v.toFixed(2)+'%':null;},
+            font:{size:10,family:"'IBM Plex Mono'",weight:'600'},
+            color:'#d97706',clip:false,padding:{left:4}}}
       ]},
       options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}},
+        plugins:{
+          legend:{position:'bottom',labels:{boxWidth:12,font:{size:11},padding:12}},
           datalabels:{},
-          tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+c.raw+'%'}}},
+          tooltip:{mode:'index',intersect:false,
+            callbacks:{label:function(c){return ' '+c.dataset.label+': '+c.raw.toFixed(2)+'%';}}}},
         scales:{
-          x:{stacked:isStacked,grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:10},callback:v=>v+'%'}},
-          y:{stacked:isStacked,grid:{display:false},ticks:{autoSkip:false,font:{size:10.5,weight:'500'}}}
+          x:{stacked:isStacked,grid:{color:'rgba(0,0,0,.04)'},
+             ticks:{font:{family:"'IBM Plex Mono'",size:10},callback:function(v){return v+'%';}},
+             title:{display:true,text:'Avg %',font:{size:10},color:'#8a95b0'}},
+          y:{stacked:isStacked,grid:{display:false},
+             ticks:{autoSkip:false,font:{size:11,weight:'500'},color:'#0e1f3d'}}
         },
-        layout:{padding:{right:50}}
-      },
-      plugins:[typeof ChartDataLabels!=='undefined'?ChartDataLabels:{}]
+        layout:{padding:{right:70}}
+      }
     });
   }
   drawDimChart(chartMode);
@@ -756,8 +766,7 @@ function renderDim(rows,field,label){
         x:{stacked:true,grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:10},callback:v=>v+'%'}},
         y:{stacked:true,grid:{display:false},ticks:{autoSkip:false,font:{size:10.5,weight:'500'}}}
       }
-    },
-    plugins:[typeof ChartDataLabels!=='undefined'?ChartDataLabels:{}]
+    }
   });
 
   const periods=[...new Set(rows.map(perKey))].sort();
