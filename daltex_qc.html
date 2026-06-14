@@ -517,6 +517,21 @@ document.getElementById('qtabs').addEventListener('click',e=>{
   S.tab=t.dataset.tab;apply();
 });
 
+function closeDrillOverlay(e){
+  if(!e||e.target===document.getElementById('drill-overlay')||e.currentTarget===document.getElementById('drill-overlay')){
+    document.getElementById('drill-overlay').style.display='none';
+    document.getElementById('drill-modal').style.display='none';
+    document.getElementById('drill-modal').innerHTML='';
+  }
+}
+function openDrillModal(html){
+  const modal=document.getElementById('drill-modal');
+  const overlay=document.getElementById('drill-overlay');
+  modal.innerHTML=html;
+  modal.style.display='block';
+  overlay.style.display='block';
+}
+
 function apply(){renderChips();killCharts();const rows=F();
   const fn={ov:renderOverview,data:renderData}[S.tab];
   if(fn)fn(rows);else renderDim(rows,DIMS[S.tab][0],DIMS[S.tab][1]);
@@ -757,7 +772,7 @@ function renderDim(rows,field,label){
          +'</tr>';
      }).join('')
      +'</tbody></table></div>')
-   +'<div id="drill-panel-dim" style="display:none;margin-top:12px"></div>'
+   
    +renderInsightsDim(rows,items,label)
    +renderAI_section('Ask about '+label.toLowerCase()+' quality trends','e.g. Which '+label.toLowerCase()+' has the worst defect rate?');
 
@@ -861,16 +876,14 @@ function renderDim(rows,field,label){
 
   window.drillDim=function(key,field,label){
     const rs=g[key];if(!rs||!rs.length)return;
-    const panel=document.getElementById('drill-panel-dim');
-    panel.style.display='block';
     const dMaj=avg(rs,r=>num(r.major_total)),dMin=avg(rs,r=>num(r.minor_total)),dTot=avg(rs,r=>num(r.grand_total));
     const topDefs=ALLDEF.map(d=>({n:d[1],sev:d[2],v:r2(avg(rs,r=>num(r[d[0]])))})).sort((a,b)=>b.v-a.v).filter(d=>d.v>0).slice(0,8);
     const maxDef=topDefs[0]?.v||1;
-    panel.innerHTML=`
+    openDrillModal(`
       <div style="background:#fff;border:2px solid #142850;border-radius:12px;padding:20px;box-shadow:0 4px 20px rgba(20,40,80,.15)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid #e2e6f0">
           <div style="font-size:16px;font-weight:700;color:#142850">${esc(key)} — ${label} Deep Dive</div>
-          <button onclick="var _p=document.getElementById('drill-panel-dim');_p.style.display='none';_p.innerHTML='';" style="display:flex;align-items:center;gap:6px;padding:7px 16px;background:#f4f6fb;border:1px solid #e2e6f0;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;color:#142850"><i class="ti ti-arrow-left" style="font-size:12px"></i> ← Close</button>
+          <button onclick="closeDrillOverlay()" style="display:flex;align-items:center;gap:6px;padding:7px 16px;background:#f4f6fb;border:1px solid #e2e6f0;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;color:#142850"><i class="ti ti-arrow-left" style="font-size:12px"></i> ← Close</button>
         </div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
           <div style="background:#fef2f2;border-radius:10px;padding:14px;border-left:4px solid #dc2626">
@@ -906,8 +919,7 @@ function renderDim(rows,field,label){
             </div>`;
           }).join('')}
         </div>
-      </div>`;
-    panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+      </div>`);
   };
 }
 
@@ -1115,5 +1127,10 @@ let LDF='',LDT='';
 })();
 
 </script>
+
+<!-- DRILL OVERLAY - fixed, outside tab content, never affects chart layout -->
+<div id="drill-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(14,31,61,.45);z-index:500;backdrop-filter:blur(2px)" onclick="closeDrillOverlay(event)"></div>
+<div id="drill-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(700px,92vw);max-height:85vh;overflow-y:auto;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(14,31,61,.3);z-index:501;padding:0"></div>
+
 </body>
 </html>
