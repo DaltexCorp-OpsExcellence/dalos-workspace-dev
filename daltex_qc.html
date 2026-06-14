@@ -395,7 +395,7 @@ input,select,button{font-family:var(--font)}
 
 </div></div></div>
 
-<script>/* v1781446313 */
+<script>/* v1781446902 */
 
 /* ===== DalOS Analytics — QC Grapes ===== */
 const SB='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
@@ -772,10 +772,88 @@ function renderDim(rows,field,label){
    +'<div style="height:12px"></div>'
    +cc(label+' Heatmap','avg % per cell · tap a row label to filter','<div id="dimhm-wrap" style="overflow:auto"></div>','<div class="cc-actions" style="flex-wrap:wrap;gap:8px;align-items:center"><span style="font-size:10px;color:#8a95b0">Columns</span><span class="seg" style="display:inline-flex;gap:0">'+bOpts.map((o,i)=>'<button class="cc-btn'+(i===0?' on':'')+'" onclick="setDHMb(\''+o[0]+'\',this)">'+o[1]+'</button>').join('')+'</span><span style="font-size:10px;color:#8a95b0;margin-left:6px">Metric</span><span class="seg" style="display:inline-flex;gap:0">'+[['total','Total'],['major','Major'],['minor','Minor']].map((o,i)=>'<button class="cc-btn'+(i===0?' on':'')+'" onclick="setDHMm(\''+o[0]+'\',this)">'+o[1]+'</button>').join('')+'</span></div>')
    +'<div style="height:12px"></div>'
-   +cc(label+' Detail','tap a row to expand its defect-reason breakdown','<div class="qc-table-wrap"><table class="tbl"><thead><tr><th style="width:22px"></th><th>'+label+'</th><th>Samples</th><th>Insp.</th><th>Major %</th><th>Minor %</th><th>Total %</th><th>Top Defect</th><th style="width:34px"></th></tr></thead><tbody>'
-     +items.map((o,i)=>{var bp=Math.min(100,o.tot/maxTot*100);var rmax=Math.max(0.0001,...o.reasons.map(rr=>rr.v));var chips=o.reasons.filter(rr=>rr.v>0).sort((a,b)=>b.v-a.v).map(rr=>'<div style="min-width:120px;flex:1"><div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px"><span style="color:#4a5778">'+esc(rr.name)+'</span><span class="mono '+(rr.sev==='maj'?'sev-maj':'sev-min')+'" style="font-weight:700">'+fmt(rr.v)+'%</span></div><span style="display:block;height:5px;background:var(--bg2);border-radius:3px;overflow:hidden"><span style="display:block;height:100%;width:'+(rr.v/rmax*100)+'%;background:'+(rr.sev==='maj'?MAJC:MINC)+'"></span></span></div>').join('')||'<span style="color:#8a95b0;font-size:11px">No defects recorded</span>';
-       return '<tr class="dim-row" style="cursor:pointer" onclick="dimToggle('+i+')"><td style="text-align:center"><i id="dimc-'+i+'" class="ti ti-chevron-right" style="color:#8a95b0;font-size:12px"></i></td><td style="font-weight:600">'+esc(o.k)+'</td><td class="mono">'+o.n+'</td><td class="mono">'+o.reps+'</td><td class="mono sev-maj">'+fmt(o.maj)+'</td><td class="mono sev-min">'+fmt(o.min)+'</td><td><div style="display:flex;align-items:center;gap:6px"><span class="mono" style="font-weight:700;min-width:36px">'+fmt(o.tot)+'</span><span style="flex:1;min-width:36px;height:6px;background:var(--bg2);border-radius:3px;overflow:hidden"><span style="display:block;height:100%;width:'+bp+'%;background:'+(o.maj>=o.min?MAJC:MINC)+'"></span></span></div></td><td style="font-size:10.5px">'+esc(o.top)+'</td><td style="text-align:center"><i class="ti ti-filter" data-v="'+esc(o.k)+'" onclick="event.stopPropagation();dimHMDrill(this)" title="Filter to '+esc(o.k)+'" style="color:#8a95b0;font-size:13px;cursor:pointer"></i></td></tr>'
-        +'<tr id="dimx-'+i+'" style="display:none"><td></td><td colspan="8" style="background:var(--bg);padding:12px 14px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#8a95b0;margin-bottom:8px">Defect reasons · '+esc(o.k)+' · '+o.n+' samples</div><div style="display:flex;flex-wrap:wrap;gap:12px 18px">'+chips+'</div></td></tr>';}).join('')
+   +cc(label+' Detail','click any row to expand defect breakdown · sorted by total defect %',
+     '<div style="overflow-x:auto">'
+     +'<table style="width:100%;border-collapse:collapse;font-size:12.5px">'
+     +'<thead>'
+     +'<tr style="border-bottom:2px solid #e2e6f0">'
+     +'<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;white-space:nowrap">'+label+'</th>'
+     +'<th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0">Samples</th>'
+     +'<th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0">Reports</th>'
+     +'<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#dc2626;min-width:160px">Major %</th>'
+     +'<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#d97706;min-width:160px">Minor %</th>'
+     +'<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#142850;min-width:160px">Total %</th>'
+     +'<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0">Top Defect</th>'
+     +'<th style="padding:10px 14px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0">Drill</th>'
+     +'</tr>'
+     +'</thead>'
+     +'<tbody>'
+     +items.map((o,i)=>{
+       var majBar=Math.min(100,o.maj/(maxTot||1)*100);
+       var minBar=Math.min(100,o.min/(maxTot||1)*100);
+       var totBar=Math.min(100,o.tot/(maxTot||1)*100);
+       var rowBg=o.tot>5?'rgba(220,38,38,.03)':o.tot>2?'rgba(217,119,6,.03)':'#fff';
+       var rmax=Math.max(0.0001,...o.reasons.map(rr=>rr.v));
+       var chips=o.reasons.filter(rr=>rr.v>0).sort((a,b)=>b.v-a.v).map(rr=>{
+         return '<div style="min-width:140px;flex:1;max-width:220px">'
+           +'<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">'
+           +'<span style="color:#4a5778;font-weight:500">'+esc(rr.name)+'</span>'
+           +'<span style="font-family:var(--mono);font-weight:700;color:'+(rr.sev==='maj'?'#dc2626':'#d97706')+'">'+fmt(rr.v)+'%</span>'
+           +'</div>'
+           +'<div style="height:6px;background:#f0f2f7;border-radius:3px"><div style="height:100%;width:'+(rr.v/rmax*100)+'%;background:'+(rr.sev==='maj'?MAJC:MINC)+';border-radius:3px"></div></div>'
+           +'</div>';
+       }).join('')||'<span style="color:#8a95b0;font-size:11px">No defects recorded</span>';
+
+       return '<tr style="border-bottom:1px solid #f0f2f7;background:'+rowBg+';cursor:pointer;transition:background .1s" onclick="dimToggle('+i+')" onmouseover="this.style.background=\'#f8f9fc\'" onmouseout="this.style.background=\''+rowBg+'\'">'
+         // Name
+         +'<td style="padding:12px 14px">'
+         +'<div style="display:flex;align-items:center;gap:8px">'
+         +'<div style="width:8px;height:8px;border-radius:50%;background:'+(o.tot>5?'#dc2626':o.tot>2?'#d97706':'#16a34a')+';flex-shrink:0"></div>'
+         +'<span style="font-weight:600;color:#0e1f3d;font-size:13px">'+esc(o.k)+'</span>'
+         +'</div>'
+         +'</td>'
+         // Samples
+         +'<td style="padding:12px 14px;text-align:center;font-family:var(--mono);font-weight:600;color:#4a5778">'+o.n+'</td>'
+         // Reports
+         +'<td style="padding:12px 14px;text-align:center;font-family:var(--mono);font-weight:600;color:#4a5778">'+o.reps+'</td>'
+         // Major
+         +'<td style="padding:12px 14px">'
+         +'<div style="display:flex;align-items:center;gap:8px">'
+         +'<span style="font-family:var(--mono);font-weight:700;color:#dc2626;min-width:44px;text-align:right">'+fmt(o.maj)+'%</span>'
+         +'<div style="flex:1;height:8px;background:#fef2f2;border-radius:4px;min-width:80px"><div style="height:100%;width:'+majBar+'%;background:#dc2626;border-radius:4px"></div></div>'
+         +'</div>'
+         +'</td>'
+         // Minor
+         +'<td style="padding:12px 14px">'
+         +'<div style="display:flex;align-items:center;gap:8px">'
+         +'<span style="font-family:var(--mono);font-weight:700;color:#d97706;min-width:44px;text-align:right">'+fmt(o.min)+'%</span>'
+         +'<div style="flex:1;height:8px;background:#fff7ed;border-radius:4px;min-width:80px"><div style="height:100%;width:'+minBar+'%;background:#d97706;border-radius:4px"></div></div>'
+         +'</div>'
+         +'</td>'
+         // Total
+         +'<td style="padding:12px 14px">'
+         +'<div style="display:flex;align-items:center;gap:8px">'
+         +'<span style="font-family:var(--mono);font-weight:800;color:#142850;min-width:44px;text-align:right">'+fmt(o.tot)+'%</span>'
+         +'<div style="flex:1;height:8px;background:#e2e6f0;border-radius:4px;min-width:80px"><div style="height:100%;width:'+totBar+'%;background:#142850;border-radius:4px"></div></div>'
+         +'</div>'
+         +'</td>'
+         // Top defect
+         +'<td style="padding:12px 14px;font-size:11px;color:#4a5778;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(o.top)+'</td>'
+         // Drill
+         +'<td style="padding:12px 14px;text-align:center">'
+         +'<i class="ti ti-filter" data-v="'+esc(o.k)+'" onclick="event.stopPropagation();dimHMDrill(this)" title="Filter to '+esc(o.k)+'" style="color:#8a95b0;font-size:13px;cursor:pointer"></i>'
+         +'</td>'
+         +'</tr>'
+         // Expanded defect breakdown row
+         +'<tr id="dimx-'+i+'" style="display:none">'
+         +'<td colspan="8" style="padding:0">'
+         +'<div style="background:#f8f9fc;border-top:1px solid #e2e6f0;border-bottom:1px solid #e2e6f0;padding:16px 20px">'
+         +'<div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#8a95b0;font-weight:700;margin-bottom:12px">Defect breakdown · '+esc(o.k)+' · '+o.n+' samples · '+o.reps+' reports</div>'
+         +'<div style="display:flex;flex-wrap:wrap;gap:16px 24px">'+chips+'</div>'
+         +'</div>'
+         +'</td>'
+         +'</tr>';
+     }).join('')
      +'</tbody></table></div>');
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
   mkChart('ch-dim',{type:'bar',data:{labels:items.map(o=>o.k),datasets:[
