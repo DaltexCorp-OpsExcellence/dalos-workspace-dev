@@ -872,12 +872,23 @@ function renderDim(rows,field,label){
 
   window.drillDim=function(key,field,label){
     const rs=g[key];if(!rs||!rs.length)return;
-    const panel=document.getElementById('drill-panel-qc');
     const dMaj=avg(rs,r=>num(r.major_total)),dMin=avg(rs,r=>num(r.minor_total)),dTot=avg(rs,r=>num(r.grand_total));
     const topDefs=ALLDEF.map(d=>({n:d[1],sev:d[2],v:r2(avg(rs,r=>num(r[d[0]])))})).sort((a,b)=>b.v-a.v).filter(d=>d.v>0).slice(0,8);
     const maxDef=topDefs[0]?.v||1;
-    document.getElementById('drill-title-qc').textContent=esc(key)+' — '+label+' Deep Dive';
-    document.getElementById('drill-content-qc').innerHTML=`
+
+    // Remove any existing drill panel
+    const old=document.getElementById('drill-panel-qc');
+    if(old) old.remove();
+
+    // Build panel element directly
+    const panel=document.createElement('div');
+    panel.id='drill-panel-qc';
+    panel.className='drill vis';
+    panel.innerHTML=`
+      <div class="drill-header">
+        <div class="drill-title">${esc(key)} — ${label} Deep Dive</div>
+        <button class="drill-close" onclick="document.getElementById('drill-panel-qc').remove()"><i class="ti ti-x"></i></button>
+      </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
         <div style="background:#fef2f2;border-radius:10px;padding:14px;border-left:4px solid #dc2626">
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:8px">Avg Major Defects</div>
@@ -901,18 +912,19 @@ function renderDim(rows,field,label){
       <div style="display:flex;flex-direction:column;gap:8px">
         ${topDefs.map(d=>{
           const pct=Math.min(d.v/maxDef*100,100);
-          return `<div>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-              <span style="font-size:11px;font-weight:600;color:#142850">${esc(d.n)}</span>
-              <span style="font-family:'IBM Plex Mono';font-size:11px;font-weight:700;color:${d.sev==='maj'?'#dc2626':'#d97706'}">${d.v.toFixed(2)}%</span>
-            </div>
-            <div style="height:7px;background:#e2e6f0;border-radius:4px">
-              <div style="width:${pct}%;height:100%;border-radius:4px;background:${d.sev==='maj'?'#dc2626':'#d97706'}"></div>
-            </div>
-          </div>`;
+          return '<div>'
+            +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
+            +'<span style="font-size:11px;font-weight:600;color:#142850">'+esc(d.n)+'</span>'
+            +'<span style="font-family:\'IBM Plex Mono\';font-size:11px;font-weight:700;color:'+(d.sev==='maj'?'#dc2626':'#d97706')+'">'+d.v.toFixed(2)+'%</span>'
+            +'</div>'
+            +'<div style="height:7px;background:#e2e6f0;border-radius:4px">'
+            +'<div style="width:'+pct+'%;height:100%;border-radius:4px;background:'+(d.sev==='maj'?'#dc2626':'#d97706')+'"></div>'
+            +'</div></div>';
         }).join('')}
       </div>`;
-    panel.classList.add('vis');
+
+    // Append after the tab-content div
+    document.getElementById('tab-content').appendChild(panel);
     panel.scrollIntoView({behavior:'smooth',block:'nearest'});
   };
 }
