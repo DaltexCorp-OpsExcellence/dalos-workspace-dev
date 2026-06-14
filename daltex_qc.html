@@ -562,6 +562,16 @@ function renderOverview(rows){
    +'<div style="height:12px"></div>'
    +'<div class="rc-grid" id="rc-grid"></div>';
 
+  // ── CHART DATA ──
+  const majAvgs=MAJ.map(function(d){return r2(avg(rows,function(r){return num(r[d[0]]);}));});
+  const minAvgs=MIN.map(function(d){return r2(avg(rows,function(r){return num(r[d[0]]);}));});
+  const par=ALLDEF.map(function(d){return {n:d[1],sev:d[2],v:avg(rows,function(r){return num(r[d[0]]);})}}).sort(function(a,b){return b.v-a.v;});
+  const parTot=par.reduce(function(s,p){return s+p.v;},0)||1;
+  var cum=0;
+  const cumArr=par.map(function(p){cum+=p.v;return r2(cum/parTot*100);});
+  const sg=groupBy(rows,function(r){return norm(r.sample_score)||'(none)';});
+  const sk=Object.keys(sg).sort(function(a,b){return sg[b].length-sg[a].length;});
+
   // ── CHARTS ──
   mkChart('ch-maj',{type:'bar',
     data:{labels:MAJ.map(function(d){return d[1];}),
@@ -1056,7 +1066,7 @@ let LDF='',LDT='';
     const reps=new Set(ROWS.map(r=>r.report_id)).size;
     const fmtLD=LDT?new Date(LDT+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';
     document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='<div class="live-dot"></div> Live &middot; '+reps+' inspections &middot; '+fmtLD;});
-    apply();
+    try{apply();}catch(re){console.error('Render error:',re);}
   }catch(e){
     console.error('QC fetchAll error:',e);
     document.querySelectorAll('.tbadge-live').forEach(b=>{
