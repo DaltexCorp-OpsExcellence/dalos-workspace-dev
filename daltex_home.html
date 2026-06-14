@@ -389,19 +389,37 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           </div>
           <div style="display:flex;justify-content:space-between">
             <span style="font-size:11px;color:var(--text3)">Net Weight</span>
-            <span style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--navy)">2,314.14 T</span>
+            <span id="h-nw2" style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--navy)">2,314.14 T</span>
           </div>
           <div style="display:flex;justify-content:space-between">
             <span style="font-size:11px;color:var(--text3)">Active Weeks</span>
-            <span style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--navy)">W19 – W23</span>
+            <span id="h-wks" style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--navy)">W19 – W23</span>
           </div>
           <div style="display:flex;justify-content:space-between">
             <span style="font-size:11px;color:var(--text3)">Containers</span>
-            <span style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--navy)">173</span>
+            <span id="h-ctr" style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--navy)">173</span>
           </div>
           <div style="display:flex;justify-content:space-between">
             <span style="font-size:11px;color:var(--text3)">Top Market</span>
-            <span style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--navy)">UK 74%</span>
+            <span id="h-mkt" style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--navy)">UK 74%</span>
+          </div>
+          <div style="height:1px;background:var(--border);margin:4px 0"></div>
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:2px">QC Analytics</div>
+          <div style="display:flex;justify-content:space-between">
+            <span style="font-size:11px;color:var(--text3)">Inspections</span>
+            <span id="h-qc-insp" style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--navy)">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span style="font-size:11px;color:var(--text3)">Samples</span>
+            <span id="h-qc-samp" style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--navy)">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span style="font-size:11px;color:var(--text3)">Avg Major</span>
+            <span id="h-qc-maj" style="font-family:var(--mono);font-size:11px;font-weight:600;color:#dc2626">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span style="font-size:11px;color:var(--text3)">Avg Minor</span>
+            <span id="h-qc-min" style="font-family:var(--mono);font-size:11px;font-weight:600;color:#d97706">—</span>
           </div>
           <div style="margin-top:4px">
             <a href="daltex_grapes.html" style="display:flex;align-items:center;justify-content:center;gap:5px;padding:6px;border-radius:7px;background:var(--navy);color:#fff;font-size:11px;font-weight:600;text-decoration:none;transition:background .15s" onmouseover="this.style.background='var(--orange)'" onmouseout="this.style.background='var(--navy)'">
@@ -465,13 +483,47 @@ updateDate();
   const SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
   const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
   const SID='19482d39-6074-4c60-b772-ced5df1ffdcb';
+  const H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+  function set(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+  function num(v){var n=parseFloat(v);return isNaN(n)?0:n;}
+
+  // ── Shipments ──
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/grapes_shipments_view?season_id=eq.${SID}&select=net_weight`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Range':'0-99999'}});
-    if(!r.ok)throw new Error('SB '+r.status);
-    const rows=await r.json();
-    const total=rows.reduce((s,x)=>s+(parseFloat(x.net_weight)||0),0);
-    const el=document.getElementById('h-nw');if(el)el.textContent=(total/1000).toFixed(1)+'kT';
-  }catch(e){console.warn('Home: live NW unavailable',e.message);}
+    const r=await fetch(SB_URL+'/rest/v1/grapes_shipments_view?season_id=eq.'+SID+'&select=net_weight,container_number,destination_country,variety,loading_week',{headers:H});
+    if(r.ok){
+      const rows=await r.json();
+      if(rows&&rows.length){
+        const nw=rows.reduce((s,x)=>s+num(x.net_weight),0);
+        const ctrs=new Set(rows.map(r=>r.container_number)).size;
+        const mkts={};rows.forEach(r=>{var m=r.destination_country||'';mkts[m]=(mkts[m]||0)+num(r.net_weight);});
+        var topM=Object.entries(mkts).sort((a,b)=>b[1]-a[1])[0];
+        const vars={};rows.forEach(r=>{var v=r.variety||'';vars[v]=(vars[v]||0)+num(r.net_weight);});
+        var topV=Object.entries(vars).sort((a,b)=>b[1]-a[1])[0];
+        const wks=[...new Set(rows.map(r=>r.loading_week).filter(Boolean))].sort((a,b)=>a-b);
+        set('h-nw2', nw.toFixed(1)+' T');
+        set('h-ctr', ctrs);
+        set('h-mkt', topM?topM[0]+' '+Math.round(topM[1]/nw*100)+'%':'—');
+        set('h-wks', wks.length?'W'+wks[0]+' – W'+wks[wks.length-1]:'—');
+      }
+    }
+  }catch(e){console.warn('Home: shipments unavailable',e.message);}
+
+  // ── QC ──
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/cqc_samples_export?select=report_id,major_total,minor_total&limit=5000',{headers:H});
+    if(r.ok){
+      const rows=await r.json();
+      if(rows&&rows.length){
+        const insp=new Set(rows.map(r=>r.report_id)).size;
+        const maj=rows.reduce((s,r)=>s+num(r.major_total),0)/rows.length;
+        const min=rows.reduce((s,r)=>s+num(r.minor_total),0)/rows.length;
+        set('h-qc-insp', insp+' reports');
+        set('h-qc-samp', rows.length+' samples');
+        set('h-qc-maj', maj.toFixed(2)+'%');
+        set('h-qc-min', min.toFixed(2)+'%');
+      }
+    }
+  }catch(e){console.warn('Home: QC unavailable',e.message);}
 })();
 </script>
 </body>
