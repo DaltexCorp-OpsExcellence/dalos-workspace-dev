@@ -518,30 +518,22 @@ document.getElementById('qtabs').addEventListener('click',e=>{
 });
 
 function closeDrillOverlay(e){
-  if(!e||e.target.id==='drill-overlay'){
-    document.getElementById('drill-overlay').style.display='none';
-    document.getElementById('drill-modal').style.display='none';
-    document.getElementById('drill-modal').innerHTML='';
-    // Restore body scroll and release locked heights
-    document.body.style.overflow='';
-    document.querySelectorAll('[id$="-wrap"]').forEach(function(el){
-      el.style.height='';
-    });
-  }
+  // If called from backdrop click, only close if clicking backdrop itself
+  if(e&&e.target&&e.target.id!=='drill-overlay') return;
+  document.getElementById('drill-overlay').style.display='none';
+  document.getElementById('drill-modal').style.display='none';
+  document.getElementById('drill-modal').innerHTML='';
+  document.body.style.paddingRight='';
 }
 function openDrillModal(html){
   const modal=document.getElementById('drill-modal');
   const overlay=document.getElementById('drill-overlay');
-  // Lock chart container sizes before opening modal to prevent resize reflow
-  document.querySelectorAll('[id$="-wrap"] canvas, #ch-dim, #ch-mix, #ch-trend').forEach(function(el){
-    var p=el.parentElement;
-    if(p&&p.offsetHeight>0) p.style.height=p.offsetHeight+'px';
-  });
+  // Compensate scrollbar width to prevent layout shift
+  var sw=window.innerWidth-document.documentElement.clientWidth;
+  document.body.style.paddingRight=sw+'px';
   modal.innerHTML=html;
   modal.style.display='block';
   overlay.style.display='block';
-  // Prevent body scroll when modal is open
-  document.body.style.overflow='hidden';
 }
 
 function apply(){renderChips();killCharts();const rows=F();
@@ -583,7 +575,7 @@ function renderOverview(rows){
    +cc('Major Defects Breakdown','avg % per sample by reason · Total Major '+fmt(aM)+'%','<div style="position:relative;height:260px"><canvas id="ch-maj"></canvas></div>')
    +cc('Minor Defects Breakdown','avg % per sample by reason · Total Minor '+fmt(am)+'%','<div style="position:relative;height:260px"><canvas id="ch-min"></canvas></div>')
    +'</div>'
-   +'<div style="display:grid;grid-template-columns:3fr 2fr;gap:12px;margin-bottom:12px">'
+   +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'
    +cc('Pareto — Defect Contribution','bars = avg % · line = cumulative share','<div style="position:relative;height:260px"><canvas id="ch-pareto"></canvas></div>')
    +cc('Score Distribution','sample QC scores','<div style="position:relative;height:220px"><canvas id="ch-score"></canvas></div><div id="score-leg" class="chart-legend" style="margin-top:8px"></div>')
    +'</div>'
@@ -751,7 +743,7 @@ function renderDim(rows,field,label){
    +kcard('Avg Minor Defects','ti-alert-circle','<span class="sev-min">'+fmt(avg(rows,r=>num(r.minor_total)))+'%</span>','avg per sample','',avg(rows,r=>num(r.minor_total))*10)
    +kcard('Highest Defects','ti-flame',worst?esc(worst.k):'--',worst?fmt(worst.tot)+'% avg total · '+worst.n+' samples':'','',worst?Math.min(worst.tot*10,100):0)
    +'</div>'
-   +'<div style="display:grid;grid-template-columns:3fr 2fr;gap:12px;margin-bottom:12px">'
+   +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'
    +cc('Major vs Minor by '+label,'avg % per sample',
      '<div style="position:relative" id="dim-bar-wrap"><canvas id="ch-dim"></canvas></div>',
      '<div class="cc-actions"><button class="cc-btn on" id="btn-grouped" onclick="setDimMode(\'grouped\',this)">Grouped</button><button class="cc-btn" id="btn-stacked" onclick="setDimMode(\'stacked\',this)">Stacked</button></div>')
