@@ -769,7 +769,8 @@ function renderDim(rows,field,label){
      +'</tbody></table></div>')
    
    +renderInsightsDim(rows,items,label)
-   +renderAI_section('Ask about '+label.toLowerCase()+' quality trends','e.g. Which '+label.toLowerCase()+' has the worst defect rate?');
+   +renderAI_section('Ask about '+label.toLowerCase()+' quality trends','e.g. Which '+label.toLowerCase()+' has the worst defect rate?')
+   +'<div class="drill" id="drill-panel-qc"><div class="drill-header"><div class="drill-title" id="drill-title-qc">Deep Dive</div><button class="drill-close" onclick="document.getElementById(\'drill-panel-qc\').classList.remove(\'vis\')"><i class="ti ti-x"></i></button></div><div id="drill-content-qc"></div></div>';
 
   const h=Math.max(220,items.length*38);
   document.getElementById('dim-bar-wrap').style.height=h+'px';
