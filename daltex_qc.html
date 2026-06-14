@@ -398,7 +398,7 @@ input,select,button{font-family:var(--font)}
 
 </div></div></div>
 
-<script>/* v1781430859 */
+<script>/* v1781431430 */
 
 /* ===== DalOS Analytics — QC Grapes ===== */
 const SB='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
@@ -872,61 +872,80 @@ function renderDim(rows,field,label){
   });
 
   window.drillDim=function(key,field,label){
-    const rs=g[key];if(!rs||!rs.length)return;
-    const dMaj=avg(rs,r=>num(r.major_total)),dMin=avg(rs,r=>num(r.minor_total)),dTot=avg(rs,r=>num(r.grand_total));
-    const topDefs=ALLDEF.map(d=>({n:d[1],sev:d[2],v:r2(avg(rs,r=>num(r[d[0]])))})).sort((a,b)=>b.v-a.v).filter(d=>d.v>0).slice(0,8);
+    const rs=g[key]; if(!rs||!rs.length) return;
+    const dMaj=r2(avg(rs,r=>num(r.major_total)));
+    const dMin=r2(avg(rs,r=>num(r.minor_total)));
+    const dTot=r2(avg(rs,r=>num(r.grand_total)));
+    const reps=new Set(rs.map(r=>r.report_id)).size;
+    const topDefs=ALLDEF.map(d=>({n:d[1],sev:d[2],v:r2(avg(rs,r=>num(r[d[0]])))}))
+      .sort((a,b)=>b.v-a.v).filter(d=>d.v>0).slice(0,8);
     const maxDef=topDefs[0]?.v||1;
 
-    // Remove any existing drill panel
-    const old=document.getElementById('drill-panel-qc');
-    if(old) old.remove();
+    // Remove existing drill panel
+    const existing=document.getElementById('qc-drill');
+    if(existing) existing.remove();
 
-    // Build panel element directly
-    const panel=document.createElement('div');
-    panel.id='drill-panel-qc';
-    panel.className='drill vis';
-    panel.innerHTML=`
-      <div class="drill-header">
-        <div class="drill-title">${esc(key)} — ${label} Deep Dive</div>
-        <button onclick="document.getElementById('drill-panel-qc').remove()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;background:#142850;border:none;border-radius:8px;cursor:pointer;color:#fff;font-size:13px;font-weight:600">&#x2715; Close</button>
+    // Build panel
+    const el=document.createElement('div');
+    el.id='qc-drill';
+    el.style.cssText='background:#fff;border:2px solid #142850;border-radius:12px;padding:24px;margin-top:20px;box-shadow:0 4px 24px rgba(20,40,80,.18)';
+
+    // Header with close button
+    const hdr=document.createElement('div');
+    hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid #e2e6f0';
+    hdr.innerHTML=`<div style="font-size:16px;font-weight:700;color:#142850">${esc(key)} &mdash; ${label} Deep Dive</div>`;
+    const closeBtn=document.createElement('button');
+    closeBtn.textContent='✕  Close';
+    closeBtn.style.cssText='background:#dc2626;color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.02em';
+    closeBtn.onclick=function(){ document.getElementById('qc-drill').remove(); };
+    hdr.appendChild(closeBtn);
+    el.appendChild(hdr);
+
+    // KPI cards
+    const kpis=document.createElement('div');
+    kpis.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px';
+    kpis.innerHTML=`
+      <div style="background:#fef2f2;border-radius:10px;padding:16px;border-left:4px solid #dc2626">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#8a95b0;margin-bottom:8px">Avg Major</div>
+        <div style="font-size:28px;font-weight:700;color:#dc2626;font-family:monospace">${dMaj}%</div>
+        <div style="font-size:11px;color:#8a95b0;margin-top:4px">${rs.length} samples</div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
-        <div style="background:#fef2f2;border-radius:10px;padding:14px;border-left:4px solid #dc2626">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:8px">Avg Major Defects</div>
-          <div style="font-family:'IBM Plex Mono';font-size:28px;font-weight:700;color:#dc2626;line-height:1">${fmt(dMaj)}%</div>
-          <div style="font-size:11px;color:#8a95b0;margin-top:4px">${rs.length} samples</div>
-        </div>
-        <div style="background:#fff7ed;border-radius:10px;padding:14px;border-left:4px solid #d97706">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:8px">Avg Minor Defects</div>
-          <div style="font-family:'IBM Plex Mono';font-size:28px;font-weight:700;color:#d97706;line-height:1">${fmt(dMin)}%</div>
-          <div style="font-size:11px;color:#8a95b0;margin-top:4px">avg per sample</div>
-        </div>
-        <div style="background:#f4f6fb;border-radius:10px;padding:14px;border-left:4px solid #142850">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:8px">Total Defects</div>
-          <div style="font-family:'IBM Plex Mono';font-size:28px;font-weight:700;color:#142850;line-height:1">${fmt(dTot)}%</div>
-          <div style="font-size:11px;color:#8a95b0;margin-top:4px">${new Set(rs.map(r=>r.report_id)).size} reports</div>
-        </div>
+      <div style="background:#fff7ed;border-radius:10px;padding:16px;border-left:4px solid #d97706">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#8a95b0;margin-bottom:8px">Avg Minor</div>
+        <div style="font-size:28px;font-weight:700;color:#d97706;font-family:monospace">${dMin}%</div>
+        <div style="font-size:11px;color:#8a95b0;margin-top:4px">avg per sample</div>
       </div>
-      <div style="font-size:12px;font-weight:700;color:#142850;margin-bottom:12px;display:flex;align-items:center;gap:6px">
-        <i class="ti ti-list-numbers" style="color:#DC6428"></i> Top Defect Breakdown
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        ${topDefs.map(d=>{
-          const pct=Math.min(d.v/maxDef*100,100);
-          return '<div>'
-            +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
-            +'<span style="font-size:11px;font-weight:600;color:#142850">'+esc(d.n)+'</span>'
-            +'<span style="font-family:\'IBM Plex Mono\';font-size:11px;font-weight:700;color:'+(d.sev==='maj'?'#dc2626':'#d97706')+'">'+d.v.toFixed(2)+'%</span>'
-            +'</div>'
-            +'<div style="height:7px;background:#e2e6f0;border-radius:4px">'
-            +'<div style="width:'+pct+'%;height:100%;border-radius:4px;background:'+(d.sev==='maj'?'#dc2626':'#d97706')+'"></div>'
-            +'</div></div>';
-        }).join('')}
+      <div style="background:#f4f6fb;border-radius:10px;padding:16px;border-left:4px solid #142850">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#8a95b0;margin-bottom:8px">Total</div>
+        <div style="font-size:28px;font-weight:700;color:#142850;font-family:monospace">${dTot}%</div>
+        <div style="font-size:11px;color:#8a95b0;margin-top:4px">${reps} reports</div>
       </div>`;
+    el.appendChild(kpis);
 
-    // Append after the tab-content div
-    document.getElementById('tab-content').appendChild(panel);
-    panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+    // Defect breakdown
+    const title=document.createElement('div');
+    title.style.cssText='font-size:12px;font-weight:700;color:#142850;margin-bottom:12px';
+    title.textContent='Top Defect Breakdown';
+    el.appendChild(title);
+
+    topDefs.forEach(d=>{
+      const pct=Math.min(d.v/maxDef*100,100);
+      const row=document.createElement('div');
+      row.style.cssText='margin-bottom:10px';
+      row.innerHTML=`
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:12px;font-weight:600;color:#142850">${esc(d.n)}</span>
+          <span style="font-size:12px;font-weight:700;color:${d.sev==='maj'?'#dc2626':'#d97706'};font-family:monospace">${d.v.toFixed(2)}%</span>
+        </div>
+        <div style="height:8px;background:#e2e6f0;border-radius:4px">
+          <div style="width:${pct}%;height:100%;border-radius:4px;background:${d.sev==='maj'?'#dc2626':'#d97706'}"></div>
+        </div>`;
+      el.appendChild(row);
+    });
+
+    // Append to tab-content and scroll into view
+    document.getElementById('tab-content').appendChild(el);
+    el.scrollIntoView({behavior:'smooth',block:'nearest'});
   };
 }
 
