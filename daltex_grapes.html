@@ -84,6 +84,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .dash-card:hover .dc-open{color:var(--orange)}
 .dc-open i{font-size:13px;transition:transform .15s}
 .dash-card:hover .dc-open i{transform:translateX(3px)}
+
+/* ── MOBILE ── */
+@media(max-width:768px){
+  .topbar{flex-wrap:wrap;height:auto;padding:10px 14px;gap:6px}
+  .logo-divider,.logo-sub{display:none}
+  .hero{flex-direction:column!important;padding:24px 16px!important;gap:16px}
+  .hero-left{width:100%!important}
+  .hero-season{width:100%!important;min-width:unset!important}
+  .hero-stats{flex-wrap:wrap;gap:8px}
+  .hstat{min-width:calc(33% - 8px)}
+  .content{padding:16px 12px!important}
+  .dash-grid,[style*="grid-template-columns:repeat(auto-fill,minmax(320px"]{grid-template-columns:1fr!important}
+}
+@media(max-width:480px){
+  .hstat{min-width:calc(50% - 8px)}
+  .hstat-val{font-size:22px}
+}
 </style>
 </head>
 <body>

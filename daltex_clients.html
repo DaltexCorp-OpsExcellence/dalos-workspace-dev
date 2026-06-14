@@ -173,6 +173,46 @@ input,select,button{font-family:var(--font)}
 .sdiv-txt{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);white-space:nowrap}
 .fade-in{animation:fadeIn .3s ease forwards}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── MOBILE RESPONSIVE ── */
+@media(max-width:768px){
+  .topbar{height:auto;padding:10px 14px;flex-wrap:wrap;gap:6px}
+  .logo-divider,.logo-sub{display:none}
+  .tabs{padding:0 6px;gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tab{padding:10px 10px;font-size:11px;white-space:nowrap;flex-shrink:0}
+  .content{padding:12px 10px!important}
+  .kpis,.kpi-row,.stat-row{grid-template-columns:repeat(2,1fr)!important}
+  .cc-grid{grid-template-columns:1fr!important}
+  [style*="grid-template-columns: repeat(3"],[style*="grid-template-columns: repeat(4"]{grid-template-columns:1fr 1fr!important}
+  [style*="grid-template-columns: 3fr 2fr"],[style*="grid-template-columns: 1fr 1fr 1fr"]{grid-template-columns:1fr!important}
+  [style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr!important}
+  .drill-panel,.drill{padding:12px!important}
+  .filter-bar,.filters{flex-wrap:wrap;gap:6px}
+  table{font-size:11px}
+  th,td{padding:7px 8px!important;white-space:nowrap}
+  .chart-wrap,[id^="chart-"]{min-height:200px}
+}
+@media(max-width:480px){
+  .kpis,.kpi-row{grid-template-columns:1fr 1fr!important}
+  .tab{padding:8px 8px;font-size:10px}
+}
+@media(max-width:820px){
+  .tabs{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{flex-shrink:0;white-space:nowrap}
+  .topbar{flex-wrap:wrap;height:auto;padding:10px 12px}
+  .logo-divider,.logo-sub{display:none}
+  .content,.main{padding:12px!important}
+  [style*="grid-template-columns: repeat(3"]{grid-template-columns:1fr 1fr!important}
+  [style*="grid-template-columns: repeat(4"]{grid-template-columns:1fr 1fr!important}
+  [style*="grid-template-columns: 3fr 2fr"]{grid-template-columns:1fr!important}
+  [style*="grid-template-columns: 1fr 1fr 1fr"]{grid-template-columns:1fr!important}
+  [style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr!important}
+}
+@media(max-width:480px){
+  .tab{padding:8px 10px;font-size:10px}
+  .kpi-grid,.kpis{grid-template-columns:1fr 1fr!important}
+}
 </style>
 </head>
 <body>
