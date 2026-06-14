@@ -245,7 +245,7 @@ input,select,button{font-family:var(--font)}
 .reset-btn{margin-left:auto;padding:5px 11px;border-radius:7px;border:1px solid var(--line);background:#fff;font-size:11px;font-weight:600;color:var(--text2);cursor:pointer}
 .reset-btn:hover{background:var(--bg2)}
 .qtabs{display:flex;gap:4px;flex-wrap:wrap}
-.rc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:12px}
+.rc-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:12px}
 @media(max-width:1100px){.rc-grid{grid-template-columns:repeat(2,1fr)}}
 .rc-card{background:#ffffff;border:1px solid #e2e6f0;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(20,40,80,.08)}
 .rc-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#142850;margin-bottom:12px;display:flex;gap:6px;align-items:center;padding-bottom:8px;border-bottom:2px solid #e2e6f0}
@@ -578,58 +578,83 @@ function renderOverview(rows){
   // ── CHARTS ──
   mkChart('ch-maj',{type:'bar',
     data:{labels:MAJ.map(function(d){return d[1];}),
-      datasets:[{data:majAvgs,backgroundColor:MAJC,borderRadius:4,barThickness:20}]},
+      datasets:[{data:majAvgs,backgroundColor:MAJC,borderRadius:4,barThickness:20,
+        datalabels:{display:true,anchor:'end',align:'end',
+          formatter:function(v){return v>0?v.toFixed(2)+'%':null;},
+          font:{size:11,weight:'700'},color:'#dc2626',clip:false}}]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},
+      plugins:{legend:{display:false},datalabels:{},
         tooltip:{callbacks:{label:function(c){return ' '+c.raw.toFixed(2)+'%';}}}},
       scales:{
         x:{ticks:{font:{family:"'IBM Plex Mono'",size:10},callback:function(v){return v+'%';}},
            grid:{color:'rgba(0,0,0,.04)'}},
         y:{ticks:{autoSkip:false,font:{size:11,weight:'600'}},grid:{display:false}}
-      },layout:{padding:{right:10}}}});
+      },layout:{padding:{right:70}}},
+    plugins:[ChartDataLabels]});
 
   mkChart('ch-min',{type:'bar',
     data:{labels:MIN.map(function(d){return d[1];}),
-      datasets:[{data:minAvgs,backgroundColor:MINC,borderRadius:4,barThickness:20}]},
+      datasets:[{data:minAvgs,backgroundColor:MINC,borderRadius:4,barThickness:20,
+        datalabels:{display:true,anchor:'end',align:'end',
+          formatter:function(v){return v>0?v.toFixed(2)+'%':null;},
+          font:{size:11,weight:'700'},color:'#d97706',clip:false}}]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},
+      plugins:{legend:{display:false},datalabels:{},
         tooltip:{callbacks:{label:function(c){return ' '+c.raw.toFixed(2)+'%';}}}},
       scales:{
         x:{ticks:{font:{family:"'IBM Plex Mono'",size:10},callback:function(v){return v+'%';}},
            grid:{color:'rgba(0,0,0,.04)'}},
         y:{ticks:{autoSkip:false,font:{size:11,weight:'600'}},grid:{display:false}}
-      },layout:{padding:{right:10}}}});
+      },layout:{padding:{right:70}}},
+    plugins:[ChartDataLabels]});
 
   mkChart('ch-pareto',{data:{labels:par.map(function(p){return p.n;}),datasets:[
-    {type:'bar',data:par.map(function(p){return r2(p.v);}),
+    {type:'bar',label:'Avg Defect %',
+     data:par.map(function(p){return r2(p.v);}),
      backgroundColor:par.map(function(p){return p.sev==='maj'?MAJC:MINC;}),
-     borderRadius:3,yAxisID:'y'},
-    {type:'line',data:cumArr,borderColor:'#142850',backgroundColor:'#142850',
-     pointRadius:3,tension:0.3,yAxisID:'y1'}]},
+     borderRadius:3,yAxisID:'y',
+     datalabels:{display:true,anchor:'end',align:'top',
+       formatter:function(v){return v>0?v.toFixed(2)+'%':null;},
+       font:{size:9,weight:'600'},color:'#142850',clip:false}},
+    {type:'line',label:'Cumulative %',
+     data:cumArr,borderColor:'#142850',backgroundColor:'transparent',
+     pointRadius:3,tension:0.3,yAxisID:'y1',borderWidth:2,
+     datalabels:{display:false}}]},
    options:{responsive:true,maintainAspectRatio:false,
-     plugins:{legend:{display:false},
-       tooltip:{callbacks:{label:function(c){return c.dataset.type==='line'?' cumulative '+c.raw+'%':' avg '+c.raw.toFixed(2)+'%';}}}},
+     plugins:{
+       legend:{display:true,position:'bottom',labels:{boxWidth:12,font:{size:10},padding:10}},
+       datalabels:{},
+       tooltip:{callbacks:{label:function(c){return c.dataset.type==='line'?' Cumulative: '+c.raw+'%':' Avg: '+c.raw.toFixed(2)+'%';}}}},
      scales:{
        x:{ticks:{font:{size:9},maxRotation:45,minRotation:45},grid:{display:false}},
-       y:{title:{display:true,text:'avg %',font:{size:9}},grid:{color:'rgba(0,0,0,.04)'},
+       y:{title:{display:true,text:'Avg %',font:{size:9}},grid:{color:'rgba(0,0,0,.04)'},
           ticks:{font:{family:"'IBM Plex Mono'",size:9},callback:function(v){return v+'%';}}},
        y1:{position:'right',min:0,max:100,grid:{display:false},
+           title:{display:true,text:'Cumulative %',font:{size:9}},
            ticks:{callback:function(v){return v+'%';},font:{family:"'IBM Plex Mono'",size:9}}}
-     }}});
+     },layout:{padding:{top:20}}},
+   plugins:[ChartDataLabels]});
 
   mkChart('ch-score',{type:'doughnut',
     data:{labels:sk,datasets:[{
       data:sk.map(function(k){return sg[k].length;}),
       backgroundColor:sk.map(function(k,i){
         return ({GREEN:'#16a34a',AMBER:'#d97706',PASS:'#2563eb',WHITE:'#94a3b8',BLUE:'#0891b2'})[k]||PAL[i%PAL.length];
-      }),borderWidth:2,borderColor:'#fff'}]},
+      }),borderWidth:2,borderColor:'#fff',
+      datalabels:{display:true,color:'#fff',font:{size:11,weight:'700'},
+        formatter:function(v,ctx){
+          var t=ctx.dataset.data.reduce(function(a,b){return a+b;},0);
+          var p=Math.round(v/t*100);
+          return p>8?p+'%':null;
+        }}}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
-      plugins:{legend:{display:false},
+      plugins:{legend:{display:false},datalabels:{},
         tooltip:{callbacks:{label:function(c){
           var total=c.dataset.data.reduce(function(a,b){return a+b;},0);
           return ' '+c.label+': '+c.raw+' ('+Math.round(c.raw/total*100)+'%)';
         }}}
-      }}});
+      }},
+    plugins:[ChartDataLabels]});
 ;
   document.getElementById('score-leg').innerHTML=sk.map((k,i)=>'<div class="cl-item"><div class="cl-rect" style="background:'+({GREEN:'#16a34a',AMBER:'#d97706',PASS:'#2563eb',WHITE:'#94a3b8',BLUE:'#0891b2'}[k]||PAL[i%PAL.length])+'"></div>'+esc(k)+' <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">'+sg[k].length+'</span></div>').join('');
 
@@ -845,7 +870,7 @@ function renderDim(rows,field,label){
       <div style="background:#fff;border:2px solid #142850;border-radius:12px;padding:20px;box-shadow:0 4px 20px rgba(20,40,80,.15)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid #e2e6f0">
           <div style="font-size:16px;font-weight:700;color:#142850">${esc(key)} — ${label} Deep Dive</div>
-          <button onclick="document.getElementById('drill-panel-dim').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:20px;color:#8a95b0"><i class="ti ti-x"></i></button>
+          <button onclick="var _p=document.getElementById('drill-panel-dim');_p.style.display='none';_p.innerHTML='';" style="display:flex;align-items:center;gap:6px;padding:7px 16px;background:#f4f6fb;border:1px solid #e2e6f0;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;color:#142850"><i class="ti ti-arrow-left" style="font-size:12px"></i> ← Close</button>
         </div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
           <div style="background:#fef2f2;border-radius:10px;padding:14px;border-left:4px solid #dc2626">
