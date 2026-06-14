@@ -1133,8 +1133,8 @@ let LDF='',LDT='';
 </script>
 
 <!-- DRILL OVERLAY - fixed, outside tab content, never affects chart layout -->
-<div id="drill-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(14,31,61,.45);z-index:500;backdrop-filter:blur(2px)" onclick="closeDrillOverlay(event)"></div>
-<div id="drill-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(700px,92vw);max-height:85vh;overflow-y:auto;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(14,31,61,.3);z-index:501;padding:0"></div>
+<div id="drill-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(14,31,61,.45);z-index:500;backdrop-filter:blur(2px)" onclick="closeDrillOverlay()"></div>
+<div id="drill-modal" onclick="event.stopPropagation()" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(700px,92vw);max-height:85vh;overflow-y:auto;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(14,31,61,.3);z-index:501;padding:0"></div>
 
 </body>
 </html>
