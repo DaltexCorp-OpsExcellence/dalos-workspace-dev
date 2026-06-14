@@ -414,14 +414,20 @@ function isoWk(ds){const t=new Date(ds+'T00:00:00');t.setDate(t.getDate()+3-((t.
 function perKey(r){return S.gran==='daily'?r.created_date:S.gran==='weekly'?'W'+String(r.wk).padStart(2,'0'):S.gran==='monthly'?r.created_date.slice(0,7):r.season;}
 
 async function fetchAll(){
-  let out=[],from=0,page=1000;
-  for(;;){
-    const res=await fetch(SB+'/rest/v1/cqc_samples_export?select=*&order=created_date.asc&offset='+from+'&limit='+page,{headers:{apikey:AK,Authorization:'Bearer '+AK}});
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const js=await res.json(); out=out.concat(js);
-    if(js.length<page) break; from+=page;
+  const url=SB+'/rest/v1/cqc_samples_export?select=*&order=created_date.asc&limit=5000';
+  const res=await fetch(url,{
+    headers:{
+      'apikey':AK,
+      'Authorization':'Bearer '+AK,
+      'Content-Type':'application/json',
+      'Prefer':'count=exact'
+    }
+  });
+  if(!res.ok){
+    const txt=await res.text();
+    throw new Error('Supabase '+res.status+': '+txt.slice(0,120));
   }
-  return out;
+  return await res.json();
 }
 
 function F(){
@@ -1052,8 +1058,18 @@ let LDF='',LDT='';
     document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='<div class="live-dot"></div> Live &middot; '+reps+' inspections &middot; '+fmtLD;});
     apply();
   }catch(e){
-    document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='<i class="ti ti-alert-triangle"></i> Offline';b.style.opacity='.6';});
-    document.getElementById('hdr-sub').textContent='Could not load QC data: '+e.message;
+    console.error('QC fetchAll error:',e);
+    document.querySelectorAll('.tbadge-live').forEach(b=>{
+      b.innerHTML='<i class="ti ti-wifi-off"></i> Offline · '+e.message.slice(0,60);
+      b.style.opacity='.8';
+      b.style.background='rgba(220,38,38,.15)';
+      b.style.color='#dc2626';
+    });
+    const sub=document.getElementById('hdr-sub');
+    if(sub) sub.textContent='Connection failed: '+e.message;
+    // Still render with empty data so UI loads
+    ROWS=[];
+    apply();
   }
 })();
 
