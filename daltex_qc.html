@@ -166,6 +166,31 @@ input,select,button{font-family:var(--font)}
 .drill-close{background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px;display:flex;align-items:center}
 .drill-grid{display:block}
 
+/* ITEM DETAIL MODAL */
+.qm-backdrop{position:fixed;inset:0;background:rgba(14,31,61,.45);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:2000;padding:20px;animation:qmfade .15s ease}
+@keyframes qmfade{from{opacity:0}to{opacity:1}}
+.qm{background:var(--white);border-radius:14px;box-shadow:0 24px 64px rgba(14,31,61,.32);width:100%;max-width:560px;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;animation:qmrise .18s ease}
+@keyframes qmrise{from{transform:translateY(14px) scale(.985);opacity:0}to{transform:none;opacity:1}}
+.qm-head{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border)}
+.qm-eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--orange);font-weight:700;margin-bottom:4px}
+.qm-title{font-size:19px;font-weight:700;color:var(--navy);line-height:1.2}
+.qm-x{background:var(--bg);border:none;width:32px;height:32px;border-radius:9px;cursor:pointer;color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.qm-x:hover{background:var(--bg2)}
+.qm-body{padding:18px 20px;overflow:auto}
+.qm-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.qm-kpi{background:var(--bg);border-radius:10px;padding:10px 12px}
+.qm-kpi .l{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);font-weight:700;margin-bottom:5px}
+.qm-kpi .v{font-size:18px;font-weight:700;font-family:var(--mono);color:var(--navy)}
+.qm-sec{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);font-weight:700;margin:18px 0 10px}
+.qm-reasons{display:flex;flex-direction:column;gap:7px}
+.qm-rrow{display:flex;align-items:center;gap:10px}
+.qm-rname{font-size:11.5px;color:var(--text2);width:150px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qm-rbar{flex:1;height:7px;background:var(--bg2);border-radius:4px;overflow:hidden}
+.qm-rbar>span{display:block;height:100%;border-radius:4px}
+.qm-rval{font-family:var(--mono);font-size:11px;font-weight:700;width:54px;text-align:right;flex-shrink:0}
+.qm-foot{padding:13px 20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:11px;color:var(--text3);flex-wrap:wrap}
+@media(max-width:560px){.qm-kpis{grid-template-columns:repeat(2,1fr)}.qm-rname{width:110px}}
+
 /* HEATMAP */
 .heat-row{display:flex;align-items:center;gap:3px;margin-bottom:3px}
 .heat-lbl{font-size:12px;color:var(--text2);width:90px;flex-shrink:0;font-family:var(--mono);font-weight:500}
@@ -490,6 +515,34 @@ document.getElementById('qtabs').addEventListener('click',e=>{
 function goTab(t){document.querySelectorAll('#qtabs .tab').forEach(x=>x.classList.toggle('on',x.dataset.tab===t));S.tab=t;window.scrollTo({top:0,behavior:'smooth'});apply();}
 function drillTo(el){var tab=el.dataset.tab,field=el.dataset.field,val=el.dataset.v;var ms=document.querySelector('.ms[data-f="'+field+'"]');if(ms){S[field]=[val];ms.querySelectorAll('input[data-v]').forEach(i=>{i.checked=(i.dataset.v===val);});var a=ms.querySelector('.ms-all input');if(a)a.checked=false;syncMS(ms,field);}goTab(tab);}
 function backBtn(){return '<button class="xbtn" style="margin-bottom:12px" onclick="goTab(\'ov\')"><i class="ti ti-arrow-left"></i> Back to Overview</button>';}
+/* ---------- Overview item detail modal ---------- */
+let __ITEM=null;
+function openItem(el){
+  var field=el.dataset.field,val=el.dataset.v,tab='',label='';
+  for(var k in DIMS){if(DIMS[k][0]===field){label=DIMS[k][1];tab=k;break;}}
+  var all=F(),rows=all.filter(r=>norm(r[field])===val);
+  if(!rows.length)return;
+  __ITEM={field:field,val:val,tab:tab,label:label};
+  var n=rows.length,reps=new Set(rows.map(r=>r.report_id)).size,ctr=new Set(rows.map(r=>norm(r.container_number)).filter(Boolean)).size;
+  var maj=avg(rows,r=>num(r.major_total)),min=avg(rows,r=>num(r.minor_total)),tot=avg(rows,r=>num(r.grand_total));
+  var reasons=ALLDEF.map(d=>({name:d[1],sev:d[2],v:avg(rows,r=>num(r[d[0]]))})).sort((a,b)=>b.v-a.v);
+  var rmax=Math.max(0.0001,...reasons.map(r=>r.v));
+  var g=groupBy(all,r=>norm(r[field])),peers=Object.keys(g).map(k=>({k:k,t:avg(g[k],r=>num(r.grand_total))})).sort((a,b)=>b.t-a.t);
+  var rank=peers.findIndex(p=>p.k===val)+1,share=all.length?n/all.length*100:0;
+  var sec=field==='variety'?'sample_farm':'variety',secLabel=field==='variety'?'Farm':'Variety';
+  var sg=groupBy(rows,r=>norm(r[sec])),secList=Object.keys(sg).map(k=>({k:k,t:avg(sg[k],r=>num(r.grand_total)),n:sg[k].length})).sort((a,b)=>b.t-a.t).slice(0,6);
+  var smax=Math.max(0.0001,...secList.map(s=>s.t));
+  var kpi=function(l,v){return '<div class="qm-kpi"><div class="l">'+l+'</div><div class="v">'+v+'</div></div>';};
+  var reasonRows=reasons.filter(r=>r.v>0).map(r=>'<div class="qm-rrow"><span class="qm-rname" title="'+esc(r.name)+'">'+esc(r.name)+'</span><span class="qm-rbar"><span style="width:'+(r.v/rmax*100)+'%;background:'+(r.sev==='maj'?MAJC:MINC)+'"></span></span><span class="qm-rval '+(r.sev==='maj'?'sev-maj':'sev-min')+'">'+fmt(r.v)+'%</span></div>').join('')||'<div style="color:var(--text3);font-size:12px">No defects recorded</div>';
+  var secRows=secList.map(s=>'<div class="qm-rrow"><span class="qm-rname" title="'+esc(s.k)+'">'+esc(s.k)+' <span style="color:var(--text3);font-size:10px">('+s.n+')</span></span><span class="qm-rbar"><span style="width:'+(s.t/smax*100)+'%;background:var(--navy2)"></span></span><span class="qm-rval mono">'+fmt(s.t)+'%</span></div>').join('')||'<div style="color:var(--text3);font-size:12px">No data</div>';
+  var html='<div class="qm-backdrop" onclick="if(event.target===this)closeItem()"><div class="qm" role="dialog" aria-modal="true"><div class="qm-head"><div><div class="qm-eyebrow">'+esc(label)+'</div><div class="qm-title">'+esc(val)+'</div></div><button class="qm-x" title="Close" onclick="closeItem()"><i class="ti ti-x"></i></button></div><div class="qm-body"><div class="qm-kpis">'+kpi('Avg Total','<span class="sev-tot">'+fmt(tot)+'%</span>')+kpi('Avg Major','<span class="sev-maj">'+fmt(maj)+'%</span>')+kpi('Avg Minor','<span class="sev-min">'+fmt(min)+'%</span>')+kpi('Samples',n)+kpi('Inspections',reps)+kpi('Containers',ctr)+'</div><div class="qm-sec">Defect Reasons &middot; avg % per sample</div><div class="qm-reasons">'+reasonRows+'</div><div class="qm-sec">Top '+esc(secLabel)+'s within this '+esc(label.toLowerCase())+'</div><div class="qm-reasons">'+secRows+'</div></div><div class="qm-foot"><span>Rank #'+rank+' of '+peers.length+' '+esc(label.toLowerCase())+'s by total defect &middot; '+fmt(share,1)+'% of samples</span><button class="xbtn" onclick="viewItemTab()">Open full '+esc(label)+' view <i class="ti ti-arrow-right"></i></button></div></div></div>';
+  var host=document.createElement('div');host.id='qm-host';host.innerHTML=html;document.body.appendChild(host);
+  document.body.style.overflow='hidden';
+  document.addEventListener('keydown',escClose);
+}
+function escClose(e){if(e.key==='Escape')closeItem();}
+function closeItem(){var h=document.getElementById('qm-host');if(h)h.remove();document.body.style.overflow='';document.removeEventListener('keydown',escClose);}
+function viewItemTab(){if(!__ITEM)return;var field=__ITEM.field,val=__ITEM.val,tab=__ITEM.tab;var ms=document.querySelector('.ms[data-f="'+field+'"]');if(ms){S[field]=[val];ms.querySelectorAll('input[data-v]').forEach(i=>{i.checked=(i.dataset.v===val);});var a=ms.querySelector('.ms-all input');if(a)a.checked=false;syncMS(ms,field);}else{S[field]=[val];}closeItem();goTab(tab);}
 
 function apply(){renderChips();killCharts();const rows=F();
   const fn={ov:renderOverview,weekly:renderWeekly,data:renderData}[S.tab];
@@ -561,7 +614,7 @@ function renderOverview(rows){
   let rcHtml=rcDims.map(d=>{
     const g=groupBy(rows,r=>norm(r[d[0]]));
     const top=Object.keys(g).map(k=>({k,v:avg(g[k],r=>num(r.major_total)),n:g[k].length})).sort((a,b)=>b.v-a.v).slice(0,5);
-    return '<div class="rc-card"><div class="rc-title"><i class="ti '+d[3]+'"></i>'+d[2]+' &mdash; avg major <span style="margin-left:auto;font-weight:500;color:var(--text3);font-size:9px">tap to drill</span></div>'+(top.map(t=>'<div class="rc-row" style="cursor:pointer" data-tab="'+d[1]+'" data-field="'+d[0]+'" data-v="'+esc(t.k)+'" onclick="drillTo(this)"><span class="rc-name" title="'+esc(t.k)+'">'+esc(t.k)+' <i class="ti ti-chevron-right" style="font-size:10px;color:var(--text3)"></i></span><span class="rc-val sev-maj">'+fmt(t.v)+'%</span></div>').join('')||'<div class="rc-row">No data</div>')+'</div>';
+    return '<div class="rc-card"><div class="rc-title"><i class="ti '+d[3]+'"></i>'+d[2]+' &mdash; avg major <span style="margin-left:auto;font-weight:500;color:var(--text3);font-size:9px">tap for details</span></div>'+(top.map(t=>'<div class="rc-row" style="cursor:pointer" data-tab="'+d[1]+'" data-field="'+d[0]+'" data-v="'+esc(t.k)+'" onclick="openItem(this)"><span class="rc-name" title="'+esc(t.k)+'">'+esc(t.k)+' <i class="ti ti-arrows-diagonal" style="font-size:11px;color:var(--text3)"></i></span><span class="rc-val sev-maj">'+fmt(t.v)+'%</span></div>').join('')||'<div class="rc-row">No data</div>')+'</div>';
   }).join('');
   const topReasons=ALLDEF.map(d=>({n:d[1],sev:d[2],v:avg(rows,r=>num(r[d[0]]))})).sort((a,b)=>b.v-a.v).slice(0,5);
   rcHtml+='<div class="rc-card"><div class="rc-title"><i class="ti ti-list-numbers"></i>Top Defect Reasons</div>'+topReasons.map(t=>'<div class="rc-row"><span class="rc-name">'+esc(t.n)+'</span><span class="rc-val '+(t.sev==='maj'?'sev-maj':'sev-min')+'">'+fmt(t.v)+'%</span></div>').join('')+'</div>';
