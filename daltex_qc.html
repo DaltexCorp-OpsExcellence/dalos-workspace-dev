@@ -370,7 +370,8 @@ input,select,button{font-family:var(--font)}
 
 </div></div></div>
 
-<script>
+<script>/* v1781432486 */
+
 /* ===== DalOS Analytics — QC Grapes ===== */
 const SB='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
 const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
@@ -486,7 +487,55 @@ document.getElementById('qtabs').addEventListener('click',e=>{
   S.tab=t.dataset.tab;apply();
 });
 function goTab(t){document.querySelectorAll('#qtabs .tab').forEach(x=>x.classList.toggle('on',x.dataset.tab===t));S.tab=t;window.scrollTo({top:0,behavior:'smooth'});apply();}
-function drillTo(el){var tab=el.dataset.tab,field=el.dataset.field,val=el.dataset.v;var ms=document.querySelector('.ms[data-f="'+field+'"]');if(ms){S[field]=[val];ms.querySelectorAll('input[data-v]').forEach(i=>{i.checked=(i.dataset.v===val);});var a=ms.querySelector('.ms-all input');if(a)a.checked=false;syncMS(ms,field);}goTab(tab);}
+function drillTo(el){
+  var key=el.dataset.v, field=el.dataset.field, label=el.dataset.tab;
+  var allRows=F();
+  var g={};
+  allRows.forEach(function(r){var k=norm(r[field]);if(k){if(!g[k])g[k]=[];g[k].push(r);}});
+  if(!g[key]||!g[key].length) return;
+  var rs=g[key];
+  var dMaj=r2(avg(rs,function(r){return num(r.major_total);}));
+  var dMin=r2(avg(rs,function(r){return num(r.minor_total);}));
+  var dTot=r2(avg(rs,function(r){return num(r.grand_total);}));
+  var reps=new Set(rs.map(function(r){return r.report_id;})).size;
+  var topDefs=ALLDEF.map(function(d){return {n:d[1],sev:d[2],v:r2(avg(rs,function(r){return num(r[d[0]]);}))}}).sort(function(a,b){return b.v-a.v;}).filter(function(d){return d.v>0;}).slice(0,8);
+  var maxDef=topDefs[0]?topDefs[0].v:1;
+  var existing=document.getElementById('qc-drill');
+  if(existing) existing.remove();
+  var panel=document.createElement('div');
+  panel.id='qc-drill';
+  panel.style.cssText='background:#fff;border:2px solid #142850;border-radius:12px;padding:20px;margin-top:16px;box-shadow:0 4px 24px rgba(20,40,80,.15)';
+  var hdr=document.createElement('div');
+  hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #e2e6f0';
+  hdr.innerHTML='<div style="font-size:15px;font-weight:700;color:#142850">'+esc(key)+' — Deep Dive</div>';
+  var cb=document.createElement('button');
+  cb.textContent='✕ Close';
+  cb.style.cssText='background:#dc2626;color:#fff;border:none;border-radius:8px;padding:7px 18px;font-size:12px;font-weight:700;cursor:pointer';
+  cb.onclick=function(){document.getElementById('qc-drill').remove();};
+  hdr.appendChild(cb);
+  panel.appendChild(hdr);
+  var kp=document.createElement('div');
+  kp.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px';
+  kp.innerHTML='<div style="background:#fef2f2;border-radius:8px;padding:14px;border-left:3px solid #dc2626"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#8a95b0;margin-bottom:6px">Avg Major</div><div style="font-size:24px;font-weight:700;color:#dc2626;font-family:monospace">'+dMaj+'%</div><div style="font-size:10px;color:#8a95b0;margin-top:3px">'+rs.length+' samples</div></div>'
+    +'<div style="background:#fff7ed;border-radius:8px;padding:14px;border-left:3px solid #d97706"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#8a95b0;margin-bottom:6px">Avg Minor</div><div style="font-size:24px;font-weight:700;color:#d97706;font-family:monospace">'+dMin+'%</div><div style="font-size:10px;color:#8a95b0;margin-top:3px">avg per sample</div></div>'
+    +'<div style="background:#f4f6fb;border-radius:8px;padding:14px;border-left:3px solid #142850"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#8a95b0;margin-bottom:6px">Total</div><div style="font-size:24px;font-weight:700;color:#142850;font-family:monospace">'+dTot+'%</div><div style="font-size:10px;color:#8a95b0;margin-top:3px">'+reps+' reports</div></div>';
+  panel.appendChild(kp);
+  if(topDefs.length){
+    var ttl=document.createElement('div');
+    ttl.style.cssText='font-size:11px;font-weight:700;color:#142850;margin-bottom:10px';
+    ttl.textContent='Top Defect Breakdown';
+    panel.appendChild(ttl);
+    topDefs.forEach(function(d){
+      var pct=Math.min(d.v/maxDef*100,100);
+      var row=document.createElement('div');
+      row.style.cssText='margin-bottom:8px';
+      row.innerHTML='<div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;font-weight:600;color:#142850">'+esc(d.n)+'</span><span style="font-size:11px;font-weight:700;color:'+(d.sev==='maj'?'#dc2626':'#d97706')+';font-family:monospace">'+d.v.toFixed(2)+'%</span></div><div style="height:7px;background:#e2e6f0;border-radius:4px"><div style="width:'+pct+'%;height:100%;border-radius:4px;background:'+(d.sev==='maj'?'#dc2626':'#d97706')+'"></div></div>';
+      panel.appendChild(row);
+    });
+  }
+  document.getElementById('tab-content').appendChild(panel);
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
 function backBtn(){return '<button class="xbtn" style="margin-bottom:12px" onclick="goTab(\'ov\')"><i class="ti ti-arrow-left"></i> Back to Overview</button>';}
 
 function apply(){renderChips();killCharts();const rows=F();
