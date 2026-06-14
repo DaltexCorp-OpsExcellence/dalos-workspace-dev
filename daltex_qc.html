@@ -398,7 +398,7 @@ input,select,button{font-family:var(--font)}
 
 </div></div></div>
 
-<script>/* v1781430499 */
+<script>/* v1781430859 */
 
 /* ===== DalOS Analytics — QC Grapes ===== */
 const SB='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
@@ -737,9 +737,9 @@ function renderDim(rows,field,label){
    +'</div>'
    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'
    +cc('Major vs Minor by '+label,'avg % per sample',
-     '<div style="position:relative" id="dim-bar-wrap"><canvas id="ch-dim"></canvas></div>',
+     '<div style="position:relative;min-height:'+Math.max(220,items.length*38)+'px" id="dim-bar-wrap"><canvas id="ch-dim"></canvas></div>',
      '<div class="cc-actions"><button class="cc-btn on" id="btn-grouped" onclick="setDimMode(\'grouped\',this)">Grouped</button><button class="cc-btn" id="btn-stacked" onclick="setDimMode(\'stacked\',this)">Stacked</button></div>')
-   +cc('Defect Reason Mix by '+label,'share of avg total defects','<div style="position:relative" id="dim-mix-wrap"><canvas id="ch-mix"></canvas></div>')
+   +cc('Defect Reason Mix by '+label,'share of avg total defects','<div style="position:relative;min-height:'+Math.max(220,items.length*38)+'px" id="dim-mix-wrap"><canvas id="ch-mix"></canvas></div>')
    +'</div>'
    +cc('Trend by '+(({daily:'Day',weekly:'Week',monthly:'Month',seasonal:'Season'})[S.gran]),'avg total defect % · top 5 '+label.toLowerCase()+'s','<div style="position:relative;height:240px"><canvas id="ch-trend"></canvas></div>')
    +'<div style="height:12px"></div>'
@@ -888,7 +888,7 @@ function renderDim(rows,field,label){
     panel.innerHTML=`
       <div class="drill-header">
         <div class="drill-title">${esc(key)} — ${label} Deep Dive</div>
-        <button class="drill-close" onclick="document.getElementById('drill-panel-qc').remove()">✕ Close</button>
+        <button onclick="document.getElementById('drill-panel-qc').remove()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;background:#142850;border:none;border-radius:8px;cursor:pointer;color:#fff;font-size:13px;font-weight:600">&#x2715; Close</button>
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
         <div style="background:#fef2f2;border-radius:10px;padding:14px;border-left:4px solid #dc2626">
