@@ -317,6 +317,13 @@ input,select,button{font-family:var(--font)}
 .qc-insight-text{font-size:12px;color:var(--text2);line-height:1.5;flex:1}
 .qc-ai{background:#fff;border:1px solid var(--border);border-radius:var(--r2);padding:18px;margin-top:12px;box-shadow:var(--shadow)}
 .ai-vis{display:block !important}
+
+.drill{background:var(--white);border:2px solid var(--navy);border-radius:var(--r2);padding:20px;box-shadow:0 4px 20px rgba(20,40,80,.15);margin-top:16px;display:none}
+.drill.vis{display:block}
+.drill-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:2px solid var(--line)}
+.drill-title{font-size:16px;font-weight:700;color:var(--navy)}
+.drill-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3);line-height:1;padding:2px}
+.drill-close:hover{color:var(--navy)}
 </style>
 </head>
 <body>
@@ -517,24 +524,8 @@ document.getElementById('qtabs').addEventListener('click',e=>{
   S.tab=t.dataset.tab;apply();
 });
 
-function closeDrillOverlay(e){
-  // If called from backdrop click, only close if clicking backdrop itself
-  if(e&&e.target&&e.target.id!=='drill-overlay') return;
-  document.getElementById('drill-overlay').style.display='none';
-  document.getElementById('drill-modal').style.display='none';
-  document.getElementById('drill-modal').innerHTML='';
-  document.body.style.paddingRight='';
-}
-function openDrillModal(html){
-  const modal=document.getElementById('drill-modal');
-  const overlay=document.getElementById('drill-overlay');
-  // Compensate scrollbar width to prevent layout shift
-  var sw=window.innerWidth-document.documentElement.clientWidth;
-  document.body.style.paddingRight=sw+'px';
-  modal.innerHTML=html;
-  modal.style.display='block';
-  overlay.style.display='block';
-}
+
+
 
 function apply(){renderChips();killCharts();const rows=F();
   const fn={ov:renderOverview,data:renderData}[S.tab];
@@ -880,50 +871,48 @@ function renderDim(rows,field,label){
 
   window.drillDim=function(key,field,label){
     const rs=g[key];if(!rs||!rs.length)return;
+    const panel=document.getElementById('drill-panel-qc');
     const dMaj=avg(rs,r=>num(r.major_total)),dMin=avg(rs,r=>num(r.minor_total)),dTot=avg(rs,r=>num(r.grand_total));
     const topDefs=ALLDEF.map(d=>({n:d[1],sev:d[2],v:r2(avg(rs,r=>num(r[d[0]])))})).sort((a,b)=>b.v-a.v).filter(d=>d.v>0).slice(0,8);
     const maxDef=topDefs[0]?.v||1;
-    openDrillModal(`
-      <div style="background:#fff;border:2px solid #142850;border-radius:12px;padding:20px;box-shadow:0 4px 20px rgba(20,40,80,.15)">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid #e2e6f0">
-          <div style="font-size:16px;font-weight:700;color:#142850">${esc(key)} — ${label} Deep Dive</div>
-          <button onclick="closeDrillOverlay()" style="display:flex;align-items:center;gap:6px;padding:7px 16px;background:#f4f6fb;border:1px solid #e2e6f0;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;color:#142850"><i class="ti ti-arrow-left" style="font-size:12px"></i> ← Close</button>
+    document.getElementById('drill-title-qc').textContent=esc(key)+' — '+label+' Deep Dive';
+    document.getElementById('drill-content-qc').innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+        <div style="background:#fef2f2;border-radius:10px;padding:14px;border-left:4px solid #dc2626">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:8px">Avg Major Defects</div>
+          <div style="font-family:'IBM Plex Mono';font-size:28px;font-weight:700;color:#dc2626;line-height:1">${fmt(dMaj)}%</div>
+          <div style="font-size:11px;color:#8a95b0;margin-top:4px">${rs.length} samples</div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
-          <div style="background:#fef2f2;border-radius:10px;padding:14px;border-left:4px solid #dc2626">
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:8px;white-space:nowrap">Avg Major Defects</div>
-            <div style="font-family:'IBM Plex Mono';font-size:28px;font-weight:700;color:#dc2626;line-height:1">${fmt(dMaj)}%</div>
-            <div style="font-size:11px;color:#8a95b0;margin-top:4px">${rs.length} samples</div>
-          </div>
-          <div style="background:#fff7ed;border-radius:10px;padding:14px;border-left:4px solid #d97706">
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:8px;white-space:nowrap">Avg Minor Defects</div>
-            <div style="font-family:'IBM Plex Mono';font-size:28px;font-weight:700;color:#d97706;line-height:1">${fmt(dMin)}%</div>
-            <div style="font-size:11px;color:#8a95b0;margin-top:4px">avg per sample</div>
-          </div>
-          <div style="background:#f4f6fb;border-radius:10px;padding:14px;border-left:4px solid #142850">
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:8px;white-space:nowrap">Total Defects</div>
-            <div style="font-family:'IBM Plex Mono';font-size:28px;font-weight:700;color:#142850;line-height:1">${fmt(dTot)}%</div>
-            <div style="font-size:11px;color:#8a95b0;margin-top:4px">${new Set(rs.map(r=>r.report_id)).size} reports</div>
-          </div>
+        <div style="background:#fff7ed;border-radius:10px;padding:14px;border-left:4px solid #d97706">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:8px">Avg Minor Defects</div>
+          <div style="font-family:'IBM Plex Mono';font-size:28px;font-weight:700;color:#d97706;line-height:1">${fmt(dMin)}%</div>
+          <div style="font-size:11px;color:#8a95b0;margin-top:4px">avg per sample</div>
         </div>
-        <div style="font-size:12px;font-weight:700;color:#142850;margin-bottom:12px;display:flex;align-items:center;gap:6px">
-          <i class="ti ti-list-numbers" style="color:#DC6428"></i> Top Defect Breakdown
+        <div style="background:#f4f6fb;border-radius:10px;padding:14px;border-left:4px solid #142850">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:8px">Total Defects</div>
+          <div style="font-family:'IBM Plex Mono';font-size:28px;font-weight:700;color:#142850;line-height:1">${fmt(dTot)}%</div>
+          <div style="font-size:11px;color:#8a95b0;margin-top:4px">${new Set(rs.map(r=>r.report_id)).size} reports</div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          ${topDefs.map(d=>{
-            const pct=Math.min(d.v/maxDef*100,100);
-            return `<div>
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-                <span style="font-size:11px;font-weight:600;color:#142850">${esc(d.n)}</span>
-                <span style="font-family:'IBM Plex Mono';font-size:11px;font-weight:700;color:${d.sev==='maj'?'#dc2626':'#d97706'}">${d.v.toFixed(2)}%</span>
-              </div>
-              <div style="height:7px;background:#e2e6f0;border-radius:4px">
-                <div style="width:${pct}%;height:100%;border-radius:4px;background:${d.sev==='maj'?'#dc2626':'#d97706'}"></div>
-              </div>
-            </div>`;
-          }).join('')}
-        </div>
-      </div>`);
+      </div>
+      <div style="font-size:12px;font-weight:700;color:#142850;margin-bottom:12px;display:flex;align-items:center;gap:6px">
+        <i class="ti ti-list-numbers" style="color:#DC6428"></i> Top Defect Breakdown
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${topDefs.map(d=>{
+          const pct=Math.min(d.v/maxDef*100,100);
+          return `<div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:11px;font-weight:600;color:#142850">${esc(d.n)}</span>
+              <span style="font-family:'IBM Plex Mono';font-size:11px;font-weight:700;color:${d.sev==='maj'?'#dc2626':'#d97706'}">${d.v.toFixed(2)}%</span>
+            </div>
+            <div style="height:7px;background:#e2e6f0;border-radius:4px">
+              <div style="width:${pct}%;height:100%;border-radius:4px;background:${d.sev==='maj'?'#dc2626':'#d97706'}"></div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    panel.classList.add('vis');
+    panel.scrollIntoView({behavior:'smooth',block:'nearest'});
   };
 }
 
@@ -1131,10 +1120,6 @@ let LDF='',LDT='';
 })();
 
 </script>
-
-<!-- DRILL OVERLAY - fixed, outside tab content, never affects chart layout -->
-<div id="drill-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(14,31,61,.45);z-index:500;backdrop-filter:blur(2px)" onclick="closeDrillOverlay()"></div>
-<div id="drill-modal" onclick="event.stopPropagation()" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(700px,92vw);max-height:85vh;overflow-y:auto;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(14,31,61,.3);z-index:501;padding:0"></div>
 
 </body>
 </html>
