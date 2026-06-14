@@ -321,6 +321,11 @@ input,select,button{font-family:var(--font)}
   div[style*="grid-template-columns:repeat(5,1fr)"]{grid-template-columns:1fr 1fr !important}
   .logo-sub{display:none}
 }
+
+.col-toggle{display:flex;gap:6px;flex-wrap:wrap;padding:10px;background:#f4f6fb;border:1px solid #e2e6f0;border-radius:8px;margin-bottom:12px}
+.col-chip{display:flex;align-items:center;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid #e2e6f0;background:#fff;color:#4a5778;user-select:none;transition:all .15s}
+.col-chip.on{background:#142850;color:#fff;border-color:#142850}
+.col-chip:hover:not(.on){background:#f0f2f7;border-color:#c8d0e0}
 </style>
 </head>
 <body>
@@ -395,7 +400,7 @@ input,select,button{font-family:var(--font)}
 
 </div></div></div>
 
-<script>/* v1781447896 */
+<script>/* v1781459244 */
 
 /* ===== DalOS Analytics — QC Grapes ===== */
 const SB='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
@@ -622,6 +627,57 @@ async function askQC(uid){
   }catch(e){
     if(aEl){aEl.textContent='AI requires internet connection.';aEl.style.display='block';}
   }finally{if(tEl) tEl.style.display='none';}
+}
+
+
+const DATACOLS_QC=[
+  {id:'qc_report_number',label:'Report #',mono:true},
+  {id:'created_date',label:'Date',mono:true},
+  {id:'container_number',label:'Container',mono:true},
+  {id:'sample_number',label:'Sample #',mono:true},
+  {id:'packhouse',label:'Packhouse'},
+  {id:'client',label:'Client'},
+  {id:'sub_client',label:'Sub Client'},
+  {id:'country',label:'Country'},
+  {id:'variety',label:'Variety'},
+  {id:'color',label:'Color'},
+  {id:'sample_farm',label:'Farm'},
+  {id:'sample_score',label:'Score',badge:true},
+  {id:'daltex_class',label:'Class',mono:true},
+  {id:'major_total',label:'Major %',pct:true,majCol:true},
+  {id:'minor_total',label:'Minor %',pct:true},
+  {id:'grand_total',label:'Total %',pct:true,totCol:true},
+  {id:'cracks_splits',label:'Cracks/Splits',pct:true,majCol:true},
+  {id:'wet_berries',label:'Wet/Glassy',pct:true,majCol:true},
+  {id:'dead_berries',label:'Dead/Shrivel',pct:true,majCol:true},
+  {id:'sulphur',label:'Sulphur/SO2',pct:true,majCol:true},
+  {id:'slip_skin',label:'Slip Skin',pct:true,majCol:true},
+  {id:'cobwebs',label:'Cobwebs',pct:true,majCol:true},
+  {id:'maggots_rots',label:'Maggots/Rots',pct:true,majCol:true},
+  {id:'blemish_skin',label:'Blemish/Skin',pct:true},
+  {id:'berry_drop',label:'Berry Drop',pct:true},
+  {id:'sunburn',label:'Sunburn',pct:true},
+  {id:'dry_stems',label:'Dry Stems',pct:true},
+];
+let visibleQCCols=new Set(['qc_report_number','created_date','container_number','packhouse','client','country','variety','sample_score','major_total','minor_total','grand_total']);
+
+function renderColToggleQC(){
+  var el=document.getElementById('qc-col-toggle');
+  if(!el)return;
+  while(el.firstChild)el.removeChild(el.firstChild);
+  DATACOLS_QC.forEach(function(c){
+    var d=document.createElement('div');
+    d.className='col-chip'+(visibleQCCols.has(c.id)?' on':'');
+    d.textContent=c.label;
+    (function(id){d.onclick=function(){
+      var show=!visibleQCCols.has(id);
+      if(show)visibleQCCols.add(id);
+      else{if(visibleQCCols.size>2)visibleQCCols.delete(id);}
+      renderColToggleQC();
+      apply();
+    };})(c.id);
+    el.appendChild(d);
+  });
 }
 
 function apply(){renderChips();killCharts();const rows=F();
@@ -1066,23 +1122,62 @@ function renderDimHM(){
 const DATACOLS=[['qc_report_number','Report'],['created_date','Date'],['container_number','Container'],['sample_number','Sample'],['packhouse','Packhouse'],['client','Client'],['sub_client','Sub Client'],['country','Country'],['variety','Variety'],['sample_variety','Sample Variety'],['color','Color'],['sample_farm','Farm'],['sample_plot','Plot'],['sample_score','Score'],['major_total','Major %'],['minor_total','Minor %'],['grand_total','Total %']];
 function renderData(rows){
   const c=document.getElementById('tab-content');
-  const PAGE=50,pages=Math.max(1,Math.ceil(rows.length/PAGE));dataPage=Math.min(dataPage,pages-1);
-  const slice=rows.slice(dataPage*PAGE,dataPage*PAGE+PAGE);
-  c.innerHTML=backBtn()+
-   '<div style="display:flex;align-items:center;gap:4px;margin-bottom:12px;flex-wrap:wrap">'
-   +'<button class="xbtn" onclick="expRecords()"><i class="ti ti-file-spreadsheet"></i> Export Records (CSV)</button>'
-   +'<button class="xbtn" onclick="expDefects()"><i class="ti ti-list-details"></i> Export Defect-Level (CSV)</button>'
-   +'<button class="xbtn" onclick="expSummary()"><i class="ti ti-report-analytics"></i> Export Report Summary (CSV)</button>'
-   +'<span style="font-size:11px;color:#8a95b0;margin-left:auto;font-family:var(--mono)">'+rows.length+' rows match filters</span></div>'
-   +cc('QC Records','sample-level detail · respects all active filters',
-     '<div class="qc-table-wrap"><table class="tbl"><thead><tr>'+DATACOLS.map(d=>'<th>'+d[1]+'</th>').join('')+ALLDEF.map(d=>'<th style="font-size:9px" title="'+d[1]+'">'+d[1].split(' ')[0]+'</th>').join('')+'</tr></thead><tbody>'
-     +slice.map(r=>'<tr>'+DATACOLS.map(d=>{const v=r[d[0]];const m=['major_total','minor_total','grand_total'].includes(d[0]);return '<td class="mono" style="font-size:10.5px;'+(m?'font-weight:600':'')+'">'+esc(v==null?'':v)+'</td>';}).join('')
-       +ALLDEF.map(d=>'<td class="mono" style="font-size:10px;'+(num(r[d[0]])>0?'color:'+(d[2]==='maj'?MAJC:MINC)+';font-weight:600':'color:#8a95b0')+'">'+num(r[d[0]])+'</td>').join('')+'</tr>').join('')
-     +'</tbody></table></div>'
-     +'<div style="display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:10px">'
-     +'<button class="xbtn" '+(dataPage<=0?'disabled style="opacity:.4"':'')+' onclick="dataPage--;apply()">&larr; Prev</button>'
-     +'<span style="font-size:11px;font-family:var(--mono);color:#8a95b0">Page '+(dataPage+1)+' / '+pages+'</span>'
-     +'<button class="xbtn" '+(dataPage>=pages-1?'disabled style="opacity:.4"':'')+' onclick="dataPage++;apply()">Next &rarr;</button></div>');
+  const PAGE=50;
+  dataPage=Math.min(dataPage,Math.max(0,Math.ceil(rows.length/PAGE)-1));
+  const slice=rows.slice(dataPage*PAGE,(dataPage+1)*PAGE);
+  const visCols=DATACOLS_QC.filter(function(col){return visibleQCCols.has(col.id);});
+  const pages=Math.max(1,Math.ceil(rows.length/PAGE));
+
+  c.innerHTML=
+    '<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">'+
+    '<button class="xbtn" onclick="expRecords()"><i class="ti ti-file-spreadsheet"></i> Export CSV</button>'+
+    '<button class="xbtn" onclick="expDefects()"><i class="ti ti-list-details"></i> Export Defect-Level</button>'+
+    '<button class="xbtn" onclick="expSummary()"><i class="ti ti-report-analytics"></i> Export Summary</button>'+
+    '<span style="font-size:11px;color:#8a95b0;margin-left:auto;font-family:var(--mono)">'+rows.length+' rows</span>'+
+    '</div>'+
+    '<div style="font-size:10px;font-weight:700;color:#8a95b0;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Visible Columns — click to toggle</div>'+
+    '<div class="col-toggle" id="qc-col-toggle"></div>'+
+    '<div class="cc" style="padding:0;overflow:hidden">'+
+    '<div style="overflow-x:auto">'+
+    '<table style="width:100%;border-collapse:collapse;font-size:12px">'+
+    '<thead><tr style="background:#f8f9fc;border-bottom:2px solid #e2e6f0">'+
+    visCols.map(function(col){
+      return '<th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;color:#8a95b0">'+col.label+'</th>';
+    }).join('')+
+    '</tr></thead><tbody>'+
+    slice.map(function(r){
+      var tot=num(r.grand_total);
+      var rowBg=tot>5?'rgba(220,38,38,.03)':tot>2?'rgba(217,119,6,.02)':'';
+      return '<tr style="border-bottom:1px solid #f0f2f7;background:'+rowBg+'">'+
+        visCols.map(function(col){
+          var val=r[col.id];
+          if(val===undefined||val===null||val===''||val==='—') val='—';
+          if(col.badge){
+            var sc=String(val).toUpperCase();
+            var sColor=({GREEN:'#16a34a',AMBER:'#d97706',PASS:'#2563eb',WHITE:'#94a3b8'})[sc]||'#8a95b0';
+            return '<td style="padding:9px 12px"><span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:'+sColor+'18;color:'+sColor+';border:1px solid '+sColor+'44">'+esc(sc)+'</span></td>';
+          }
+          if(col.pct){
+            var v=num(val);
+            var color=col.totCol?'#142850':col.majCol?'#dc2626':'#d97706';
+            var fw=col.totCol?'800':'600';
+            return '<td style="padding:9px 12px;font-family:var(--mono);font-size:11px;font-weight:'+fw+';color:'+( v>0?color:'#c8d0e0')+'">'+( v>0?v.toFixed(2)+'%':'—')+'</td>';
+          }
+          if(col.mono){
+            return '<td style="padding:9px 12px;font-family:var(--mono);font-size:11px;color:#4a5778">'+esc(String(val))+'</td>';
+          }
+          return '<td style="padding:9px 12px;font-size:12px;color:#0e1f3d">'+esc(String(val))+'</td>';
+        }).join('')+'</tr>';
+    }).join('')+
+    '</tbody></table></div>'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid #e2e6f0;background:#f8f9fc">'+
+    '<span style="font-size:11px;color:#8a95b0;font-family:var(--mono)">Page '+(dataPage+1)+' of '+pages+' · '+rows.length+' records</span>'+
+    '<div style="display:flex;gap:6px">'+
+    '<button class="xbtn" '+(dataPage<=0?'disabled style="opacity:.4"':'')+ ' onclick="dataPage--;apply()">&larr; Prev</button>'+
+    '<button class="xbtn" '+(dataPage>=pages-1?'disabled style="opacity:.4"':'')+ ' onclick="dataPage++;apply()">Next &rarr;</button>'+
+    '</div></div></div>';
+
+  renderColToggleQC();
 }
 function csvDl(name,rowsArr){
   const csv=rowsArr.map(r=>r.map(v=>{v=v==null?'':String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(',')).join('\n');
