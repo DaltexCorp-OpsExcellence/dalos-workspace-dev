@@ -130,6 +130,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div class="hs-row"><span class="hs-lbl">Top Market</span><span class="hs-val" id="g-topmkt">UK 74%</span></div>
       <div class="hs-row"><span class="hs-lbl">Top Variety</span><span class="hs-val" id="g-topvar">Flame 57%</span></div>
       <div class="hs-row"><span class="hs-lbl">Weeks</span><span class="hs-val" id="g-weeks">W19 – W23</span></div>
+      <div style="height:1px;background:rgba(255,255,255,.15);margin:8px 0"></div>
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.35);margin-bottom:6px">QC Analytics</div>
+      <div class="hs-row"><span class="hs-lbl">Inspections</span><span class="hs-val" id="qc-insp" style="color:#ffb380">—</span></div>
+      <div class="hs-row"><span class="hs-lbl">Samples</span><span class="hs-val" id="qc-samples" style="color:#ffb380">—</span></div>
+      <div class="hs-row"><span class="hs-lbl">Avg Major</span><span class="hs-val" id="qc-major" style="color:#fca5a5">—</span></div>
+      <div class="hs-row"><span class="hs-lbl">Avg Minor</span><span class="hs-val" id="qc-minor" style="color:#fde68a">—</span></div>
     </div>
   </div>
 </div>
@@ -265,6 +271,30 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     if(tv[0])set('g-topvar',tv[0]+' '+Math.round(tv[1]/total*100)+'%');
     set('g-weeks',wk.length?('W'+wk[0]+' \u2013 W'+wk[wk.length-1]):'\u2014');
   }catch(e){console.warn('Grapes landing: live unavailable',e.message);}
+
+  // ── Fetch QC data ──
+  try{
+    const qcRes=await fetch(SB_URL+'/rest/v1/cqc_samples_export?select=report_id,major_total,minor_total&limit=5000',{
+      headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}
+    });
+    if(qcRes.ok){
+      const qcData=await qcRes.json();
+      if(qcData&&qcData.length){
+        const insp=new Set(qcData.map(r=>r.report_id)).size;
+        const avgMaj=qcData.reduce((s,r)=>s+(parseFloat(r.major_total)||0),0)/qcData.length;
+        const avgMin=qcData.reduce((s,r)=>s+(parseFloat(r.minor_total)||0),0)/qcData.length;
+        var qi=document.getElementById('qc-insp');
+        var qs=document.getElementById('qc-samples');
+        var qm=document.getElementById('qc-major');
+        var qn=document.getElementById('qc-minor');
+        if(qi) qi.textContent=insp+' reports';
+        if(qs) qs.textContent=qcData.length+' samples';
+        if(qm) qm.textContent=avgMaj.toFixed(2)+'%';
+        if(qn) qn.textContent=avgMin.toFixed(2)+'%';
+      }
+    }
+  }catch(e){console.warn('QC fetch failed',e);}
+
 })();
 </script>
 </body>
