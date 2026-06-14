@@ -395,7 +395,7 @@ input,select,button{font-family:var(--font)}
 
 </div></div></div>
 
-<script>/* v1781447409 */
+<script>/* v1781447896 */
 
 /* ===== DalOS Analytics — QC Grapes ===== */
 const SB='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
@@ -765,7 +765,12 @@ function renderDim(rows,field,label){
    +kcard('Highest Defects','ti-flame',worst?esc(worst.k):'--',worst?fmt(worst.tot)+'% avg total · '+worst.n+' samples':'','',worst?Math.min(worst.tot*10,100):0)
    +'</div>'
    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'
-   +cc('Major vs Minor by '+label,'avg % per sample · stacked','<div style="position:relative;height:'+dh+'px" id="dim-bar-wrap"><canvas id="ch-dim"></canvas></div>')
+   +cc('Major vs Minor by '+label,'avg % per sample',
+     '<div style="position:relative;height:'+dh+'px" id="dim-bar-wrap"><canvas id="ch-dim"></canvas></div>',
+     '<div style="display:flex;gap:6px">'
+     +'<button id="dim-btn-grouped" onclick="setDimMode(\'grouped\',this)" style="padding:4px 12px;border-radius:6px;border:1px solid #e2e6f0;background:#142850;color:#fff;font-size:11px;font-weight:600;cursor:pointer">Grouped</button>'
+     +'<button id="dim-btn-stacked" onclick="setDimMode(\'stacked\',this)" style="padding:4px 12px;border-radius:6px;border:1px solid #e2e6f0;background:#fff;color:#4a5778;font-size:11px;font-weight:600;cursor:pointer">Stacked</button>'
+     +'</div>')
    +cc('Defect Reason Mix by '+label,'share of avg total defects','<div style="position:relative;height:'+dh+'px" id="dim-mix-wrap"><canvas id="ch-mix"></canvas></div>')
    +'</div>'
    +cc('Trend by '+({daily:'Day',weekly:'Week',monthly:'Month',seasonal:'Season'})[S.gran],'avg total defect % · top 5 '+label.toLowerCase()+'s','<div style="position:relative;height:240px"><canvas id="ch-trend"></canvas></div>')
@@ -975,11 +980,48 @@ function renderDim(rows,field,label){
      }).join('')
      +'</tbody></table></div>');
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
-  mkChart('ch-dim',{type:'bar',data:{labels:items.map(o=>o.k),datasets:[
-    {label:'Major',data:items.map(o=>r2(o.maj)),backgroundColor:MAJC,stack:'s',borderRadius:3,barThickness:16},
-    {label:'Minor',data:items.map(o=>r2(o.min)),backgroundColor:MINC,stack:'s',borderRadius:3,barThickness:16}]},
-   options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}},datalabels:{color:'#fff',textStrokeColor:'rgba(0,0,0,.4)',textStrokeWidth:2,anchor:'center',align:'center',font:{family:"'IBM Plex Mono'",size:8,weight:'700'},formatter:v=>(+v>=0.3?(Math.round(v*100)/100):''),display:c=>+c.dataset.data[c.dataIndex]>=0.3}},scales:{x:{stacked:true,grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:10}}},y:{stacked:true,grid:{display:false},ticks:{autoSkip:false,font:{size:10.5,weight:'500'}}}}}});
-  mkChart('ch-mix',{type:'bar',data:{labels:items.map(o=>o.k),datasets:ALLDEF.map((d,i)=>({label:d[1],data:items.map(o=>r2(avg(g[o.k],r=>num(r[d[0]])))),backgroundColor:d[2]==='maj'?['#7f1d1d','#dc2626','#ef4444','#f87171','#fca5a5','#fecaca','#fee2e2'][MAJ.findIndex(m=>m[0]===d[0])]:['#92400e','#d97706','#fbbf24','#fde68a'][MIN.findIndex(m=>m[0]===d[0])],stack:'s',barThickness:16}))},
+  // Major vs Minor chart with Grouped/Stacked toggle
+  function drawDimBar(mode){
+    var isStacked=mode==='stacked';
+    // Update button styles
+    var bg=document.getElementById('dim-btn-grouped');
+    var bs=document.getElementById('dim-btn-stacked');
+    if(bg&&bs){
+      bg.style.background=isStacked?'#fff':'#142850';
+      bg.style.color=isStacked?'#4a5778':'#fff';
+      bs.style.background=isStacked?'#142850':'#fff';
+      bs.style.color=isStacked?'#fff':'#4a5778';
+    }
+    mkChart('ch-dim',{type:'bar',data:{labels:items.map(o=>o.k),datasets:[
+      {label:'Major %',data:items.map(o=>r2(o.maj)),backgroundColor:MAJC,
+        stack:isStacked?'s':undefined,borderRadius:4,barThickness:isStacked?18:13,
+        datalabels:{display:true,anchor:'end',align:'end',
+          formatter:function(v){return v>0?v.toFixed(2)+'%':null;},
+          font:{size:9,weight:'700'},color:'#dc2626',clip:false}},
+      {label:'Minor %',data:items.map(o=>r2(o.min)),backgroundColor:MINC,
+        stack:isStacked?'s':undefined,borderRadius:4,barThickness:isStacked?18:13,
+        datalabels:{display:isStacked?false:true,anchor:'end',align:'end',
+          formatter:function(v){return v>0?v.toFixed(2)+'%':null;},
+          font:{size:9,weight:'600'},color:'#d97706',clip:false}}
+    ]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'bottom',labels:{boxWidth:12,font:{size:11},padding:12}},
+        datalabels:{},
+        tooltip:{mode:'index',intersect:false,callbacks:{label:function(c){return ' '+c.dataset.label+': '+c.raw.toFixed(2)+'%';}}}
+      },
+      scales:{
+        x:{stacked:isStacked,grid:{color:'rgba(0,0,0,.04)'},
+           ticks:{font:{family:"'IBM Plex Mono'",size:10},callback:function(v){return v+'%';}}},
+        y:{stacked:isStacked,grid:{display:false},
+           ticks:{autoSkip:false,font:{size:11,weight:'500'}}}
+      },
+      layout:{padding:{right:65}}
+    }});
+  }
+  drawDimBar('grouped');
+  window.setDimMode=function(mode,btn){drawDimBar(mode);};
+  mkChart('ch-mix',{type:'bar',data:{labels:items.map(o=>o.k),datasets:ALLDEF.map((d,i)=>({label:d[1],data:items.map(o=>r2(avg(g[o.k],r=>num(r[d[0]])))),backgroundColor:d[2]==='maj'?['#2563eb', '#7c3aed', '#0891b2', '#dc2626', '#d97706', '#16a34a', '#be185d'][MAJ.findIndex(m=>m[0]===d[0])]:(['#ea580c', '#0d9488', '#b45309', '#6d28d9'])[MIN.findIndex(m=>m[0]===d[0])],stack:'s',barThickness:16}))},
    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{color:'#fff',textStrokeColor:'rgba(0,0,0,.4)',textStrokeWidth:2,anchor:'center',align:'center',font:{family:"'IBM Plex Mono'",size:8,weight:'700'},formatter:v=>(+v>=1?(Math.round(v*10)/10):''),display:c=>+c.dataset.data[c.dataIndex]>=1},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+c.raw+'%'}}},scales:{x:{stacked:true,grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:10}}},y:{stacked:true,grid:{display:false},ticks:{autoSkip:false,font:{size:10.5,weight:'500'}}}}}});
   const periods=[...new Set(rows.map(perKey))].sort();
   const top5=items.slice(0,5).map(o=>o.k);
