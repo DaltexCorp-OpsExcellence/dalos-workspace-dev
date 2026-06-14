@@ -395,7 +395,7 @@ input,select,button{font-family:var(--font)}
 
 </div></div></div>
 
-<script>/* v1781447080 */
+<script>/* v1781447409 */
 
 /* ===== DalOS Analytics — QC Grapes ===== */
 const SB='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
@@ -749,7 +749,7 @@ function renderDim(rows,field,label){
     const rs=g[k];
     const reasons=ALLDEF.map(d=>({key:d[0],name:d[1],sev:d[2],v:avg(rs,r=>num(r[d[0]]))}));
     let best='',bv=-1;reasons.forEach(rr=>{if(rr.v>bv){bv=rr.v;best=rr.name;}});
-    return {k,n:rs.length,reps:new Set(rs.map(r=>r.report_id)).size,maj:avg(rs,r=>num(r.major_total)),min:avg(rs,r=>num(r.minor_total)),tot:avg(rs,r=>num(r.grand_total)),top:bv>0?best:'—',reasons};
+    return {k,n:rs.length,reps:new Set(rs.map(r=>r.report_id)).size,maj:avg(rs,r=>num(r.major_total)),min:avg(rs,r=>num(r.minor_total)),tot:avg(rs,r=>num(r.grand_total)),top:bv>0?best:'—',reasons,rs};
   }).sort((a,b)=>b.tot-a.tot);
   const worst=items[0];
   const dh=Math.max(220,items.length*34);
@@ -870,17 +870,105 @@ function renderDim(rows,field,label){
          +'</td>'
          +'</tr>'
 
-         // Expanded breakdown row
+         // Expanded breakdown row - rich detail panel
          +'<tr id="dimx-'+i+'" style="display:none">'
          +'<td colspan="7" style="padding:0">'
-         +'<div style="background:#f8f9fc;border-top:1px solid #e2e6f0;border-bottom:2px solid #e2e6f0;padding:18px 20px">'
-         +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">'
-         +'<span style="font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;font-weight:700">Defect breakdown</span>'
-         +'<span style="font-size:10px;color:#8a95b0">·</span>'
-         +'<span style="font-size:11px;font-weight:600;color:#142850">'+esc(o.k)+'</span>'
-         +'<span style="font-size:10px;color:#8a95b0">'+o.n+' samples · '+o.reps+' reports</span>'
+         +'<div style="background:#f8f9fc;border-top:1px solid #e2e6f0;border-bottom:2px solid #142850;padding:20px 22px">'
+
+         // Header
+         +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">'
+         +'<div style="display:flex;align-items:center;gap:10px">'
+         +'<div style="width:10px;height:10px;border-radius:50%;background:'+dotCol+';box-shadow:0 0 0 3px '+dotCol+'33"></div>'
+         +'<span style="font-size:15px;font-weight:700;color:#142850">'+esc(o.k)+'</span>'
+         +'<span style="padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;background:'+dotCol+'18;color:'+dotCol+'">'+o.n+' samples · '+o.reps+' reports</span>'
          +'</div>'
-         +'<div style="display:flex;flex-wrap:wrap;gap:14px 24px">'+chips+'</div>'
+         +'</div>'
+
+         // KPI mini-cards
+         +'<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:18px">'
+         // Major
+         +'<div style="background:#fff;border:1px solid #e2e6f0;border-radius:10px;padding:12px;border-top:3px solid #dc2626">'
+         +'<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:6px">Avg Major</div>'
+         +'<div style="font-family:var(--mono);font-size:20px;font-weight:700;color:#dc2626">'+fmt(o.maj)+'%</div>'
+         +'</div>'
+         // Minor
+         +'<div style="background:#fff;border:1px solid #e2e6f0;border-radius:10px;padding:12px;border-top:3px solid #d97706">'
+         +'<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:6px">Avg Minor</div>'
+         +'<div style="font-family:var(--mono);font-size:20px;font-weight:700;color:#d97706">'+fmt(o.min)+'%</div>'
+         +'</div>'
+         // Total
+         +'<div style="background:#fff;border:1px solid #e2e6f0;border-radius:10px;padding:12px;border-top:3px solid #142850">'
+         +'<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:6px">Avg Total</div>'
+         +'<div style="font-family:var(--mono);font-size:20px;font-weight:800;color:#142850">'+fmt(o.tot)+'%</div>'
+         +'</div>'
+         // Score breakdown
+         +(()=>{var sc=groupBy(o.rs||[],function(r){var s=r.sample_score||'';return s.toUpperCase()||'—';});var scKeys=Object.keys(sc).sort();var scTotal=o.n;
+           return '<div style="background:#fff;border:1px solid #e2e6f0;border-radius:10px;padding:12px;border-top:3px solid #7c3aed">'
+             +'<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:6px">QC Scores</div>'
+             +'<div style="display:flex;flex-direction:column;gap:3px">'
+             +scKeys.map(function(k){var c=({GREEN:'#16a34a',AMBER:'#d97706',PASS:'#2563eb',WHITE:'#94a3b8'})[k]||'#64748b';return '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:10px;font-weight:600;color:'+c+'">'+k+'</span><span style="font-family:var(--mono);font-size:10px;font-weight:700;color:'+c+'">'+sc[k].length+'</span></div>';}).join('')
+             +'</div></div>';
+         })()
+         // Containers
+         +(()=>{var ctrs=new Set((o.rs||[]).map(function(r){return r.container_number||'';})).size;
+           return '<div style="background:#fff;border:1px solid #e2e6f0;border-radius:10px;padding:12px;border-top:3px solid #0891b2">'
+             +'<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:6px">Containers</div>'
+             +'<div style="font-family:var(--mono);font-size:20px;font-weight:700;color:#0891b2">'+ctrs+'</div>'
+             +'</div>';
+         })()
+         // Varieties
+         +(()=>{var vars=groupBy(o.rs||[],function(r){return r.variety||'';});var topV=Object.keys(vars).sort(function(a,b){return vars[b].length-vars[a].length;}).slice(0,3);
+           return '<div style="background:#fff;border:1px solid #e2e6f0;border-radius:10px;padding:12px;border-top:3px solid #16a34a">'
+             +'<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8a95b0;margin-bottom:6px">Top Varieties</div>'
+             +'<div style="display:flex;flex-direction:column;gap:3px">'
+             +topV.map(function(v){return '<div style="font-size:10px;font-weight:600;color:#0e1f3d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(v)+'</div>';}).join('')
+             +'</div></div>';
+         })()
+         +'</div>'
+
+         // Defect reasons - split major / minor
+         +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">'
+
+         // Major defects
+         +'<div>'
+         +'<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#dc2626;margin-bottom:10px;display:flex;align-items:center;gap:5px"><i class="ti ti-alert-triangle" style="font-size:11px"></i> Major Defects</div>'
+         +'<div style="display:flex;flex-direction:column;gap:8px">'
+         +o.reasons.filter(rr=>rr.sev==='maj'&&rr.v>0).sort((a,b)=>b.v-a.v).map(rr=>{
+           var pct=rr.v/rmax*100;
+           return '<div>'
+             +'<div style="display:flex;justify-content:space-between;margin-bottom:3px">'
+             +'<span style="font-size:11px;color:#4a5778;font-weight:500">'+esc(rr.name)+'</span>'
+             +'<span style="font-family:var(--mono);font-size:11px;font-weight:700;color:#dc2626">'+fmt(rr.v)+'%</span>'
+             +'</div>'
+             +'<div style="height:7px;background:#fef2f2;border-radius:4px">'
+             +'<div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#ef4444,#dc2626);border-radius:4px"></div>'
+             +'</div>'
+             +'</div>';
+         }).join('')
+         +(o.reasons.filter(rr=>rr.sev==='maj'&&rr.v>0).length===0?'<div style="font-size:11px;color:#8a95b0;font-style:italic">No major defects</div>':'')
+         +'</div>'
+         +'</div>'
+
+         // Minor defects
+         +'<div>'
+         +'<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#d97706;margin-bottom:10px;display:flex;align-items:center;gap:5px"><i class="ti ti-alert-circle" style="font-size:11px"></i> Minor Defects</div>'
+         +'<div style="display:flex;flex-direction:column;gap:8px">'
+         +o.reasons.filter(rr=>rr.sev==='min'&&rr.v>0).sort((a,b)=>b.v-a.v).map(rr=>{
+           var pct=rr.v/rmax*100;
+           return '<div>'
+             +'<div style="display:flex;justify-content:space-between;margin-bottom:3px">'
+             +'<span style="font-size:11px;color:#4a5778;font-weight:500">'+esc(rr.name)+'</span>'
+             +'<span style="font-family:var(--mono);font-size:11px;font-weight:700;color:#d97706">'+fmt(rr.v)+'%</span>'
+             +'</div>'
+             +'<div style="height:7px;background:#fff7ed;border-radius:4px">'
+             +'<div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#fbbf24,#d97706);border-radius:4px"></div>'
+             +'</div>'
+             +'</div>';
+         }).join('')
+         +(o.reasons.filter(rr=>rr.sev==='min'&&rr.v>0).length===0?'<div style="font-size:11px;color:#8a95b0;font-style:italic">No minor defects</div>':'')
+         +'</div>'
+         +'</div>'
+         +'</div>'
          +'</div>'
          +'</td>'
          +'</tr>';
