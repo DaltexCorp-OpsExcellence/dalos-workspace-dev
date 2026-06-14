@@ -657,8 +657,11 @@ function renderOverview(rows){
     `<div class="qc-insight-item"><div class="qc-insight-icon" style="background:#f0fdf4"><i class="ti ti-sum" style="color:#16a34a"></i></div><div class="qc-insight-text">Overall defect split: <strong>${fmt(aM)}% major</strong> + <strong>${fmt(am)}% minor</strong> = ${fmt(aM+am)}% combined avg per sample.</div></div>`,
   ].filter(Boolean).join('');
 
-  c.innerHTML+=`<div class="qc-insights"><div class="qc-insights-title"><i class="ti ti-bulb" style="color:#DC6428"></i> Auto Insights</div>${insHtml}</div>`
+  // Append insights without destroying canvas elements
+  const _insDiv=document.createElement('div');
+  _insDiv.innerHTML=`<div class="qc-insights"><div class="qc-insights-title"><i class="ti ti-bulb" style="color:#DC6428"></i> Auto Insights</div>${insHtml}</div>`
     +renderAI_section('Ask about overall QC performance','e.g. What is the main quality concern this season?');
+  c.appendChild(_insDiv);
 }
 let HMC='fv';
 function setHM(k,btn){HMC=k;btn.parentElement.querySelectorAll('.cc-btn').forEach(b=>b.classList.toggle('on',b===btn));renderHM(F());}
