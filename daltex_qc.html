@@ -7,10 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" crossorigin="anonymous"></script>
-
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <style>
 :root {
   --navy:#142850;--navy2:#1a3668;--navy3:#0e1f3d;
@@ -246,7 +244,7 @@ input,select,button{font-family:var(--font)}
 .qtabs{display:flex;gap:4px;flex-wrap:wrap}
 .rc-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px}
 @media(max-width:1100px){.rc-grid{grid-template-columns:repeat(2,1fr)}}
-.rc-card{background:#ffffff;border:1px solid #e2e6f0;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(20,40,80,.08)}
+.rc-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:var(--shadow)}
 .rc-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px;display:flex;gap:5px;align-items:center}
 .rc-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px dashed var(--line);font-size:11.5px}
 .rc-row:last-child{border-bottom:none}
@@ -373,8 +371,7 @@ input,select,button{font-family:var(--font)}
 
 </div></div></div>
 
-<script>/* v1781432973 */
-
+<script>
 /* ===== DalOS Analytics — QC Grapes ===== */
 const SB='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
 const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
@@ -471,8 +468,8 @@ function killChip(f){
 
 /* ---------- helpers ---------- */
 function killCharts(){Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}});charts={};}
-function mkChart(id,cfg){const el=document.getElementById(id);if(!el)return;if(charts[id]){try{charts[id].destroy();}catch(e){}}charts[id]=new Chart(el,cfg);}
-if(typeof ChartDataLabels!=="undefined"){try{Chart.register(ChartDataLabels);}catch(e){}}
+if(window.ChartDataLabels){Chart.register(window.ChartDataLabels);Chart.defaults.set('plugins.datalabels',{color:'#334155',font:{family:"'IBM Plex Mono', monospace",size:9,weight:'600'},anchor:'end',align:'end',offset:1,clamp:true,clip:false,formatter:function(v){if(v==null||v==='')return '';var n=+v;if(isNaN(n))return v;if(n===0)return '';return (Math.round(n*100)/100)+'%';},display:function(c){var v=c.dataset.data[c.dataIndex];return v!=null&&+v>0;}});}
+function mkChart(id,cfg){const el=document.getElementById(id);if(!el)return;var ex=Chart.getChart(el);if(ex)ex.destroy();charts[id]=new Chart(el,cfg);}
 function cc(title,sub,body,actions){return '<div class="cc"><div class="cc-header"><div><div class="cc-title">'+title+'</div><div class="cc-sub">'+sub+'</div></div>'+(actions||'')+'</div>'+body+'</div>';}
 function kcard(label,icon,val,sub,extra,bar){return '<div class="kcard fade-in"><div class="kcard-label"><i class="ti '+icon+'"></i>'+label+'</div><div class="kcard-val">'+val+'</div><div class="kcard-sub">'+sub+'</div>'+(extra||'')+'<div class="kcard-bar"><div class="kcard-bar-fill" style="width:'+Math.max(0,Math.min(100,bar||0))+'%"></div></div></div>';}
 function deltaBadge(d,inverse){if(d===null)return '<span style="font-size:10px;color:var(--text3)">--</span>';const good=inverse?d<=0:d>=0;return '<span style="font-size:11px;font-weight:700;font-family:var(--mono);color:'+(good?'#16a34a':'#dc2626')+'">'+(d>=0?'▲ +':'▼ ')+Math.abs(d).toFixed(2)+' pp</span>';}
@@ -491,55 +488,7 @@ document.getElementById('qtabs').addEventListener('click',e=>{
   S.tab=t.dataset.tab;apply();
 });
 function goTab(t){document.querySelectorAll('#qtabs .tab').forEach(x=>x.classList.toggle('on',x.dataset.tab===t));S.tab=t;window.scrollTo({top:0,behavior:'smooth'});apply();}
-function drillTo(el){
-  var key=el.dataset.v, field=el.dataset.field, label=el.dataset.tab;
-  var allRows=F();
-  var g={};
-  allRows.forEach(function(r){var k=norm(r[field]);if(k){if(!g[k])g[k]=[];g[k].push(r);}});
-  if(!g[key]||!g[key].length) return;
-  var rs=g[key];
-  var dMaj=r2(avg(rs,function(r){return num(r.major_total);}));
-  var dMin=r2(avg(rs,function(r){return num(r.minor_total);}));
-  var dTot=r2(avg(rs,function(r){return num(r.grand_total);}));
-  var reps=new Set(rs.map(function(r){return r.report_id;})).size;
-  var topDefs=ALLDEF.map(function(d){return {n:d[1],sev:d[2],v:r2(avg(rs,function(r){return num(r[d[0]]);}))}}).sort(function(a,b){return b.v-a.v;}).filter(function(d){return d.v>0;}).slice(0,8);
-  var maxDef=topDefs[0]?topDefs[0].v:1;
-  var existing=document.getElementById('qc-drill');
-  if(existing) existing.remove();
-  var panel=document.createElement('div');
-  panel.id='qc-drill';
-  panel.style.cssText='background:#fff;border:2px solid #142850;border-radius:12px;padding:20px;margin-top:16px;box-shadow:0 4px 24px rgba(20,40,80,.15)';
-  var hdr=document.createElement('div');
-  hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #e2e6f0';
-  hdr.innerHTML='<div style="font-size:15px;font-weight:700;color:#142850">'+esc(key)+' — Deep Dive</div>';
-  var cb=document.createElement('button');
-  cb.textContent='✕ Close';
-  cb.style.cssText='background:#dc2626;color:#fff;border:none;border-radius:8px;padding:7px 18px;font-size:12px;font-weight:700;cursor:pointer';
-  cb.onclick=function(){document.getElementById('qc-drill').remove();};
-  hdr.appendChild(cb);
-  panel.appendChild(hdr);
-  var kp=document.createElement('div');
-  kp.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px';
-  kp.innerHTML='<div style="background:#fef2f2;border-radius:8px;padding:14px;border-left:3px solid #dc2626"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#8a95b0;margin-bottom:6px">Avg Major</div><div style="font-size:24px;font-weight:700;color:#dc2626;font-family:monospace">'+dMaj+'%</div><div style="font-size:10px;color:#8a95b0;margin-top:3px">'+rs.length+' samples</div></div>'
-    +'<div style="background:#fff7ed;border-radius:8px;padding:14px;border-left:3px solid #d97706"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#8a95b0;margin-bottom:6px">Avg Minor</div><div style="font-size:24px;font-weight:700;color:#d97706;font-family:monospace">'+dMin+'%</div><div style="font-size:10px;color:#8a95b0;margin-top:3px">avg per sample</div></div>'
-    +'<div style="background:#f4f6fb;border-radius:8px;padding:14px;border-left:3px solid #142850"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#8a95b0;margin-bottom:6px">Total</div><div style="font-size:24px;font-weight:700;color:#142850;font-family:monospace">'+dTot+'%</div><div style="font-size:10px;color:#8a95b0;margin-top:3px">'+reps+' reports</div></div>';
-  panel.appendChild(kp);
-  if(topDefs.length){
-    var ttl=document.createElement('div');
-    ttl.style.cssText='font-size:11px;font-weight:700;color:#142850;margin-bottom:10px';
-    ttl.textContent='Top Defect Breakdown';
-    panel.appendChild(ttl);
-    topDefs.forEach(function(d){
-      var pct=Math.min(d.v/maxDef*100,100);
-      var row=document.createElement('div');
-      row.style.cssText='margin-bottom:8px';
-      row.innerHTML='<div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;font-weight:600;color:#142850">'+esc(d.n)+'</span><span style="font-size:11px;font-weight:700;color:'+(d.sev==='maj'?'#dc2626':'#d97706')+';font-family:monospace">'+d.v.toFixed(2)+'%</span></div><div style="height:7px;background:#e2e6f0;border-radius:4px"><div style="width:'+pct+'%;height:100%;border-radius:4px;background:'+(d.sev==='maj'?'#dc2626':'#d97706')+'"></div></div>';
-      panel.appendChild(row);
-    });
-  }
-  document.getElementById('tab-content').appendChild(panel);
-  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
-}
+function drillTo(el){var tab=el.dataset.tab,field=el.dataset.field,val=el.dataset.v;var ms=document.querySelector('.ms[data-f="'+field+'"]');if(ms){S[field]=[val];ms.querySelectorAll('input[data-v]').forEach(i=>{i.checked=(i.dataset.v===val);});var a=ms.querySelector('.ms-all input');if(a)a.checked=false;syncMS(ms,field);}goTab(tab);}
 function backBtn(){return '<button class="xbtn" style="margin-bottom:12px" onclick="goTab(\'ov\')"><i class="ti ti-arrow-left"></i> Back to Overview</button>';}
 
 function apply(){renderChips();killCharts();const rows=F();
@@ -592,19 +541,19 @@ function renderOverview(rows){
   // major/minor breakdown
   const majAvgs=MAJ.map(d=>r2(avg(rows,r=>num(r[d[0]]))));
   const minAvgs=MIN.map(d=>r2(avg(rows,r=>num(r[d[0]]))));
-  mkChart('ch-maj',{type:'bar',data:{labels:MAJ.map(d=>d[1]),datasets:[{data:majAvgs,backgroundColor:MAJC,borderRadius:4,barThickness:18,datalabels:{display:true,anchor:'end',align:'end',formatter:function(v){return v>0?v.toFixed(2)+'%':null;},font:{size:10,weight:'700'},color:'#dc2626',clip:false}}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{}},scales:{x:{ticks:{font:{family:"'IBM Plex Mono'",size:10},callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{autoSkip:false,font:{size:10.5,weight:'500'}},grid:{display:false}}},layout:{padding:{right:65}}}});
-  mkChart('ch-min',{type:'bar',data:{labels:MIN.map(d=>d[1]),datasets:[{data:minAvgs,backgroundColor:MINC,borderRadius:4,barThickness:18,datalabels:{display:true,anchor:'end',align:'end',formatter:function(v){return v>0?v.toFixed(2)+'%':null;},font:{size:10,weight:'700'},color:'#d97706',clip:false}}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{}},scales:{x:{ticks:{font:{family:"'IBM Plex Mono'",size:10},callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{autoSkip:false,font:{size:10.5,weight:'500'}},grid:{display:false}}},layout:{padding:{right:65}}}});
+  mkChart('ch-maj',{type:'bar',data:{labels:MAJ.map(d=>d[1]),datasets:[{data:majAvgs,backgroundColor:MAJC,borderRadius:4,barThickness:18}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{family:"'IBM Plex Mono'",size:10}},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{autoSkip:false,font:{size:10.5,weight:'500'}},grid:{display:false}}}}});
+  mkChart('ch-min',{type:'bar',data:{labels:MIN.map(d=>d[1]),datasets:[{data:minAvgs,backgroundColor:MINC,borderRadius:4,barThickness:18}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{family:"'IBM Plex Mono'",size:10}},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{autoSkip:false,font:{size:10.5,weight:'500'}},grid:{display:false}}}}});
   // pareto
   const par=ALLDEF.map(d=>({n:d[1],sev:d[2],v:avg(rows,r=>num(r[d[0]]))})).sort((a,b)=>b.v-a.v);
   const tot=par.reduce((s,p)=>s+p.v,0)||1;let cum=0;const cumArr=par.map(p=>{cum+=p.v;return r2(cum/tot*100);});
   mkChart('ch-pareto',{data:{labels:par.map(p=>p.n),datasets:[
     {type:'bar',data:par.map(p=>r2(p.v)),backgroundColor:par.map(p=>p.sev==='maj'?MAJC:MINC),borderRadius:3,yAxisID:'y'},
     {type:'line',data:cumArr,borderColor:'#142850',backgroundColor:'#142850',pointRadius:3,tension:.3,yAxisID:'y1'}]},
-   options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.type==='line'?(' cumulative '+c.raw+'%'):(' avg '+c.raw+'%')}}},
+   options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{display:c=>c.dataset.type!=='line'&&+c.dataset.data[c.dataIndex]>0,anchor:'end',align:'end',offset:2,font:{family:"'IBM Plex Mono'",size:8,weight:'600'},color:'#475569',formatter:v=>(Math.round(v*100)/100)+'%'},tooltip:{callbacks:{label:c=>c.dataset.type==='line'?(' cumulative '+c.raw+'%'):(' avg '+c.raw+'%')}}},
     scales:{x:{ticks:{font:{size:9},maxRotation:45,minRotation:45},grid:{display:false}},y:{title:{display:true,text:'avg %',font:{size:9}},grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:9}}},y1:{position:'right',min:0,max:100,grid:{display:false},ticks:{callback:v=>v+'%',font:{family:"'IBM Plex Mono'",size:9}}}}}});
   // score donut
   const sg=groupBy(rows,r=>norm(r.sample_score)||'(none)');const sk=Object.keys(sg).sort((a,b)=>sg[b].length-sg[a].length);
-  mkChart('ch-score',{type:'doughnut',data:{labels:sk,datasets:[{data:sk.map(k=>sg[k].length),backgroundColor:sk.map((k,i)=>({GREEN:'#16a34a',AMBER:'#d97706',PASS:'#2563eb',WHITE:'#94a3b8',BLUE:'#0891b2'})[k]||PAL[i%PAL.length]),borderWidth:2,borderColor:'#fff',datalabels:{display:true,color:'#fff',font:{size:11,weight:'700'},formatter:function(v,ctx){var t=ctx.dataset.data.reduce(function(a,b){return a+b;},0);return Math.round(v/t*100)>8?Math.round(v/t*100)+'%':null;}},datalabels:{display:true,color:'#fff',font:{size:11,weight:'700'},formatter:function(v,ctx){var t=ctx.dataset.data.reduce(function(a,b){return a+b;},0);var p=Math.round(v/t*100);return p>8?p+'%':null;}}}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false}}}});
+  mkChart('ch-score',{type:'doughnut',data:{labels:sk,datasets:[{data:sk.map(k=>sg[k].length),backgroundColor:sk.map((k,i)=>({GREEN:'#16a34a',AMBER:'#d97706',PASS:'#2563eb',WHITE:'#94a3b8',BLUE:'#0891b2'})[k]||PAL[i%PAL.length]),borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false},datalabels:{color:'#fff',textStrokeColor:'rgba(0,0,0,.4)',textStrokeWidth:2,anchor:'center',align:'center',font:{family:"'IBM Plex Mono'",size:11,weight:'700'},formatter:v=>(+v>0?v:''),display:c=>+c.dataset.data[c.dataIndex]>0}}}});
   document.getElementById('score-leg').innerHTML=sk.map((k,i)=>'<div class="cl-item"><div class="cl-rect" style="background:'+(({GREEN:'#16a34a',AMBER:'#d97706',PASS:'#2563eb',WHITE:'#94a3b8',BLUE:'#0891b2'})[k]||PAL[i%PAL.length])+'"></div>'+esc(k)+' <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">'+sg[k].length+'</span></div>').join('');
   renderHM(rows);
   // root cause
@@ -657,39 +606,23 @@ function renderDim(rows,field,label){
    +cc('Major vs Minor by '+label,'avg % per sample · stacked','<div style="position:relative;height:'+dh+'px" id="dim-bar-wrap"><canvas id="ch-dim"></canvas></div>')
    +cc('Defect Reason Mix by '+label,'share of avg total defects','<div style="position:relative;height:'+dh+'px" id="dim-mix-wrap"><canvas id="ch-mix"></canvas></div>')
    +'</div>'
-   +cc('Trend by '+({daily:'Day',weekly:'Week',monthly:'Month',seasonal:'Season'})[S.gran],'avg total defect % · top 5 '+label.toLowerCase()+'s','<div style="position:relative;height:280px;min-height:280px"><canvas id="ch-trend"></canvas></div>')
+   +cc('Trend by '+({daily:'Day',weekly:'Week',monthly:'Month',seasonal:'Season'})[S.gran],'avg total defect % · top 5 '+label.toLowerCase()+'s','<div style="position:relative;height:240px"><canvas id="ch-trend"></canvas></div>')
    +'<div style="height:12px"></div>'
    +cc(label+' Detail','avg % per sample · zeros included','<div class="qc-table-wrap"><table class="tbl"><thead><tr><th>'+label+'</th><th>Samples</th><th>Inspections</th><th>Major %</th><th>Minor %</th><th>Total %</th><th>Top Defect</th>'+ALLDEF.map(d=>'<th title="'+d[1]+'" style="font-size:9px">'+d[1].split(' ')[0]+'</th>').join('')+'</tr></thead><tbody>'
      +items.map(o=>'<tr><td style="font-weight:600">'+esc(o.k)+'</td><td class="mono">'+o.n+'</td><td class="mono">'+o.reps+'</td><td class="mono sev-maj">'+fmt(o.maj)+'</td><td class="mono sev-min">'+fmt(o.min)+'</td><td class="mono" style="font-weight:700">'+fmt(o.tot)+'</td><td style="font-size:10.5px">'+esc(o.top)+'</td>'
        +ALLDEF.map(d=>{const v=avg(g[o.k],r=>num(r[d[0]]));return '<td class="mono" style="font-size:10px;'+(v>0?'':'color:var(--text3)')+'">'+fmt(v,2)+'</td>';}).join('')+'</tr>').join('')
      +'</tbody></table></div>');
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
-  mkChart('ch-dim',{type:'bar',
-    data:{labels:items.map(o=>o.k),datasets:[
-      {label:'Major %',data:items.map(o=>r2(o.maj)),backgroundColor:MAJC,borderRadius:4,barThickness:14,
-        datalabels:{display:true,anchor:'end',align:'end',
-          formatter:function(v){return v>0?v.toFixed(2)+'%':null;},
-          font:{size:10,weight:'700'},color:'#dc2626',clip:false}},
-      {label:'Minor %',data:items.map(o=>r2(o.min)),backgroundColor:MINC,borderRadius:4,barThickness:14,
-        datalabels:{display:true,anchor:'end',align:'end',
-          formatter:function(v){return v>0?v.toFixed(2)+'%':null;},
-          font:{size:10,weight:'600'},color:'#d97706',clip:false}}
-    ]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}},
-        datalabels:{},
-        tooltip:{callbacks:{label:function(c){return ' '+c.dataset.label+': '+c.raw.toFixed(2)+'%';}}}},
-      scales:{
-        x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:10},callback:function(v){return v+'%';}}},
-        y:{grid:{display:false},ticks:{autoSkip:false,font:{size:11,weight:'500'}}}
-      },layout:{padding:{right:70}}},
-    plugins:[ChartDataLabels]});
-  mkChart('ch-mix',{type:'bar',data:{labels:items.map(o=>o.k),datasets:ALLDEF.map((d,i)=>({label:d[1],data:items.map(o=>r2(avg(g[o.k],r=>num(r[d[0]])))),datalabels:{display:true,anchor:"end",align:"end",formatter:function(v){return v>0?v.toFixed(1)+"%":null;},font:{size:9,weight:"600"},color:function(ctx){return ctx.dataset.backgroundColor.toString().includes("220,38")?'#dc2626':'#d97706';},clip:false},backgroundColor:d[2]==='maj'?['#7f1d1d','#dc2626','#ef4444','#f87171','#fca5a5','#fecaca','#fee2e2'][MAJ.findIndex(m=>m[0]===d[0])]:['#92400e','#d97706','#fbbf24','#fde68a'][MIN.findIndex(m=>m[0]===d[0])],stack:'s',barThickness:16}))},
-   options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+c.raw+'%'}}},scales:{x:{stacked:true,grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:10}}},y:{stacked:true,grid:{display:false},ticks:{autoSkip:false,font:{size:10.5,weight:'500'}}}}}});
+  mkChart('ch-dim',{type:'bar',data:{labels:items.map(o=>o.k),datasets:[
+    {label:'Major',data:items.map(o=>r2(o.maj)),backgroundColor:MAJC,stack:'s',borderRadius:3,barThickness:16},
+    {label:'Minor',data:items.map(o=>r2(o.min)),backgroundColor:MINC,stack:'s',borderRadius:3,barThickness:16}]},
+   options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}},datalabels:{color:'#fff',textStrokeColor:'rgba(0,0,0,.4)',textStrokeWidth:2,anchor:'center',align:'center',font:{family:"'IBM Plex Mono'",size:8,weight:'700'},formatter:v=>(+v>=0.3?(Math.round(v*100)/100):''),display:c=>+c.dataset.data[c.dataIndex]>=0.3}},scales:{x:{stacked:true,grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:10}}},y:{stacked:true,grid:{display:false},ticks:{autoSkip:false,font:{size:10.5,weight:'500'}}}}}});
+  mkChart('ch-mix',{type:'bar',data:{labels:items.map(o=>o.k),datasets:ALLDEF.map((d,i)=>({label:d[1],data:items.map(o=>r2(avg(g[o.k],r=>num(r[d[0]])))),backgroundColor:d[2]==='maj'?['#7f1d1d','#dc2626','#ef4444','#f87171','#fca5a5','#fecaca','#fee2e2'][MAJ.findIndex(m=>m[0]===d[0])]:['#92400e','#d97706','#fbbf24','#fde68a'][MIN.findIndex(m=>m[0]===d[0])],stack:'s',barThickness:16}))},
+   options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{color:'#fff',textStrokeColor:'rgba(0,0,0,.4)',textStrokeWidth:2,anchor:'center',align:'center',font:{family:"'IBM Plex Mono'",size:8,weight:'700'},formatter:v=>(+v>=1?(Math.round(v*10)/10):''),display:c=>+c.dataset.data[c.dataIndex]>=1},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+c.raw+'%'}}},scales:{x:{stacked:true,grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:10}}},y:{stacked:true,grid:{display:false},ticks:{autoSkip:false,font:{size:10.5,weight:'500'}}}}}});
   const periods=[...new Set(rows.map(perKey))].sort();
   const top5=items.slice(0,5).map(o=>o.k);
   mkChart('ch-trend',{type:'line',data:{labels:periods,datasets:top5.map((k,i)=>({label:k,data:periods.map(p=>{const rs=g[k].filter(r=>perKey(r)===p);return rs.length?r2(avg(rs,r=>num(r.grand_total))):null;}),borderColor:PAL[i],backgroundColor:PAL[i],spanGaps:true,tension:.3,pointRadius:3}))},
-   options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}},scales:{x:{grid:{display:false},ticks:{font:{family:"'IBM Plex Mono'",size:9}}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:9},callback:v=>v+'%'}}}}});
+   options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}},datalabels:{align:'top',anchor:'center',offset:6,backgroundColor:'rgba(255,255,255,.85)',borderRadius:3,padding:{top:1,bottom:1,left:3,right:3},font:{family:"'IBM Plex Mono'",size:8,weight:'700'},color:c=>c.dataset.borderColor,formatter:v=>(v==null?'':(Math.round(v*100)/100)+'%'),display:c=>c.dataIndex===c.dataset.data.length-1&&c.dataset.data[c.dataIndex]!=null}},scales:{x:{grid:{display:false},ticks:{font:{family:"'IBM Plex Mono'",size:9}}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:9},callback:v=>v+'%'}}}}});
   }));
 }
 
@@ -717,9 +650,9 @@ function renderWeekly(rows){
     {type:'bar',label:'Major',data:majS,backgroundColor:MAJC,borderRadius:3,order:2},
     {type:'bar',label:'Minor',data:minS,backgroundColor:MINC,borderRadius:3,order:2},
     {type:'line',label:'Rolling Major (3)',data:roll,borderColor:'#142850',backgroundColor:'#142850',tension:.3,pointRadius:3,order:1}]},
-   options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}},scales:{x:{grid:{display:false},ticks:{font:{family:"'IBM Plex Mono'",size:9}}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{callback:v=>v+'%',font:{family:"'IBM Plex Mono'",size:9}}}}}});
+   options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}},datalabels:{display:c=>c.dataset.type!=='line'&&+c.dataset.data[c.dataIndex]>0,anchor:'end',align:'end',offset:2,font:{family:"'IBM Plex Mono'",size:8,weight:'600'},color:'#475569',formatter:v=>(Math.round(v*100)/100)+'%'}},scales:{x:{grid:{display:false},ticks:{font:{family:"'IBM Plex Mono'",size:9}}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{callback:v=>v+'%',font:{family:"'IBM Plex Mono'",size:9}}}}}});
   const mkReason=(id,defs,pal)=>mkChart(id,{type:'line',data:{labels:keys,datasets:defs.map((d,i)=>({label:d[1],data:keys.map(k=>r2(avg(g[k],r=>num(r[d[0]])))),borderColor:pal[i],backgroundColor:pal[i],tension:.3,pointRadius:2.5}))},
-   options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:9,font:{size:9}}}},scales:{x:{grid:{display:false},ticks:{font:{family:"'IBM Plex Mono'",size:9}}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{callback:v=>v+'%',font:{family:"'IBM Plex Mono'",size:9}}}}}});
+   options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:9,font:{size:9}}},datalabels:{align:'top',anchor:'center',offset:6,backgroundColor:'rgba(255,255,255,.85)',borderRadius:3,padding:{top:1,bottom:1,left:3,right:3},font:{family:"'IBM Plex Mono'",size:8,weight:'700'},color:c=>c.dataset.borderColor,formatter:v=>(v==null?'':(Math.round(v*100)/100)+'%'),display:c=>c.dataIndex===c.dataset.data.length-1&&c.dataset.data[c.dataIndex]!=null}},scales:{x:{grid:{display:false},ticks:{font:{family:"'IBM Plex Mono'",size:9}}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{callback:v=>v+'%',font:{family:"'IBM Plex Mono'",size:9}}}}}});
   mkReason('ch-wmaj',MAJ,['#7f1d1d','#dc2626','#ef4444','#f97316','#db2777','#9333ea','#0e7490']);
   mkReason('ch-wmin',MIN,['#92400e','#d97706','#fbbf24','#65a30d']);
 }
