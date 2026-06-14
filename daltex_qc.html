@@ -162,11 +162,11 @@ input,select,button{font-family:var(--font)}
 .insight-text strong{color:var(--text);font-weight:600}
 
 /* DRILL PANEL */
-.drill{background:var(--white);border:1px solid var(--navy);border-radius:var(--r2);padding:24px;box-shadow:var(--shadow2);margin-top:12px;display:none}
+.drill{background:#fff;border:2px solid #142850;border-radius:12px;padding:20px;box-shadow:0 4px 20px rgba(20,40,80,.15);margin-top:16px;display:none}
 .drill.vis{display:block}
-.drill-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.drill-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:2px solid #e2e6f0}
 .drill-title{font-size:14px;font-weight:700;color:var(--navy)}
-.drill-close{background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px;display:flex;align-items:center}
+.drill-close{background:#f4f6fb;border:1px solid #e2e6f0;border-radius:8px;cursor:pointer;color:#142850;font-size:12px;font-weight:600;padding:6px 14px;display:flex;align-items:center;gap:5px}
 .drill-grid{display:block}
 
 /* HEATMAP */
@@ -887,7 +887,7 @@ function renderDim(rows,field,label){
     panel.innerHTML=`
       <div class="drill-header">
         <div class="drill-title">${esc(key)} — ${label} Deep Dive</div>
-        <button class="drill-close" onclick="document.getElementById('drill-panel-qc').remove()"><i class="ti ti-x"></i></button>
+        <button class="drill-close" onclick="document.getElementById('drill-panel-qc').remove()">✕ Close</button>
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
         <div style="background:#fef2f2;border-radius:10px;padding:14px;border-left:4px solid #dc2626">
