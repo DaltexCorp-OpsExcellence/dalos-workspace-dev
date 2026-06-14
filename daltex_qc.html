@@ -351,7 +351,6 @@ input,select,button{font-family:var(--font)}
   <div class="tab" data-tab="client"><i class="ti ti-users"></i>Clients</div>
   <div class="tab" data-tab="sub_client"><i class="ti ti-user-circle"></i>Sub Clients</div>
   <div class="tab" data-tab="packhouse"><i class="ti ti-home-cog"></i>Packhouse</div>
-  <div class="tab" data-tab="weekly"><i class="ti ti-calendar-stats"></i>Weekly</div>
   <div class="tab" data-tab="data"><i class="ti ti-database"></i>Data Extraction</div>
 </div>
 
@@ -396,7 +395,8 @@ input,select,button{font-family:var(--font)}
 
 </div></div></div>
 
-<script>
+<script>/* v1781446313 */
+
 /* ===== DalOS Analytics — QC Grapes ===== */
 const SB='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
 const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
@@ -545,8 +545,87 @@ function escClose(e){if(e.key==='Escape')closeItem();}
 function closeItem(){var h=document.getElementById('qm-host');if(h)h.remove();document.body.style.overflow='';document.removeEventListener('keydown',escClose);}
 function viewItemTab(){if(!__ITEM)return;var field=__ITEM.field,val=__ITEM.val,tab=__ITEM.tab;var ms=document.querySelector('.ms[data-f="'+field+'"]');if(ms){S[field]=[val];ms.querySelectorAll('input[data-v]').forEach(i=>{i.checked=(i.dataset.v===val);});var a=ms.querySelector('.ms-all input');if(a)a.checked=false;syncMS(ms,field);}else{S[field]=[val];}closeItem();goTab(tab);}
 
+
+/* ---------- AUTO INSIGHTS + AI HELPERS ---------- */
+function renderInsightsDim(rows, items, label){
+  if(!items||!items.length) return document.createElement('div');
+  const worst=items[0], best=items[items.length-1];
+  const avgMaj=avg(rows,function(r){return num(r.major_total);});
+  const aboveAvg=items.filter(function(i){return i.maj>avgMaj;});
+  const declining=items.filter(function(i){return i.tot>3;});
+
+  function ins(bg,icon,color,html){
+    var d=document.createElement('div');
+    d.style.cssText='display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #f0f2f7';
+    d.innerHTML='<div style="width:30px;height:30px;border-radius:7px;background:'+bg+';display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti '+icon+'" style="font-size:13px;color:'+color+'"></i></div>'
+      +'<div style="font-size:12px;color:#4a5778;line-height:1.5;flex:1">'+html+'</div>';
+    return d;
+  }
+
+  var wrap=document.createElement('div');
+  wrap.style.cssText='background:#fff;border:1px solid #e2e6f0;border-radius:12px;padding:18px;margin-top:16px;box-shadow:0 2px 8px rgba(20,40,80,.06)';
+  wrap.innerHTML='<div style="font-size:13px;font-weight:700;color:#142850;margin-bottom:12px;display:flex;align-items:center;gap:6px"><i class="ti ti-bulb" style="color:#DC6428"></i> Auto Insights</div>';
+
+  if(worst) wrap.appendChild(ins('#fef2f2','ti-alert-triangle','#dc2626','<strong>'+esc(worst.k)+'</strong> has the highest defect rate: <strong>'+fmt(worst.tot)+'%</strong> total ('+fmt(worst.maj)+'% major, '+fmt(worst.min)+'% minor) across '+worst.n+' samples.'));
+  if(best&&items.length>1) wrap.appendChild(ins('#f0fdf4','ti-check','#16a34a','<strong>'+esc(best.k)+'</strong> is the best performer at <strong>'+fmt(best.tot)+'%</strong> total defects — '+Math.round((worst.tot-best.tot)/worst.tot*100)+'% lower than the worst.'));
+  if(aboveAvg.length) wrap.appendChild(ins('#fff7ed','ti-trending-up','#d97706','<strong>'+aboveAvg.length+' '+label.toLowerCase()+(aboveAvg.length>1?'s':'')+' above average</strong> major rate ('+fmt(avgMaj)+'%): '+aboveAvg.slice(0,3).map(function(i){return esc(i.k);}).join(', ')+(aboveAvg.length>3?' and '+(aboveAvg.length-3)+' more':'')+'.'));
+  if(items.length>1) wrap.appendChild(ins('#f4f6fb','ti-arrows-diff','#142850','Performance spread: <strong>'+fmt(best.tot)+'%</strong> ('+esc(best.k)+') to <strong>'+fmt(worst.tot)+'%</strong> ('+esc(worst.k)+') — a <strong>'+fmt(worst.tot-best.tot)+'%</strong> gap.'));
+
+  // Top defect insight
+  var topDef=ALLDEF.map(function(d){return {n:d[1],sev:d[2],v:avg(rows,function(r){return num(r[d[0]]);})};}).sort(function(a,b){return b.v-a.v;})[0];
+  if(topDef&&topDef.v>0) wrap.appendChild(ins(topDef.sev==='maj'?'#fef2f2':'#fff7ed',topDef.sev==='maj'?'ti-virus':'ti-alert-circle',topDef.sev==='maj'?'#dc2626':'#d97706','Leading defect reason: <strong>'+esc(topDef.n)+'</strong> averaging <strong>'+fmt(topDef.v)+'%</strong> across all samples.'));
+
+  var lastChild=wrap.lastElementChild;
+  if(lastChild) lastChild.style.borderBottom='none';
+  return wrap;
+}
+
+function renderAI(placeholder, chips){
+  var uid='ai'+Math.floor(Math.random()*99999);
+  var wrap=document.createElement('div');
+  wrap.style.cssText='background:#fff;border:1px solid #e2e6f0;border-radius:12px;padding:18px;margin-top:12px;box-shadow:0 2px 8px rgba(20,40,80,.06)';
+  wrap.innerHTML='<div style="font-size:13px;font-weight:700;color:#142850;margin-bottom:4px;display:flex;align-items:center;gap:6px"><i class="ti ti-sparkles" style="color:#DC6428"></i> AI Analyst</div>'
+    +'<div style="font-size:11px;color:#8a95b0;margin-bottom:10px">'+placeholder+'</div>'
+    +'<div style="display:flex;gap:8px;margin-bottom:10px">'
+    +'<input id="'+uid+'-q" type="text" placeholder="Ask a question about this data…" style="flex:1;padding:8px 12px;border:1px solid #e2e6f0;border-radius:8px;font-size:12px;color:#0e1f3d;outline:none;font-family:inherit">'
+    +'<button onclick="askQC(\''+uid+'\')" style="padding:8px 16px;background:#142850;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Ask</button>'
+    +'</div>'
+    +(chips&&chips.length?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'+chips.map(function(c){return '<button onclick="setQ(\''+uid+'\',\''+c+'\')" style="padding:4px 10px;background:#f4f6fb;border:1px solid #e2e6f0;border-radius:20px;font-size:11px;cursor:pointer;color:#4a5778">'+c+'</button>';}).join('')+'</div>':'')
+    +'<div id="'+uid+'-thinking" style="display:none;font-size:11px;color:#8a95b0;padding:4px 0">Analysing…</div>'
+    +'<div id="'+uid+'-ans" style="display:none;font-size:12px;color:#4a5778;line-height:1.6;padding:10px;background:#f4f6fb;border-radius:8px;border:1px solid #e2e6f0;margin-top:6px"></div>';
+  setTimeout(function(){
+    var el=document.getElementById(uid+'-q');
+    if(el) el.addEventListener('keydown',function(e){if(e.key==='Enter')askQC(uid);});
+  },100);
+  return wrap;
+}
+
+function setQ(uid,q){var el=document.getElementById(uid+'-q');if(el){el.value=q;askQC(uid);}}
+
+async function askQC(uid){
+  var q=document.getElementById(uid+'-q')&&document.getElementById(uid+'-q').value.trim();
+  if(!q) return;
+  var tEl=document.getElementById(uid+'-thinking');
+  var aEl=document.getElementById(uid+'-ans');
+  if(tEl) tEl.style.display='block';
+  if(aEl) aEl.style.display='none';
+  var rows=F();
+  var ctx='Daltex QC data. '+rows.length+' samples. Avg major: '+fmt(avg(rows,function(r){return num(r.major_total);}))+'%. Avg minor: '+fmt(avg(rows,function(r){return num(r.minor_total);}))+'%. Top defects: '+ALLDEF.slice(0,4).map(function(d){return d[1]+': '+fmt(avg(rows,function(r){return num(r[d[0]]);}))+'%';}).join(', ')+'.';
+  try{
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,
+        system:'You are a QC analyst for Daltex grapes. Values are percentages. Be concise: 2-4 sentences with numbers. Plain text only.',
+        messages:[{role:'user',content:ctx+' Question: '+q}]})});
+    var d=await resp.json();
+    if(aEl){aEl.textContent=d.content&&d.content[0]?d.content[0].text:'No response.';aEl.style.display='block';}
+  }catch(e){
+    if(aEl){aEl.textContent='AI requires internet connection.';aEl.style.display='block';}
+  }finally{if(tEl) tEl.style.display='none';}
+}
+
 function apply(){renderChips();killCharts();const rows=F();
-  const fn={ov:renderOverview,weekly:renderWeekly,data:renderData}[S.tab];
+  const fn={ov:renderOverview,data:renderData}[S.tab];
   if(fn)fn(rows);else renderDim(rows,DIMS[S.tab][0],DIMS[S.tab][1]);
   updateSub(rows);
 }
@@ -620,6 +699,30 @@ function renderOverview(rows){
   const topReasons=ALLDEF.map(d=>({n:d[1],sev:d[2],v:avg(rows,r=>num(r[d[0]]))})).sort((a,b)=>b.v-a.v).slice(0,5);
   rcHtml+='<div class="rc-card"><div class="rc-title"><i class="ti ti-list-numbers"></i>Top Defect Reasons</div>'+topReasons.map(t=>'<div class="rc-row"><span class="rc-name">'+esc(t.n)+'</span><span class="rc-val '+(t.sev==='maj'?'sev-maj':'sev-min')+'">'+fmt(t.v)+'%</span></div>').join('')+'</div>';
   document.getElementById('rc-grid').innerHTML=rcHtml;
+
+  // ── AUTO INSIGHTS ──
+  var worstFarm=Object.entries(groupBy(rows,function(r){return r.sample_farm||'';})).map(function(e){return {k:e[0],v:avg(e[1],function(r){return num(r.major_total);})};}).filter(function(x){return x.k;}).sort(function(a,b){return b.v-a.v;})[0];
+  var worstVar=Object.entries(groupBy(rows,function(r){return r.variety||'';})).map(function(e){return {k:e[0],v:avg(e[1],function(r){return num(r.major_total);})};}).filter(function(x){return x.k;}).sort(function(a,b){return b.v-a.v;})[0];
+  var ovMaj=avg(rows,function(r){return num(r.major_total);}),ovMin=avg(rows,function(r){return num(r.minor_total);});
+  var amberCount=rows.filter(function(r){var sc=r.sample_score||'';return sc.toUpperCase()==='AMBER';}).length;
+  var topDefOv=ALLDEF.map(function(d){return {n:d[1],sev:d[2],v:avg(rows,function(r){return num(r[d[0]]);})};}).sort(function(a,b){return b.v-a.v;})[0];
+
+  function insRow(bg,icon,col,html){var d=document.createElement('div');d.style.cssText='display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #f0f2f7';d.innerHTML='<div style="width:30px;height:30px;border-radius:7px;background:'+bg+';display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti '+icon+'" style="font-size:13px;color:'+col+'"></i></div><div style="font-size:12px;color:#4a5778;line-height:1.5;flex:1">'+html+'</div>';return d;}
+
+  var insWrap=document.createElement('div');
+  insWrap.style.cssText='background:#fff;border:1px solid #e2e6f0;border-radius:12px;padding:18px;margin-top:16px;box-shadow:0 2px 8px rgba(20,40,80,.06)';
+  insWrap.innerHTML='<div style="font-size:13px;font-weight:700;color:#142850;margin-bottom:12px;display:flex;align-items:center;gap:6px"><i class="ti ti-bulb" style="color:#DC6428"></i> Auto Insights</div>';
+  if(worstFarm) insWrap.appendChild(insRow('#fef2f2','ti-building','#dc2626','Highest-risk farm: <strong>'+esc(worstFarm.k)+'</strong> at avg <strong>'+fmt(worstFarm.v)+'%</strong> major defects.'));
+  if(worstVar) insWrap.appendChild(insRow('#fff7ed','ti-plant-2','#d97706','Most affected variety: <strong>'+esc(worstVar.k)+'</strong> at avg <strong>'+fmt(worstVar.v)+'%</strong> major defects.'));
+  insWrap.appendChild(insRow('#fef2f2','ti-flag','#dc2626','AMBER score rate: <strong>'+fmt(amberCount/Math.max(rows.length,1)*100,1)+'%</strong> ('+amberCount+' of '+rows.length+' samples).'+(amberCount/Math.max(rows.length,1)>0.2?' ⚠ Review required.':'')));
+  insWrap.appendChild(insRow('#f4f6fb','ti-sum','#142850','Defect split: <strong>'+fmt(ovMaj)+'%</strong> major + <strong>'+fmt(ovMin)+'%</strong> minor = <strong>'+fmt(ovMaj+ovMin)+'%</strong> combined avg.'));
+  if(topDefOv&&topDefOv.v>0) insWrap.appendChild(insRow(topDefOv.sev==='maj'?'#fef2f2':'#fff7ed',topDefOv.sev==='maj'?'ti-virus':'ti-alert-circle',topDefOv.sev==='maj'?'#dc2626':'#d97706','Leading defect: <strong>'+esc(topDefOv.n)+'</strong> at <strong>'+fmt(topDefOv.v)+'%</strong> avg.'));
+  insWrap.lastElementChild.style.borderBottom='none';
+  c.appendChild(insWrap);
+
+  // ── AI ──
+  c.appendChild(renderAI('Ask about overall QC performance',['Which farm has the worst defects?','What is driving the major defect rate?','Compare farms by defect type','Which variety has best quality?']));
+
 }
 let HMC='fv';
 function setHM(k,btn){HMC=k;btn.parentElement.querySelectorAll('.cc-btn').forEach(b=>b.classList.toggle('on',b===btn));renderHM(F());}
@@ -687,6 +790,16 @@ function renderDim(rows,field,label){
    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}},datalabels:{align:'top',anchor:'center',offset:6,backgroundColor:'rgba(255,255,255,.85)',borderRadius:3,padding:{top:1,bottom:1,left:3,right:3},font:{family:"'IBM Plex Mono'",size:8,weight:'700'},color:c=>c.dataset.borderColor,formatter:v=>(v==null?'':(Math.round(v*100)/100)+'%'),display:c=>c.dataIndex===c.dataset.data.length-1&&c.dataset.data[c.dataIndex]!=null}},scales:{x:{grid:{display:false},ticks:{font:{family:"'IBM Plex Mono'",size:9}}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:9},callback:v=>v+'%'}}}}});
   renderDimHM();
   }));
+
+  // ── AUTO INSIGHTS + AI ──
+  c.appendChild(renderInsightsDim(rows,items,label));
+  c.appendChild(renderAI('Ask about '+label.toLowerCase()+' quality data',[
+    'Which '+label.toLowerCase()+' has the worst major defects?',
+    'Compare top 3 by total defects',
+    'What is the main defect reason?',
+    'Which '+label.toLowerCase()+' improved most?'
+  ]));
+
 }
 
 let DHMb='reasons',DHMm='total';
@@ -708,36 +821,7 @@ function renderDimHM(){
   document.getElementById('dimhm-wrap').innerHTML=h;
 }
 
-/* ---------- WEEKLY ---------- */
-function renderWeekly(rows){
-  const c=document.getElementById('tab-content');
-  const g=groupBy(rows,perKey),keys=Object.keys(g).sort();
-  const granLbl=({daily:'Day',weekly:'Week',monthly:'Month',seasonal:'Season'})[S.gran];
-  const majS=keys.map(k=>r2(avg(g[k],r=>num(r.major_total))));
-  const minS=keys.map(k=>r2(avg(g[k],r=>num(r.minor_total))));
-  const roll=majS.map((v,i)=>{const a=majS.slice(Math.max(0,i-2),i+1);return r2(a.reduce((s,x)=>s+x,0)/a.length);});
-  c.innerHTML=backBtn()+
-   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'
-   +cc('Major & Minor Defects by '+granLbl,'avg % per sample · line = 3-period rolling major','<div style="position:relative;height:250px"><canvas id="ch-wk"></canvas></div>')
-   +cc(granLbl+'-over-'+granLbl+' Comparison','avg % with Δ vs previous period','<div class="qc-table-wrap" style="max-height:250px"><table class="tbl"><thead><tr><th>'+granLbl+'</th><th>Samples</th><th>Major %</th><th>Δ Major</th><th>Minor %</th><th>Δ Minor</th></tr></thead><tbody>'
-     +keys.map((k,i)=>{const dM=i?r2(majS[i]-majS[i-1]):null,dm=i?r2(minS[i]-minS[i-1]):null;
-       return '<tr><td class="mono" style="font-weight:600">'+esc(k)+'</td><td class="mono">'+g[k].length+'</td><td class="mono sev-maj">'+fmt(majS[i])+'</td><td>'+deltaBadge(dM,true)+'</td><td class="mono sev-min">'+fmt(minS[i])+'</td><td>'+deltaBadge(dm,true)+'</td></tr>';}).join('')
-     +'</tbody></table></div>')
-   +'</div>'
-   +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'
-   +cc('Major Defect Reasons by '+granLbl,'avg % per sample per reason','<div style="position:relative;height:250px"><canvas id="ch-wmaj"></canvas></div>')
-   +cc('Minor Defect Reasons by '+granLbl,'avg % per sample per reason','<div style="position:relative;height:250px"><canvas id="ch-wmin"></canvas></div>')
-   +'</div>';
-  mkChart('ch-wk',{data:{labels:keys,datasets:[
-    {type:'bar',label:'Major',data:majS,backgroundColor:MAJC,borderRadius:3,order:2},
-    {type:'bar',label:'Minor',data:minS,backgroundColor:MINC,borderRadius:3,order:2},
-    {type:'line',label:'Rolling Major (3)',data:roll,borderColor:'#142850',backgroundColor:'#142850',tension:.3,pointRadius:3,order:1}]},
-   options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}},datalabels:{display:c=>c.dataset.type!=='line'&&+c.dataset.data[c.dataIndex]>0,anchor:'end',align:'end',offset:2,font:{family:"'IBM Plex Mono'",size:8,weight:'600'},color:'#475569',formatter:v=>(Math.round(v*100)/100)+'%'}},scales:{x:{grid:{display:false},ticks:{font:{family:"'IBM Plex Mono'",size:9}}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{callback:v=>v+'%',font:{family:"'IBM Plex Mono'",size:9}}}}}});
-  const mkReason=(id,defs,pal)=>mkChart(id,{type:'line',data:{labels:keys,datasets:defs.map((d,i)=>({label:d[1],data:keys.map(k=>r2(avg(g[k],r=>num(r[d[0]])))),borderColor:pal[i],backgroundColor:pal[i],tension:.3,pointRadius:2.5}))},
-   options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:9,font:{size:9}}},datalabels:{align:'top',anchor:'center',offset:6,backgroundColor:'rgba(255,255,255,.85)',borderRadius:3,padding:{top:1,bottom:1,left:3,right:3},font:{family:"'IBM Plex Mono'",size:8,weight:'700'},color:c=>c.dataset.borderColor,formatter:v=>(v==null?'':(Math.round(v*100)/100)+'%'),display:c=>c.dataIndex===c.dataset.data.length-1&&c.dataset.data[c.dataIndex]!=null}},scales:{x:{grid:{display:false},ticks:{font:{family:"'IBM Plex Mono'",size:9}}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{callback:v=>v+'%',font:{family:"'IBM Plex Mono'",size:9}}}}}});
-  mkReason('ch-wmaj',MAJ,['#7f1d1d','#dc2626','#ef4444','#f97316','#db2777','#9333ea','#0e7490']);
-  mkReason('ch-wmin',MIN,['#92400e','#d97706','#fbbf24','#65a30d']);
-}
+
 
 /* ---------- DATA EXTRACTION ---------- */
 const DATACOLS=[['qc_report_number','Report'],['created_date','Date'],['container_number','Container'],['sample_number','Sample'],['packhouse','Packhouse'],['client','Client'],['sub_client','Sub Client'],['country','Country'],['variety','Variety'],['sample_variety','Sample Variety'],['color','Color'],['sample_farm','Farm'],['sample_plot','Plot'],['sample_score','Score'],['major_total','Major %'],['minor_total','Minor %'],['grand_total','Total %']];
