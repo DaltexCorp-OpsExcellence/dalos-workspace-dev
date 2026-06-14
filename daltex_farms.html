@@ -279,8 +279,8 @@ input,select,button,textarea{font-family:var(--font)}
 </div>
 
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-  <div class="cc"><div class="cc-header"><div><div class="cc-title">Farm &#215; Variety (T)</div><div class="cc-sub">Net weight heatmap</div></div></div><div id="heat-fv"></div></div>
-  <div class="cc"><div class="cc-header"><div><div class="cc-title">Farm &#215; Market (T)</div><div class="cc-sub">Net weight heatmap</div></div></div><div id="heat-fm"></div></div>
+  <div class="cc"><div class="cc-header"><div><div class="cc-title">Farm &#215; Variety</div><div class="cc-sub">Net weight heatmap · <strong id="fv-mode-lbl">Tonnes (T)</strong></div></div><div style="display:flex;gap:5px"><button id="btn-fv-t" onclick="setHeatMode('fv','t',this)" style="padding:4px 12px;border-radius:6px;border:1px solid #e2e6f0;background:#142850;color:#fff;font-size:11px;font-weight:600;cursor:pointer">T</button><button id="btn-fv-pct" onclick="setHeatMode('fv','pct',this)" style="padding:4px 12px;border-radius:6px;border:1px solid #e2e6f0;background:#fff;color:#4a5778;font-size:11px;font-weight:600;cursor:pointer">%</button></div></div><div id="heat-fv"></div></div>
+  <div class="cc"><div class="cc-header"><div><div class="cc-title">Farm &#215; Market</div><div class="cc-sub">Net weight heatmap · <strong id="fm-mode-lbl">Tonnes (T)</strong></div></div><div style="display:flex;gap:5px"><button id="btn-fm-t" onclick="setHeatMode('fm','t',this)" style="padding:4px 12px;border-radius:6px;border:1px solid #e2e6f0;background:#142850;color:#fff;font-size:11px;font-weight:600;cursor:pointer">T</button><button id="btn-fm-pct" onclick="setHeatMode('fm','pct',this)" style="padding:4px 12px;border-radius:6px;border:1px solid #e2e6f0;background:#fff;color:#4a5778;font-size:11px;font-weight:600;cursor:pointer">%</button></div></div><div id="heat-fm"></div></div>
 </div>
 
 <!-- AUTO INSIGHTS -->
@@ -562,22 +562,80 @@ function renderVarTable(r){
   </table>`;
 }
 
+var heatMode={fv:'t',fm:'t'};
+
+function setHeatMode(which,mode,btn){
+  heatMode[which]=mode;
+  var tBtn=document.getElementById('btn-'+which+'-t');
+  var pBtn=document.getElementById('btn-'+which+'-pct');
+  if(tBtn&&pBtn){
+    tBtn.style.background=mode==='t'?'#142850':'#fff';
+    tBtn.style.color=mode==='t'?'#fff':'#4a5778';
+    pBtn.style.background=mode==='pct'?'#142850':'#fff';
+    pBtn.style.color=mode==='pct'?'#fff':'#4a5778';
+  }
+  renderHeatmaps(filt());
+}
+
 function renderHeatmaps(r){
-  const shown=r.map(x=>x.f);
-  const varieties=['Flame','Prime','Arra 30','Star Light','Early Flame','Early Pearl'];
-  const allMkts=[...new Set(FM.map(x=>x.m))].sort((a,b)=>{const ta=FM.filter(x=>x.m===a).reduce((s,r)=>s+r.nw,0),tb=FM.filter(x=>x.m===b).reduce((s,r)=>s+r.nw,0);return tb-ta;});
-  const maxFV=Math.max(...FV.map(d=>d.nw),1), maxFM=Math.max(...FM.map(d=>d.nw),1);
-  function heatHtml(data,rows,cols,rk,ck,maxVal){
-    let h=`<div style="overflow-x:auto"><div style="display:flex;gap:2px;margin-bottom:3px"><div style="width:110px;flex-shrink:0"></div>${cols.map(c=>`<div style="flex:1;min-width:56px;text-align:center;font-size:9px;font-weight:700;color:#8a95b0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.length>8?c.slice(0,7)+'…':c}</div>`).join('')}</div>`;
-    rows.forEach(row=>{
-      h+=`<div style="display:flex;gap:2px;margin-bottom:2px"><div style="width:110px;flex-shrink:0;font-size:9px;font-weight:500;color:#4a5778;font-family:'IBM Plex Mono';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${row}</div>`;
-      cols.forEach(col=>{const item=data.find(d=>d[rk]===row&&d[ck]===col);const nw=item?.nw||0;const a=nw>0?0.1+(nw/maxVal)*0.82:0;const bg=nw>0?`rgba(20,40,80,${a.toFixed(2)})`:'#f0f0f5';const tc=a>0.45?'#fff':'#142850';h+=`<div style="flex:1;min-width:56px;height:22px;border-radius:3px;background:${bg};color:${tc};display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono';font-size:9px">${nw>0?nw.toFixed(1)+'T':'—'}</div>`;});
+  var shown=r.map(function(x){return x.f;});
+  var varieties=['Flame','Prime','Arra 30','Star Light','Early Flame','Early Pearl'];
+  var allMkts=[...new Set(FM.map(function(x){return x.m;}))].sort(function(a,b){
+    var ta=FM.filter(function(x){return x.m===a;}).reduce(function(s,r){return s+r.nw;},0);
+    var tb=FM.filter(function(x){return x.m===b;}).reduce(function(s,r){return s+r.nw;},0);
+    return tb-ta;
+  });
+  var maxFV=Math.max.apply(null,FV.map(function(d){return d.nw;}).concat([1]));
+  var maxFM=Math.max.apply(null,FM.map(function(d){return d.nw;}).concat([1]));
+
+  function heatHtml(data,rows,cols,rk,ck,maxVal,mode){
+    var rowTotals={};
+    rows.forEach(function(row){
+      rowTotals[row]=cols.reduce(function(s,col){
+        var item=data.find(function(d){return d[rk]===row&&d[ck]===col;});
+        return s+(item?item.nw:0);
+      },0);
+    });
+    var grandTotal=Object.values(rowTotals).reduce(function(s,v){return s+v;},0)||1;
+
+    var h='<div style="overflow-x:auto">'
+      +'<div style="display:flex;gap:2px;margin-bottom:3px">'
+      +'<div style="width:110px;flex-shrink:0"></div>'
+      +cols.map(function(c){return '<div style="flex:1;min-width:60px;text-align:center;font-size:9px;font-weight:700;color:#8a95b0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(c.length>8?c.slice(0,7)+'…':c)+'</div>';}).join('')
+      +'<div style="width:52px;text-align:center;font-size:9px;font-weight:700;color:#8a95b0">Total</div>'
+      +'</div>';
+
+    rows.forEach(function(row){
+      var rowTotal=rowTotals[row];
+      var rowPct=rowTotal/grandTotal*100;
+      h+='<div style="display:flex;gap:2px;margin-bottom:2px">'
+        +'<div style="width:110px;flex-shrink:0;font-size:9px;font-weight:500;color:#4a5778;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+row+'</div>';
+      cols.forEach(function(col){
+        var item=data.find(function(d){return d[rk]===row&&d[ck]===col;});
+        var nw=item?item.nw:0;
+        var displayVal,heatVal;
+        if(mode==='pct'){
+          var pct=rowTotal>0?nw/rowTotal*100:0;
+          displayVal=pct>0?pct.toFixed(1)+'%':'—';
+          heatVal=pct/100;
+        } else {
+          displayVal=nw>0?nw.toFixed(1)+'T':'—';
+          heatVal=nw>0?(nw/maxVal):0;
+        }
+        var a=heatVal>0?0.1+heatVal*0.82:0;
+        var bg=heatVal>0?'rgba(20,40,80,'+a.toFixed(2)+')':'#f0f0f5';
+        var tc=a>0.45?'#fff':'#142850';
+        h+='<div style="flex:1;min-width:60px;height:24px;border-radius:3px;background:'+bg+';color:'+tc+';display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600">'+displayVal+'</div>';
+      });
+      var rowDisp=mode==='pct'?rowPct.toFixed(1)+'%':rowTotal.toFixed(1)+'T';
+      h+='<div style="width:52px;height:24px;border-radius:3px;background:#f4f6fb;border:1px solid #e2e6f0;color:#142850;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">'+rowDisp+'</div>';
       h+='</div>';
     });
     return h+'</div>';
   }
-  document.getElementById('heat-fv').innerHTML=heatHtml(FV.filter(d=>shown.includes(d.f)),shown,varieties,'f','v',maxFV);
-  document.getElementById('heat-fm').innerHTML=heatHtml(FM.filter(d=>shown.includes(d.f)),shown,allMkts,'f','m',maxFM);
+
+  document.getElementById('heat-fv').innerHTML=heatHtml(FV.filter(function(d){return shown.includes(d.f);}),shown,varieties,'f','v',maxFV,heatMode.fv);
+  document.getElementById('heat-fm').innerHTML=heatHtml(FM.filter(function(d){return shown.includes(d.f);}),shown,allMkts,'f','m',maxFM,heatMode.fm);
 }
 
 function drillFarm(farm){
