@@ -541,7 +541,26 @@ let PRIOR_MKT = {
 let PRIOR_TOTAL = 1085.0;
 let PRIOR_WEEKLY = {19:42.7, 20:576.3, 21:374.4, 22:92.0};
 
-const FLAGS={UK:'🇬🇧',Holland:'🇳🇱',Switzerland:'🇨🇭',Slovenia:'🇸🇮',Norway:'🇳🇴',Lativia:'🇱🇻',"South Africa":'🇿🇦',Russia:'🇷🇺',UAE:'🇦🇪',Spain:'🇪🇸'};
+
+var FLAG_ISO={
+  'UK':'gb','Holland':'nl','Netherlands':'nl','Switzerland':'ch',
+  'Slovenia':'si','Norway':'no','Latvia':'lv','Lativia':'lv',
+  'South Africa':'za','Russia':'ru','UAE':'ae','Spain':'es',
+  'Germany':'de','France':'fr','Belgium':'be','Italy':'it',
+  'Sweden':'se','Denmark':'dk','Finland':'fi','Poland':'pl',
+  'Austria':'at','Portugal':'pt','Ireland':'ie','Egypt':'eg',
+  'USA':'us','Canada':'ca','Australia':'au','Japan':'jp','China':'cn'
+};
+function flagImg(country,size){
+  size=size||20;
+  var iso=FLAG_ISO[country]||FLAG_ISO[(country||'').trim()];
+  if(!iso) return '<span style="width:'+(size+4)+'px;display:inline-block"></span>';
+  return '<img src="https://flagcdn.com/'+size+'x'+(Math.round(size*0.75))+'/'
+    +iso+'.png" width="'+size+'" height="'+(Math.round(size*0.75))+'" '
+    +'style="border-radius:2px;vertical-align:middle;flex-shrink:0" '
+    +'alt="">';
+}
+;
 const PAL=['#142850','#DC6428','#1a3668','#d46024','#3d6fa8','#f4a55a','#0e1f3d','#a84420','#5c8fc9','#8a95b0'];
 const VAR_COL={Prime:'#142850',Flame:'#DC6428',"Early Flame":'#e8872e',"Star Light":'#3d6fa8',"Early Pearl":'#5c8fc9',"Arra 30":'#8a95b0'};
 const CLR_COL={Red:'#DC6428',White:'#8a95b0',Black:'#142850'};
@@ -897,7 +916,7 @@ function renderTable(mkts,total){
       ? `<span class="${yoyPct>=0?'tbl-yoy-up':'tbl-yoy-dn'}">${yoyPct>=0?'▲ +':'▼ '}${Math.abs(yoyPct).toFixed(1)}%</span><br><span style="font-size:9px;color:var(--text3);font-family:var(--mono)">Prior: ${prior.toFixed(1)}T</span>`
       : `<span style="font-size:10px;color:var(--text3)">—</span>`;
     return `<tr style="cursor:pointer" onclick="drillMarket('${m.c}')">
-      <td><div class="mkt-name">${FLAGS[m.c]||'🌍'} ${m.c}</div></td>
+      <td><div class="mkt-name">${flagImg(m.c)||'🌍'} ${m.c}</div></td>
       <td><span class="mono" style="font-weight:600;color:var(--navy)">${m.nw.toFixed(2)}</span></td>
       <td><div class="pct-bar"><span class="mono" style="width:36px">${pct}%</span><div class="pct-track"><div class="pct-fill" style="width:${pct}%"></div></div></div></td>
       <td>${yoyCell}</td>
@@ -1053,7 +1072,7 @@ function renderClassBreakdown(){
 
   document.getElementById('class-breakdown').innerHTML=rows.map(r=>`
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
-      <div style="font-size:10px;color:var(--text2);width:74px;flex-shrink:0;font-family:var(--mono)">${FLAGS[r.m]||''} ${r.m}</div>
+      <div style="font-size:10px;color:var(--text2);width:74px;flex-shrink:0;font-family:var(--mono)">${flagImg(r.m)} ${r.m}</div>
       <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;display:flex">
         <div style="width:${r.c1pct}%;background:var(--navy)"></div>
         <div style="width:${100-r.c1pct}%;background:var(--orange)"></div>
@@ -1084,7 +1103,7 @@ function renderHeatmap(){
   </div>`;
   shown.forEach(m=>{
     html+=`<div class="heat-row">
-      <div class="heat-lbl">${FLAGS[m]||''} ${m}</div>
+      <div class="heat-lbl">${flagImg(m)} ${m}</div>
       ${weeks.map(w=>{
         const row=RAW.by_mkt_week.find(r=>r.c===m&&r.wk===w);
         const v=row?(metric==='nw'?row.nw:row.ctr):0;
@@ -1112,7 +1131,7 @@ function renderColorDist(){
     const tot=rows.reduce((s,r)=>s+r.nw,0)||1;
     const parts=colors.map(col=>({col,nw:rows.find(r=>r.col===col)?.nw||0})).filter(p=>p.nw>0);
     return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
-      <div style="font-size:12px;font-weight:500;color:var(--text2);width:92px;flex-shrink:0">${FLAGS[m]||''} ${m}</div>
+      <div style="font-size:12px;font-weight:500;color:var(--text2);width:92px;flex-shrink:0">${flagImg(m)} ${m}</div>
       <div class="stacked-row" style="flex:1">${parts.map(p=>`<div style="flex:${p.nw};background:${CLR_COL[p.col]};height:8px;border-radius:4px" title="${p.col}: ${p.nw.toFixed(1)}T (${(p.nw/tot*100).toFixed(1)}%)"></div>`).join('')}</div>
       <div style="font-size:12px;color:var(--text3);font-family:var(--mono);width:104px;text-align:right">${parts.map(p=>`${p.col[0]}${(p.nw/tot*100).toFixed(1)}%`).join(' ')}</div>
     </div>`;
@@ -1154,7 +1173,7 @@ function drillMarket(country){
   const mkts=filteredMkts();
   const mkt=mkts.find(m=>m.c===country);
   if(!mkt) return;
-  document.getElementById('drill-title').textContent=`${FLAGS[country]||''} ${country} — Deep Dive`;
+  document.getElementById('drill-title').textContent=`${flagImg(country)} ${country} — Deep Dive`;
   document.getElementById('drill-panel').classList.add('vis');
 
   const varieties=RAW.by_mkt_variety.filter(r=>r.c===country).sort((a,b)=>b.nw-a.nw);

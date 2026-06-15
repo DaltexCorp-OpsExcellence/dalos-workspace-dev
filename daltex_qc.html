@@ -731,6 +731,13 @@ function renderColToggleQC(){
   });
 }
 
+
+var FLAG_ISO={'UK':'gb','Holland':'nl','Netherlands':'nl','Switzerland':'ch','Slovenia':'si','Norway':'no','Latvia':'lv','Lativia':'lv','South Africa':'za','Russia':'ru','UAE':'ae','Spain':'es','Germany':'de','France':'fr','Belgium':'be','Italy':'it','Sweden':'se','Denmark':'dk','Finland':'fi','Poland':'pl','Austria':'at','Portugal':'pt','Ireland':'ie','Egypt':'eg','USA':'us','Canada':'ca','Australia':'au'};
+function flagImg(country){
+  var iso=FLAG_ISO[country]||FLAG_ISO[(country||'').trim()];
+  if(!iso)return '';
+  return '<img src="https://flagcdn.com/20x15/'+iso+'.png" width="20" height="15" style="border-radius:2px;vertical-align:middle;margin-right:4px;flex-shrink:0" alt="">';
+}
 function apply(){renderChips();killCharts();const rows=F();
   const fn={ov:renderOverview,data:renderData}[S.tab];
   if(fn)fn(rows);else renderDim(rows,DIMS[S.tab][0],DIMS[S.tab][1]);
