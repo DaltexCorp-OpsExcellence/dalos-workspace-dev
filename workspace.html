@@ -204,6 +204,18 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
         <button id="resetBtn" class="btn btn-primary" style="width:100%;justify-content:center;padding:10px">Send reset link</button>
       </div>
     </div>
+    <div id="setPwForm" style="display:none">
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px"><i id="setPwIcon" class="ti ti-user-check" style="font-size:20px;color:#6fc191"></i><div id="setPwTitle" style="font-family:var(--font-display);font-size:25px;color:#f4f1e8">Create your password</div></div>
+      <div id="setPwSub" style="font-size:13px;color:rgba(244,241,232,.55);margin-bottom:22px;line-height:1.6">Welcome to DalOS. Set a password to activate your account.</div>
+      <div id="setPwDone" style="display:none;background:var(--green-bg);border:1px solid var(--green-border);border-radius:8px;padding:14px 16px;font-size:13px;color:var(--green);text-align:center">Password set. Taking you in&hellip;</div>
+      <div id="setPwFields">
+        <div style="margin-bottom:14px;position:relative"><label class="form-label" style="font-size:10px;letter-spacing:2px">NEW PASSWORD</label><input class="form-input" id="newPw" type="password"/><button id="toggleNewPw" type="button" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);font-size:11px">Show</button></div>
+        <div style="margin-bottom:8px;position:relative"><label class="form-label" style="font-size:10px;letter-spacing:2px">CONFIRM PASSWORD</label><input class="form-input" id="confPw" type="password"/></div>
+        <div style="font-size:11px;color:rgba(244,241,232,.4);margin-bottom:18px">Minimum 8 characters.</div>
+        <div id="setPwErr" style="display:none;background:var(--red-bg);border:1px solid var(--red-border);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--red);margin-bottom:14px"></div>
+        <button id="setPwBtn" class="btn btn-primary" style="width:100%;justify-content:center;padding:10px">Set password &amp; continue</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -250,6 +262,20 @@ var DALOS_SUPABASE_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
 var DALOS_SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
 var VISION_URL='https://daltexcorp-opsexcellence.github.io/dalos-vision-dev/';
 var ANALYTICS_URL='daltex_home.html';
+var DALOS_LINK=(function(){
+  var out={type:null,access_token:null,refresh_token:null,error:null};
+  try{
+    var h=(location.hash||'').replace(/^#/,'');
+    if(h){var hp=new URLSearchParams(h);
+      out.error=hp.get('error_description')||hp.get('error');
+      var t=hp.get('type');
+      if(t==='invite'||t==='recovery'){out.type=t;out.access_token=hp.get('access_token');out.refresh_token=hp.get('refresh_token');}
+    }
+    var sp=new URLSearchParams(location.search||'');
+    if(!out.type&&sp.get('invite')==='1')out.type='invite';
+  }catch(e){}
+  return out;
+})();
 var sb=window.supabase.createClient(DALOS_SUPABASE_URL,DALOS_SUPABASE_ANON);
 function $(id){return document.getElementById(id);}
 function setBusy(btn,on,b,i){btn.disabled=on;btn.style.opacity=on?'.7':'1';btn.textContent=on?b:i;}
@@ -258,6 +284,52 @@ $('togglePw').onclick=function(){var p=$('pw');if(p.type==='password'){p.type='t
 $('forgotBtn').onclick=function(){$('signinForm').style.display='none';$('resetForm').style.display='block';$('resetEmail').value=$('email').value;};
 $('backToSignin').onclick=function(){$('resetForm').style.display='none';$('signinForm').style.display='block';$('resetErr').style.display='none';$('resetDone').style.display='none';$('resetFields').style.display='block';};
 function showLogin(){$('loginStage').style.display='flex';}
+function showSetPw(mode){
+  $('loginStage').style.display='flex';
+  $('signinForm').style.display='none';$('resetForm').style.display='none';$('setPwForm').style.display='block';
+  if(mode==='recovery'){
+    $('setPwIcon').className='ti ti-key';
+    $('setPwTitle').textContent='Reset your password';
+    $('setPwSub').textContent='Choose a new password for your account.';
+    $('setPwBtn').textContent='Update password';
+  }else{
+    $('setPwIcon').className='ti ti-user-check';
+    $('setPwTitle').textContent='Create your password';
+    $('setPwSub').textContent='Welcome to DalOS. Set a password to activate your account.';
+    $('setPwBtn').textContent='Set password \u0026 continue';
+  }
+}
+function trySetPw(){
+  var p=$('newPw').value,c=$('confPw').value,e=$('setPwErr'),btn=$('setPwBtn');
+  function err(m){e.textContent=m;e.style.display='block';btn.disabled=false;btn.style.opacity='1';}
+  if(p.length<8){err('Password must be at least 8 characters.');return;}
+  if(p!==c){err('Passwords do not match.');return;}
+  e.style.display='none';btn.disabled=true;btn.style.opacity='.7';
+  function doUpdate(){
+    sb.auth.updateUser({password:p}).then(function(res){
+      if(res.error){err(res.error.message||'Could not set password.');return;}
+      $('setPwFields').style.display='none';$('setPwDone').style.display='block';
+      sb.auth.getSession().then(function(s){
+        var u=s&&s.data&&s.data.session&&s.data.session.user;
+        if(!u){location.replace('workspace.html');return;}
+        resolveUser(u).then(function(r){
+          if(!r.user){location.replace('workspace.html');return;}
+          var _nx=nextTarget();
+          setTimeout(function(){if(_nx){openNext(_nx,true);}else{showChooser(r.user,true);}},900);
+        });
+      });
+    }).catch(function(){err('Network error. Please try again.');});
+  }
+  sb.auth.getSession().then(function(s){
+    if(s&&s.data&&s.data.session){doUpdate();}
+    else if(DALOS_LINK.access_token){sb.auth.setSession({access_token:DALOS_LINK.access_token,refresh_token:DALOS_LINK.refresh_token||''}).then(doUpdate).catch(function(){err('This link has expired. Request a new one.');});}
+    else{err('This link has expired. Request a new one.');}
+  });
+}
+$('toggleNewPw').onclick=function(){var p=$('newPw');if(p.type==='password'){p.type='text';this.textContent='Hide';}else{p.type='password';this.textContent='Show';}};
+$('setPwBtn').onclick=trySetPw;
+$('newPw').addEventListener('keydown',function(ev){if(ev.key==='Enter')trySetPw();});
+$('confPw').addEventListener('keydown',function(ev){if(ev.key==='Enter')trySetPw();});
 function fillChooser(u){
   var name=(u.name||u.full_name||'').trim();var first=name.split(' ')[0]||'there';
   var initials=name.split(' ').map(function(n){return n[0];}).slice(0,2).join('').toUpperCase();
@@ -354,11 +426,17 @@ function tryReset(){
 }
 $('resetBtn').onclick=tryReset;
 $('resetEmail').addEventListener('keydown',function(e){if(e.key==='Enter')tryReset();});
-sb.auth.getSession().then(function(s){
-  var sess=s&&s.data&&s.data.session;
-  if(sess&&sess.user){resolveUser(sess.user).then(function(r){if(r.user){var _nx=nextTarget();if(_nx){openNext(_nx,false);}else{showChooser(r.user,false);}}else{showLogin();}});}
-  else{showLogin();}
-}).catch(function(){showLogin();});
+if(DALOS_LINK.type==='invite'||DALOS_LINK.type==='recovery'){
+  showSetPw(DALOS_LINK.type);
+}else if(DALOS_LINK.error){
+  showLogin();showErr(DALOS_LINK.error);
+}else{
+  sb.auth.getSession().then(function(s){
+    var sess=s&&s.data&&s.data.session;
+    if(sess&&sess.user){resolveUser(sess.user).then(function(r){if(r.user){var _nx=nextTarget();if(_nx){openNext(_nx,false);}else{showChooser(r.user,false);}}else{showLogin();}});}
+    else{showLogin();}
+  }).catch(function(){showLogin();});
+}
 </script>
 </body>
 </html>
