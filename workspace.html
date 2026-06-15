@@ -279,6 +279,25 @@ function showBeat(opts){
   document.body.appendChild(o);
   setTimeout(opts.then,opts.duration||1650);
 }
+function nextTarget(){
+  try{
+    var n=new URLSearchParams(location.search).get('next');
+    if(!n) return null;
+    n=decodeURIComponent(n);
+    if(!/^[A-Za-z0-9_\-]+\.html(\?[^#]*)?(#.*)?$/.test(n)) return null;
+    var base=n.split(/[?#]/)[0].toLowerCase();
+    if(base==='workspace.html'||base==='index.html'||base==='daltex_login.html') return null;
+    return n;
+  }catch(e){return null;}
+}
+function openNext(target,animate){
+  var beat={accent:'#6aa8ff',crest:BEAT_EMB_A,line:'Opening DalOS Analytics',sub:'Loading\u2026',subColor:'#6aa8ff',bg:'radial-gradient(circle at 50% 46%, #6aa8ff22 0%, #0b1510 55%, #0a120c 100%)'};
+  function fire(d){beat.duration=d;beat.then=function(){window.location.replace(target);};$('loginStage').style.display='none';showBeat(beat);}
+  if(animate){
+    var lc=$('lcard');if(lc){lc.classList.remove('dlogin-card-in');lc.classList.add('dlogin-card-exit');}
+    setTimeout(function(){fire(1100);},420);
+  } else {fire(900);}
+}
 function showChooser(u,animate){
   fillChooser(u);
   if(animate){
@@ -316,7 +335,7 @@ function tryLogin(){
     if(res.error){setBusy($('signinBtn'),false,'Signing in...','Sign in');showErr(res.error.message==='Invalid login credentials'?'Incorrect email or password.':(res.error.message||'Sign in failed.'));return;}
     resolveUser(res.data.user).then(function(r){
       if(r.err){setBusy($('signinBtn'),false,'Signing in...','Sign in');showErr(r.err);sb.auth.signOut();return;}
-      showChooser(r.user,true);
+      var _nx=nextTarget();if(_nx){openNext(_nx,true);}else{showChooser(r.user,true);}
     });
   }).catch(function(){setBusy($('signinBtn'),false,'Signing in...','Sign in');showErr('Network error. Please try again.');});
 }
@@ -337,7 +356,7 @@ $('resetBtn').onclick=tryReset;
 $('resetEmail').addEventListener('keydown',function(e){if(e.key==='Enter')tryReset();});
 sb.auth.getSession().then(function(s){
   var sess=s&&s.data&&s.data.session;
-  if(sess&&sess.user){resolveUser(sess.user).then(function(r){if(r.user){showChooser(r.user,false);}else{showLogin();}});}
+  if(sess&&sess.user){resolveUser(sess.user).then(function(r){if(r.user){var _nx=nextTarget();if(_nx){openNext(_nx,false);}else{showChooser(r.user,false);}}else{showLogin();}});}
   else{showLogin();}
 }).catch(function(){showLogin();});
 </script>
