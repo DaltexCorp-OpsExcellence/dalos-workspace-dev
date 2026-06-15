@@ -276,9 +276,9 @@ tbody td{padding:8px 10px;color:var(--text);vertical-align:middle}
   <a href="daltex_grapes.html" style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.7);font-size:11px;font-weight:500;text-decoration:none;transition:all .15s" onmouseover="this.style.background='rgba(255,255,255,.14)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,.08)';this.style.color='rgba(255,255,255,.7)'"><i class="ti ti-arrow-left" style="font-size:11px"></i> Grapes</a>
 
   <div style="display:flex;align-items:center;gap:8px">
-    <div style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;cursor:pointer" title="Profile"><i class="ti ti-user" style="font-size:15px;color:#fff"></i></div>
-    <button onclick="if(confirm('Are you sure you want to sign out?'))window.location.href='daltex_login.html'" style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:8px;background:rgba(255,100,100,.1);border:1px solid rgba(255,100,100,.3);color:#ffb3b3;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s" onmouseover="this.style.background='rgba(255,100,100,.2)'" onmouseout="this.style.background='rgba(255,100,100,.1)'"><i class="ti ti-logout" style="font-size:12px"></i> Sign out</button>
-  </div>
+      <div id="dalos-avatar" style="width:32px;height:32px;border-radius:50%;background:#DC6428;border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;font-weight:700;color:#fff;letter-spacing:.5px;flex-shrink:0" title="Profile">??</div>
+      <button onclick="dalSignOut()" style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:8px;background:rgba(255,100,100,.1);border:1px solid rgba(255,100,100,.3);color:#ffb3b3;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s" onmouseover="this.style.background='rgba(255,100,100,.2)'" onmouseout="this.style.background='rgba(255,100,100,.1)'"><i class="ti ti-logout" style="font-size:12px"></i> Sign out</button>
+    </div>
 </div>
 <div class="tabs">
   <div class="tab" onclick="window.location='grapes_overview_branded.html'"><i class="ti ti-layout-dashboard"></i>Overview</div>
@@ -663,6 +663,48 @@ function exportXLSX(){
 }
 
 window.onload=loadLiveData;
+</script>
+<script>
+(function(){
+  var SKEY='sb-sfyjvgjwvtwkrnqrvqyc-auth-token';
+  function getInitials(){
+    try{
+      var raw=localStorage.getItem(SKEY);
+      if(!raw) return '?';
+      var s=JSON.parse(raw);
+      var sess=(s&&s.access_token)?s:((s&&s.currentSession)?s.currentSession:null);
+      var meta=(sess&&sess.user&&sess.user.user_metadata)||{};
+      var name=(meta.full_name||meta.name||'').trim();
+      if(!name){
+        var email=(sess&&sess.user&&sess.user.email)||'';
+        name=email.split('@')[0].replace(/[._-]/g,' ');
+      }
+      var parts=name.trim().split(/\s+/).filter(Boolean);
+      if(parts.length>=2) return (parts[0][0]+parts[1][0]).toUpperCase();
+      if(parts.length===1) return parts[0].slice(0,2).toUpperCase();
+    }catch(e){}
+    return '?';
+  }
+  function dalSignOut(){
+    if(!confirm('Are you sure you want to sign out?')) return;
+    try{
+      var SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
+      var SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
+      if(window.supabase){
+        var sb=window.supabase.createClient(SB_URL,SB_ANON);
+        sb.auth.signOut().then(function(){ window.location.href='daltex_login.html'; });
+        return;
+      }
+    }catch(e){}
+    localStorage.clear();
+    window.location.href='daltex_login.html';
+  }
+  window.dalSignOut=dalSignOut;
+  document.addEventListener('DOMContentLoaded',function(){
+    var av=document.getElementById('dalos-avatar');
+    if(av){ av.textContent=getInitials(); }
+  });
+})();
 </script>
 </body>
 </html>
