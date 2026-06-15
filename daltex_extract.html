@@ -263,15 +263,17 @@ tbody td{padding:8px 10px;color:var(--text);vertical-align:middle}
 <body>
 <div class="shell">
 <div class="topbar">
-  <div style="display:flex;flex-direction:column;align-items:flex-start">
-  <div class="logo">
-    <div class="logo-icon">&#127815;</div>
-    <span class="logo-text">DALTEX</span>
-    <div class="logo-divider"></div>
-    <span class="logo-sub">Grapes Shipments</span>
+  <div style="display:flex;align-items:center;gap:0">
+    <a href="daltex_home.html" style="display:flex;align-items:center;gap:8px;text-decoration:none">
+      <div class="logo-icon">🍇</div>
+      <span class="logo-text">DALTEX</span>
+    </a>
+    <div class="logo-divider" style="margin:0 12px"></div>
+    <a href="daltex_grapes.html" style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;color:rgba(255,255,255,.45);text-decoration:none;transition:color .15s" onmouseover="this.style.color='rgba(255,255,255,.85)'" onmouseout="this.style.color='rgba(255,255,255,.45)'"><i class="ti ti-arrow-left" style="font-size:12px"></i>Grapes</a>
+    <span style="color:rgba(255,255,255,.2);margin:0 8px;font-size:14px">/</span>
+    <span style="font-size:12px;font-weight:600;color:rgba(255,255,255,.9)">Grapes Shipments</span>
   </div>
-  <a href="daltex_grapes.html" style="display:inline-flex;align-items:center;gap:5px;margin-top:5px;font-size:11px;font-weight:500;color:rgba(255,255,255,.5);text-decoration:none;transition:color .15s" onmouseover="this.style.color='rgba(255,255,255,.9)'" onmouseout="this.style.color='rgba(255,255,255,.5)'"><i class="ti ti-arrow-left" style="font-size:11px"></i> Grapes</a>
-  </div>
+
   <div style="display:flex;align-items:center;gap:8px">
     <div class="tbadge tbadge-warn"><i class="ti ti-clock" style="font-size:11px"></i> Season 2025/26</div>
     <div class="tbadge tbadge-live"><i class="ti ti-table" style="font-size:11px"></i> Excel Data</div>
@@ -297,7 +299,6 @@ tbody td{padding:8px 10px;color:var(--text);vertical-align:middle}
   <div>
     <div class="page-title">Data Explorer <span>&#8212; Shipment Records</span></div>
     <div class="page-subtitle" id="hdr-sub">Season 2025/26 &#183; 319 records &#183; 2,314.14 T net weight</div>
-  </div>
   <div style="display:flex;align-items:center;gap:8px">
     <button class="cc-btn" onclick="exportCSV()" style="padding:7px 14px"><i class="ti ti-download" style="font-size:11px"></i> CSV</button>
     <button class="cc-btn" onclick="exportXLSX()" style="padding:7px 14px"><i class="ti ti-file-spreadsheet" style="font-size:11px"></i> Excel</button>
@@ -358,7 +359,6 @@ tbody td{padding:8px 10px;color:var(--text);vertical-align:middle}
       <thead id="tbl-head"></thead>
       <tbody id="tbl-body"></tbody>
     </table>
-  </div>
   <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--border)">
     <div style="font-size:11px;color:var(--text3)" id="tbl-info">0 records</div>
     <div style="display:flex;align-items:center;gap:12px">

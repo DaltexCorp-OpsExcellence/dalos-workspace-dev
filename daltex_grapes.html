@@ -66,7 +66,7 @@
 body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
 
 /* TOPBAR */
-.topbar{background:var(--navy);min-height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(20,40,80,.3)}
+.topbar{background:var(--navy);height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(20,40,80,.3)}
 .logo{display:flex;align-items:center;gap:12px;text-decoration:none}
 .logo-icon{width:36px;height:36px;background:var(--orange);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;font-family:var(--mono)}
 .logo-name{font-size:18px;font-weight:700;color:#fff;letter-spacing:-.3px}
@@ -151,15 +151,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <div style="display:flex;flex-direction:column;align-items:flex-start">
-  <a class="logo" href="daltex_home.html">
-    <div class="logo-icon">DA</div>
-    <div>
-      <span class="logo-name">Daltex Analytics</span>
-      <span class="logo-sub">Business Intelligence</span>
+  <div style="display:flex;align-items:center;gap:0">
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="logo-icon">DA</div>
+      <span class="logo-text">DALTEX</span>
     </div>
-  </a>
-  <a href="daltex_home.html" style="display:inline-flex;align-items:center;gap:5px;margin-top:5px;font-size:11px;font-weight:500;color:rgba(255,255,255,.5);text-decoration:none;transition:color .15s" onmouseover="this.style.color='rgba(255,255,255,.9)'" onmouseout="this.style.color='rgba(255,255,255,.5)'"><i class="ti ti-arrow-left" style="font-size:11px"></i> All Products</a>
+    <div class="logo-divider" style="margin:0 12px"></div>
+    <a href="daltex_home.html" style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;color:rgba(255,255,255,.45);text-decoration:none;transition:color .15s" onmouseover="this.style.color='rgba(255,255,255,.85)'" onmouseout="this.style.color='rgba(255,255,255,.45)'"><i class="ti ti-arrow-left" style="font-size:12px"></i>Home</a>
+    <span style="color:rgba(255,255,255,.2);margin:0 8px;font-size:14px">/</span>
+    <span style="font-size:12px;font-weight:600;color:rgba(255,255,255,.9)">Grapes</span>
   </div>
   <div style="display:flex;align-items:center;gap:12px">
     <div class="topbar-badge"><i class="ti ti-circle-dot" style="font-size:10px"></i> Season 2025/26</div>
