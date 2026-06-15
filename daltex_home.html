@@ -326,6 +326,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </div>
   </div>
   <a class="ws-switch" href="workspace.html" title="Back to DalOS Workspace"><i class="ti ti-grid-dots"></i> Workspace</a>
+  <button class="ws-switch" onclick="signOut()" title="Sign out" style="border-color:rgba(255,100,100,.25);color:#ffb3b3"><i class="ti ti-logout"></i> Sign out</button>
   </div>
   <div class="topbar-right">
     <span class="staging-badge"><span class="staging-dot"></span>Staging</span>
@@ -926,6 +927,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <script>
 // ── Panel & Modal Controls ──
+function signOut(){
+  if(confirm('Are you sure you want to sign out?')){
+    window.location.href='daltex_login.html';
+  }
+}
 function openPanel(product){
   document.getElementById('access-overlay').classList.add('open');
   document.getElementById('access-panel').classList.add('open');
