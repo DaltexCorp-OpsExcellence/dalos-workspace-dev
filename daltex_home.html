@@ -150,6 +150,123 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   .hstat{min-width:calc(50% - 10px)}
   .hstat-val{font-size:24px}
 }
+
+/* ── ACCESS SIDE PANEL ── */
+.access-panel{position:fixed;top:0;right:-480px;width:460px;max-width:100vw;height:100vh;background:#fff;border-left:1px solid var(--border);box-shadow:-4px 0 24px rgba(20,40,80,.1);z-index:400;display:flex;flex-direction:column;transition:right .3s cubic-bezier(.4,0,.2,1);font-family:var(--font)}
+.access-panel.open{right:0}
+.access-overlay{display:none;position:fixed;inset:0;background:rgba(14,31,61,.18);z-index:300}
+.access-overlay.open{display:block}
+.ap-head{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--navy)}
+.ap-title{font-size:15px;font-weight:700;color:#fff}
+.ap-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
+.ap-close{width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.7);font-size:16px}
+.ap-close:hover{background:rgba(255,255,255,.1)}
+.ap-body{flex:1;overflow-y:auto;padding:16px 20px}
+.ap-share-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:8px;border:1.5px dashed var(--border);background:transparent;cursor:pointer;font-size:13px;font-weight:600;color:var(--orange);font-family:var(--font);margin-bottom:16px;transition:.15s}
+.ap-share-btn:hover{background:#eff6ff;border-color:var(--orange)}
+.ap-sect{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;margin-top:14px}
+.arow{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:#fff}
+.arow.expiring{border-color:#fde68a;background:#fffbeb}
+.aav{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.ainfo{flex:1;min-width:0}
+.aname{font-size:13px;font-weight:600;color:var(--navy)}
+.arole-lbl{font-size:11px;color:var(--text3);margin-top:1px}
+.atags{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.atag{font-size:10px;padding:2px 7px;border-radius:6px;background:var(--bg);border:1px solid var(--border);color:var(--text2);font-weight:500}
+.atag.warn{background:#fef3c7;border-color:#fde68a;color:#92400e}
+.abtns{display:flex;gap:4px;flex-shrink:0;margin-top:1px}
+.abtn-sm{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text3);transition:.15s}
+.abtn-sm:hover{background:var(--bg);color:var(--navy)}
+.abtn-sm.del:hover{background:#fef2f2;border-color:#fecaca;color:#dc2626}
+
+/* ── SHARE MODAL ── */
+.share-modal-wrap{display:none;position:fixed;inset:0;background:rgba(14,31,61,.4);z-index:500;align-items:center;justify-content:center}
+.share-modal-wrap.open{display:flex}
+.share-modal{background:#fff;border-radius:14px;width:520px;max-width:95vw;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 40px rgba(20,40,80,.2);font-family:var(--font)}
+.sm-head{padding:16px 20px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--navy)}
+.sm-title{font-size:14px;font-weight:700;color:#fff}
+.sm-sub{font-size:11px;color:rgba(255,255,255,.45);margin-top:2px}
+.sm-close{width:28px;height:28px;border-radius:7px;border:1px solid rgba(255,255,255,.2);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.7);font-size:15px}
+.sm-close:hover{background:rgba(255,255,255,.1)}
+.sm-steps{display:flex;align-items:center;padding:10px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg)}
+.sm-step{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text3);flex:1}
+.sm-step.active{color:var(--orange);font-weight:600}
+.sm-step.done{color:#16a34a}
+.sm-snum{width:18px;height:18px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.sm-line{flex:1;height:1px;background:var(--border);margin:0 3px}
+.sm-line.done{background:#bbf7d0}
+.sm-body{padding:15px 20px;overflow-y:auto;flex:1}
+.sm-panel{display:none}.sm-panel.active{display:block}
+.sm-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.sm-lpill{display:inline-flex;align-items:center;gap:3px;font-size:9px;padding:2px 7px;border-radius:20px;margin-right:5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.lp1{background:#ede9fe;color:#6d28d9}.lp2{background:#fff7ed;color:#c2410c}.lp3{background:#f0fdf4;color:#16a34a}.lp4{background:#eff6ff;color:#1d4ed8}
+.sm-search{position:relative;margin-bottom:8px}
+.sm-search i{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--text3)}
+.sm-search input{width:100%;padding:8px 10px 8px 32px;font-size:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-family:var(--font)}
+.sm-search input:focus{outline:none;border-color:var(--orange)}
+.sm-ulist{border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:8px}
+.sm-urow{display:flex;align-items:center;gap:9px;padding:8px 11px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s}
+.sm-urow:last-child{border-bottom:none}
+.sm-urow:hover{background:var(--bg)}
+.sm-urow.sel{background:#eff6ff}
+.sm-uav{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.sm-uinfo{flex:1}.sm-uname{font-size:12px;font-weight:600;color:var(--navy)}.sm-urole{font-size:10px;color:var(--text3)}
+.sm-chk{width:16px;height:16px;border-radius:4px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;color:var(--orange)}
+.sm-chk.on{background:#eff6ff;border-color:var(--orange)}
+.sm-role-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px}
+.sm-rcard{border:1px solid var(--border);border-radius:8px;padding:10px 11px;cursor:pointer;transition:all .12s}
+.sm-rcard:hover{background:var(--bg)}
+.sm-rcard.sel{border:2px solid var(--orange);background:#fff7ed}
+.sm-rcard.full{grid-column:1/-1;display:flex;align-items:center;gap:10px}
+.sm-rname{font-size:12px;font-weight:700;color:var(--navy);margin-top:4px}
+.sm-rdesc{font-size:10px;color:var(--text3);margin-top:1px;line-height:1.4}
+.sm-rbadge{display:inline-block;font-size:9px;padding:2px 7px;border-radius:20px;font-weight:700;margin-top:3px;text-transform:uppercase;letter-spacing:.04em}
+.rb-all{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
+.rb-lim{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}
+.sm-info-note{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;font-size:11px;color:var(--text2);display:flex;align-items:center;gap:7px}
+.sm-prefill{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px 11px;font-size:11px;color:#92400e;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.sm-two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+.sm-col{border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.sm-col-head{padding:8px 11px;background:var(--bg);border-bottom:1px solid var(--border);font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;gap:5px}
+.sm-prow{display:flex;align-items:center;gap:8px;padding:7px 11px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s}
+.sm-prow:last-child{border-bottom:none}
+.sm-prow:hover{background:var(--bg)}
+.sm-prow.sel{background:#eff6ff}
+.sm-pname{font-size:12px;font-weight:600;color:var(--navy);flex:1}
+.sm-dbrow{display:flex;align-items:center;gap:8px;padding:7px 11px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s}
+.sm-dbrow:last-child{border-bottom:none}
+.sm-dbrow:hover{background:var(--bg)}
+.sm-dbrow.allrow{background:var(--bg)}
+.sm-dblabel{font-size:12px;color:var(--navy);flex:1}
+.sm-fblock{border:1px solid var(--border);border-radius:8px;padding:11px;margin-bottom:8px}
+.sm-ftitle{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:7px;display:flex;align-items:center;gap:5px}
+.sm-chips{display:flex;flex-wrap:wrap;gap:5px}
+.sm-chip{border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:11px;cursor:pointer;color:var(--text2);background:transparent;font-family:var(--font);transition:all .12s}
+.sm-chip:hover{border-color:var(--navy);color:var(--navy)}
+.sm-chip.on{background:#eff6ff;border-color:var(--orange);color:var(--orange);font-weight:600}
+.sm-chip.all.on{background:#f0fdf4;border-color:#16a34a;color:#16a34a;font-weight:600}
+.sm-tlist{border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:8px}
+.sm-trow{display:flex;align-items:center;gap:9px;padding:8px 11px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.sm-trow:last-child{border-bottom:none}
+.sm-trow:hover{background:var(--bg)}
+.sm-trow.allrow{background:var(--bg)}
+.sm-tlabel{font-size:12px;color:var(--navy);flex:1}
+.sm-exprow{display:flex;align-items:center;gap:8px;margin-top:7px}
+.sm-exprow label{font-size:11px;color:var(--text2);white-space:nowrap}
+.sm-exprow select{font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:7px;background:var(--bg);color:var(--text);flex:1;font-family:var(--font)}
+.sm-foot{padding:11px 20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.sm-btn-b{font-size:12px;color:var(--text2);background:transparent;border:1px solid var(--border);border-radius:7px;padding:7px 14px;cursor:pointer;font-family:var(--font)}
+.sm-btn-b:hover{background:var(--bg)}
+.sm-btn-n{font-size:12px;font-weight:700;color:#fff;background:var(--orange);border:none;border-radius:7px;padding:7px 16px;cursor:pointer;font-family:var(--font)}
+.sm-btn-n:hover{background:var(--orange2)}
+.sm-btn-grant{font-size:12px;font-weight:700;color:#fff;background:var(--navy);border:none;border-radius:7px;padding:7px 18px;cursor:pointer;font-family:var(--font)}
+.sm-btn-grant:hover{background:#1a3668}
+.sm-success{text-align:center;padding:28px 16px}
+.sm-stag{display:inline-flex;align-items:center;gap:3px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:3px 9px;font-size:11px;color:var(--text2);margin:2px;font-weight:500}
+.pc-share-btn{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid var(--border);background:#fff;color:var(--text2);cursor:pointer;font-family:var(--font);transition:.15s;text-transform:uppercase;letter-spacing:.04em}
+.pc-share-btn:hover{border-color:var(--navy);color:var(--navy);background:var(--bg)}
+.manage-access-btn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#dce6f5;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);transition:.18s}
+.manage-access-btn:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.28)}
 </style>
 </head>
 <body>
@@ -170,6 +287,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <span class="staging-badge"><span class="staging-dot"></span>Staging</span>
     <div class="topbar-date" id="topbar-date"></div>
     <div class="topbar-badge"><i class="ti ti-circle-dot" style="font-size:10px"></i> Season 2025/26</div>
+    <button class="manage-access-btn" onclick="openPanel('all')"><i class="ti ti-shield-lock" style="font-size:13px"></i>Manage access</button>
   </div>
 </div>
 
@@ -219,6 +337,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           <span class="pc-dash-chip">Harvest</span>
           <span class="pc-dash-chip">Budgeting</span>
         </div>
+        <button class="pc-share-btn" onclick="event.stopPropagation();openPanel('grapes')"><i class="ti ti-share" style="font-size:11px"></i>Share</button>
         <div class="pc-arrow"><i class="ti ti-arrow-right"></i></div>
       </div>
     </div>
@@ -486,6 +605,407 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
 
 </div>
+
+<!-- ACCESS OVERLAY -->
+<div class="access-overlay" id="access-overlay" onclick="closePanel()"></div>
+
+<!-- ACCESS SIDE PANEL -->
+<div class="access-panel" id="access-panel">
+  <div class="ap-head">
+    <div>
+      <div class="ap-title"><i class="ti ti-shield-lock" style="font-size:14px;margin-right:6px"></i>Access management</div>
+      <div class="ap-sub" id="ap-sub">DALos Analytics — All products</div>
+    </div>
+    <button class="ap-close" onclick="closePanel()"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="ap-body">
+    <button class="ap-share-btn" onclick="openModal()"><i class="ti ti-plus" style="font-size:15px"></i>Share access with someone</button>
+    <div class="ap-sect">Active access — 5 users</div>
+    <div class="arow">
+      <div class="aav" style="background:#f0fdf4;color:#16a34a">AF</div>
+      <div class="ainfo">
+        <div class="aname">Ahmed Farouk</div>
+        <div class="arole-lbl">Farm Manager</div>
+        <div class="atags"><span class="atag">Grapes</span><span class="atag">Shipments</span><span class="atag">QC</span><span class="atag">Farm A</span></div>
+      </div>
+      <div class="abtns">
+        <button class="abtn-sm" title="Edit"><i class="ti ti-edit"></i></button>
+        <button class="abtn-sm del" title="Revoke"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>
+    <div class="arow">
+      <div class="aav" style="background:#eff6ff;color:#1d4ed8">SK</div>
+      <div class="ainfo">
+        <div class="aname">Sara Khalil</div>
+        <div class="arole-lbl">QC Analyst</div>
+        <div class="atags"><span class="atag">Grapes</span><span class="atag">QC</span><span class="atag">All farms</span></div>
+      </div>
+      <div class="abtns">
+        <button class="abtn-sm"><i class="ti ti-edit"></i></button>
+        <button class="abtn-sm del"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>
+    <div class="arow">
+      <div class="aav" style="background:#fff7ed;color:#c2410c">NA</div>
+      <div class="ainfo">
+        <div class="aname">Nour Adel</div>
+        <div class="arole-lbl">Logistics Lead</div>
+        <div class="atags"><span class="atag">Grapes</span><span class="atag">Shipments</span><span class="atag">Harvest</span><span class="atag">All markets</span></div>
+      </div>
+      <div class="abtns">
+        <button class="abtn-sm"><i class="ti ti-edit"></i></button>
+        <button class="abtn-sm del"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>
+    <div class="arow">
+      <div class="aav" style="background:#ede9fe;color:#6d28d9">OS</div>
+      <div class="ainfo">
+        <div class="aname">Omar Saleh</div>
+        <div class="arole-lbl">Export Manager</div>
+        <div class="atags"><span class="atag">Grapes</span><span class="atag">Shipments</span><span class="atag">Netherlands</span><span class="atag">UK</span></div>
+      </div>
+      <div class="abtns">
+        <button class="abtn-sm"><i class="ti ti-edit"></i></button>
+        <button class="abtn-sm del"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>
+    <div class="arow expiring">
+      <div class="aav" style="background:#fff7ed;color:#c2410c">LH</div>
+      <div class="ainfo">
+        <div class="aname">Laila Hassan</div>
+        <div class="arole-lbl">Finance Analyst</div>
+        <div class="atags"><span class="atag">Grapes</span><span class="atag">Budget</span><span class="atag warn"><i class="ti ti-clock" style="font-size:9px"></i> Expires in 3 days</span></div>
+      </div>
+      <div class="abtns">
+        <button class="abtn-sm"><i class="ti ti-edit"></i></button>
+        <button class="abtn-sm del"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="share-modal-wrap" id="share-modal-wrap">
+  <div class="share-modal">
+    <div class="sm-head">
+      <div>
+        <div class="sm-title"><i class="ti ti-shield-lock" style="font-size:13px;margin-right:5px"></i>Share dashboard access</div>
+        <div class="sm-sub">DALos Analytics — Daltex</div>
+      </div>
+      <button class="sm-close" onclick="closeModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="sm-steps" id="sm-steps">
+      <div class="sm-step active" id="ss1"><div class="sm-snum" id="sn1">1</div><span>User</span></div>
+      <div class="sm-line" id="sl1"></div>
+      <div class="sm-step" id="ss2"><div class="sm-snum" id="sn2">2</div><span>Role</span></div>
+      <div class="sm-line" id="sl2"></div>
+      <div class="sm-step" id="ss3"><div class="sm-snum" id="sn3">3</div><span>Products</span></div>
+      <div class="sm-line" id="sl3"></div>
+      <div class="sm-step" id="ss4"><div class="sm-snum" id="sn4">4</div><span>Filters</span></div>
+      <div class="sm-line" id="sl4"></div>
+      <div class="sm-step" id="ss5"><div class="sm-snum" id="sn5">5</div><span>Tabs</span></div>
+    </div>
+    <div class="sm-body">
+      <!-- STEP 1: USER -->
+      <div class="sm-panel active" id="smp1">
+        <div class="sm-label">Select workspace user</div>
+        <div class="sm-search"><i class="ti ti-search"></i><input type="text" placeholder="Search DALos Workspace users..." oninput="smFilterU(this.value)"></div>
+        <div class="sm-ulist" id="sm-ulist">
+          <div class="sm-urow" data-n="Ahmed Farouk" data-r="Farm Manager" onclick="smSelU(this)">
+            <div class="sm-uav" style="background:#f0fdf4;color:#16a34a">AF</div>
+            <div class="sm-uinfo"><div class="sm-uname">Ahmed Farouk</div><div class="sm-urole">Farm Manager</div></div>
+            <div class="sm-chk"></div>
+          </div>
+          <div class="sm-urow" data-n="Sara Khalil" data-r="QC Analyst" onclick="smSelU(this)">
+            <div class="sm-uav" style="background:#eff6ff;color:#1d4ed8">SK</div>
+            <div class="sm-uinfo"><div class="sm-uname">Sara Khalil</div><div class="sm-urole">QC Analyst</div></div>
+            <div class="sm-chk"></div>
+          </div>
+          <div class="sm-urow" data-n="Nour Adel" data-r="Logistics Lead" onclick="smSelU(this)">
+            <div class="sm-uav" style="background:#fff7ed;color:#c2410c">NA</div>
+            <div class="sm-uinfo"><div class="sm-uname">Nour Adel</div><div class="sm-urole">Logistics Lead</div></div>
+            <div class="sm-chk"></div>
+          </div>
+          <div class="sm-urow" data-n="Omar Saleh" data-r="Export Manager" onclick="smSelU(this)">
+            <div class="sm-uav" style="background:#ede9fe;color:#6d28d9">OS</div>
+            <div class="sm-uinfo"><div class="sm-uname">Omar Saleh</div><div class="sm-urole">Export Manager</div></div>
+            <div class="sm-chk"></div>
+          </div>
+          <div class="sm-urow" data-n="Karim Mansour" data-r="Director" onclick="smSelU(this)">
+            <div class="sm-uav" style="background:#f0fdf4;color:#166534">KM</div>
+            <div class="sm-uinfo"><div class="sm-uname">Karim Mansour</div><div class="sm-urole">Director</div></div>
+            <div class="sm-chk"></div>
+          </div>
+          <div class="sm-urow" data-n="Laila Hassan" data-r="Finance Analyst" onclick="smSelU(this)">
+            <div class="sm-uav" style="background:#fff7ed;color:#c2410c">LH</div>
+            <div class="sm-uinfo"><div class="sm-uname">Laila Hassan</div><div class="sm-urole">Finance Analyst</div></div>
+            <div class="sm-chk"></div>
+          </div>
+        </div>
+        <div id="sm-ucnt" style="font-size:11px;color:var(--text3)">No user selected</div>
+      </div>
+      <!-- STEP 2: ROLE -->
+      <div class="sm-panel" id="smp2">
+        <div class="sm-label"><span class="sm-lpill lp1">Layer 1</span>Assign role</div>
+        <div class="sm-role-grid">
+          <div class="sm-rcard full" data-role="director" onclick="smSelRole(this)">
+            <i class="ti ti-crown" style="font-size:22px;color:#d97706"></i>
+            <div><div class="sm-rname">Director / C-Level</div><div class="sm-rdesc">Full access — all products, dashboards & data</div><span class="sm-rbadge rb-all">All access</span></div>
+            <div class="sm-chk" style="margin-left:auto;flex-shrink:0"></div>
+          </div>
+          <div class="sm-rcard" data-role="product_manager" onclick="smSelRole(this)">
+            <i class="ti ti-layout-dashboard" style="font-size:20px;color:var(--orange)"></i>
+            <div class="sm-rname">Product manager</div><div class="sm-rdesc">Their product only, all dashboards</div>
+            <span class="sm-rbadge rb-lim">Product-scoped</span>
+          </div>
+          <div class="sm-rcard" data-role="farm_manager" onclick="smSelRole(this)">
+            <i class="ti ti-building-warehouse" style="font-size:20px;color:#16a34a"></i>
+            <div class="sm-rname">Farm manager</div><div class="sm-rdesc">Their farm only</div>
+            <span class="sm-rbadge rb-lim">Farm-scoped</span>
+          </div>
+          <div class="sm-rcard" data-role="qc_analyst" onclick="smSelRole(this)">
+            <i class="ti ti-microscope" style="font-size:20px;color:var(--orange)"></i>
+            <div class="sm-rname">QC analyst</div><div class="sm-rdesc">QC dashboard only</div>
+            <span class="sm-rbadge rb-lim">QC-scoped</span>
+          </div>
+          <div class="sm-rcard" data-role="export_manager" onclick="smSelRole(this)">
+            <i class="ti ti-ship" style="font-size:20px;color:var(--orange)"></i>
+            <div class="sm-rname">Export manager</div><div class="sm-rdesc">Shipments, their markets</div>
+            <span class="sm-rbadge rb-lim">Market-scoped</span>
+          </div>
+          <div class="sm-rcard" data-role="finance" onclick="smSelRole(this)">
+            <i class="ti ti-chart-bar" style="font-size:20px;color:#d97706"></i>
+            <div class="sm-rname">Finance</div><div class="sm-rdesc">Budget vs actual only</div>
+            <span class="sm-rbadge rb-lim">Finance-scoped</span>
+          </div>
+        </div>
+        <div class="sm-info-note"><i class="ti ti-info-circle" style="font-size:14px;color:var(--orange)"></i>Role pre-fills products, filters and tabs. Override anything in the next steps.</div>
+      </div>
+      <!-- STEP 3: PRODUCTS & DASHBOARDS -->
+      <div class="sm-panel" id="smp3">
+        <div class="sm-label"><span class="sm-lpill lp2">Layer 2</span>Products & dashboards</div>
+        <div class="sm-prefill"><i class="ti ti-wand" style="font-size:13px"></i><span id="p3note">Pre-filled from role. Adjust as needed.</span></div>
+        <div class="sm-two-col">
+          <div class="sm-col">
+            <div class="sm-col-head"><i class="ti ti-package" style="font-size:12px"></i>Products</div>
+            <div class="sm-prow sel" data-prod="grapes" onclick="smTogProd(this)"><div class="sm-chk on" id="pc-grapes"><i class="ti ti-check" style="font-size:10px"></i></div><span class="sm-pname">Grapes</span></div>
+            <div class="sm-prow" data-prod="citrus" onclick="smTogProd(this)"><div class="sm-chk" id="pc-citrus"></div><span class="sm-pname">Citrus</span></div>
+            <div class="sm-prow" data-prod="mango" onclick="smTogProd(this)"><div class="sm-chk" id="pc-mango"></div><span class="sm-pname">Mango</span></div>
+            <div class="sm-prow" data-prod="pomegranate" onclick="smTogProd(this)"><div class="sm-chk" id="pc-pomegranate"></div><span class="sm-pname">Pomegranate</span></div>
+            <div class="sm-prow" data-prod="potatoes" onclick="smTogProd(this)"><div class="sm-chk" id="pc-potatoes"></div><span class="sm-pname">Potatoes</span></div>
+          </div>
+          <div class="sm-col">
+            <div class="sm-col-head"><i class="ti ti-layout-dashboard" style="font-size:12px"></i>Dashboards</div>
+            <div class="sm-dbrow allrow" onclick="smTogAllDbs()"><div class="sm-chk on" id="db-all"><i class="ti ti-check" style="font-size:10px"></i></div><div class="sm-dblabel" style="font-weight:700;font-size:11px">Select all</div></div>
+            <div class="sm-dbrow" data-db="shipments" onclick="smTogDb(this)"><div class="sm-chk on" id="dc-shipments"><i class="ti ti-check" style="font-size:10px"></i></div><div class="sm-dblabel">Shipments</div></div>
+            <div class="sm-dbrow" data-db="qc" onclick="smTogDb(this)"><div class="sm-chk on" id="dc-qc"><i class="ti ti-check" style="font-size:10px"></i></div><div class="sm-dblabel">QC</div></div>
+            <div class="sm-dbrow" data-db="harvest" onclick="smTogDb(this)"><div class="sm-chk on" id="dc-harvest"><i class="ti ti-check" style="font-size:10px"></i></div><div class="sm-dblabel">Harvest funnel</div></div>
+            <div class="sm-dbrow" data-db="budget" onclick="smTogDb(this)"><div class="sm-chk on" id="dc-budget"><i class="ti ti-check" style="font-size:10px"></i></div><div class="sm-dblabel">Budget vs actual</div></div>
+          </div>
+        </div>
+      </div>
+      <!-- STEP 4: FILTERS -->
+      <div class="sm-panel" id="smp4">
+        <div class="sm-label"><span class="sm-lpill lp3">Layer 3</span>Data filters</div>
+        <div class="sm-prefill"><i class="ti ti-wand" style="font-size:13px"></i><span id="p4note">Pre-filled from role. Adjust as needed.</span></div>
+        <div class="sm-fblock">
+          <div class="sm-ftitle"><i class="ti ti-building-warehouse" style="font-size:13px"></i>Farm access</div>
+          <div class="sm-chips" id="farm-chips">
+            <div class="sm-chip all on" onclick="smChip(this)">All farms</div>
+            <div class="sm-chip" onclick="smChip(this)">Farm A</div>
+            <div class="sm-chip" onclick="smChip(this)">Farm B</div>
+            <div class="sm-chip" onclick="smChip(this)">Farm C</div>
+            <div class="sm-chip" onclick="smChip(this)">Farm D</div>
+          </div>
+        </div>
+        <div class="sm-fblock">
+          <div class="sm-ftitle"><i class="ti ti-world" style="font-size:13px"></i>Market access</div>
+          <div class="sm-chips" id="market-chips">
+            <div class="sm-chip all on" onclick="smChip(this)">All markets</div>
+            <div class="sm-chip" onclick="smChip(this)">Netherlands</div>
+            <div class="sm-chip" onclick="smChip(this)">UK</div>
+            <div class="sm-chip" onclick="smChip(this)">Germany</div>
+            <div class="sm-chip" onclick="smChip(this)">Switzerland</div>
+          </div>
+        </div>
+        <div class="sm-fblock">
+          <div class="sm-ftitle"><i class="ti ti-leaf" style="font-size:13px"></i>Variety access</div>
+          <div class="sm-chips" id="variety-chips">
+            <div class="sm-chip all on" onclick="smChip(this)">All varieties</div>
+            <div class="sm-chip" onclick="smChip(this)">Crimson</div>
+            <div class="sm-chip" onclick="smChip(this)">Flame</div>
+            <div class="sm-chip" onclick="smChip(this)">Sugraone</div>
+            <div class="sm-chip" onclick="smChip(this)">Thompson</div>
+          </div>
+        </div>
+        <div class="sm-fblock">
+          <div class="sm-ftitle"><i class="ti ti-clock" style="font-size:13px"></i>Access expiry</div>
+          <div class="sm-exprow"><label>Expires after</label><select><option>No expiry</option><option>1 week</option><option>1 month</option><option>3 months</option><option>End of season</option><option>Custom date</option></select></div>
+        </div>
+      </div>
+      <!-- STEP 5: TABS -->
+      <div class="sm-panel" id="smp5">
+        <div class="sm-label"><span class="sm-lpill lp4">Layer 4</span>Tab visibility</div>
+        <div class="sm-prefill"><i class="ti ti-wand" style="font-size:13px"></i><span id="p5note">Pre-filled from role. Toggle to override.</span></div>
+        <div class="sm-tlist">
+          <div class="sm-trow allrow" onclick="smTogAllTabs()"><div class="sm-chk on" id="tall"><i class="ti ti-check" style="font-size:10px"></i></div><div class="sm-tlabel" style="font-weight:700">Select all tabs</div></div>
+          <div class="sm-trow" onclick="smTogTab(this,'overview')"><div class="sm-chk on" id="t-overview"><i class="ti ti-check" style="font-size:10px"></i></div><div class="sm-tlabel">Overview</div><span style="font-size:10px;color:var(--text3)">Summary KPIs</span></div>
+          <div class="sm-trow" onclick="smTogTab(this,'markets')"><div class="sm-chk on" id="t-markets"><i class="ti ti-check" style="font-size:10px"></i></div><div class="sm-tlabel">Markets</div><span style="font-size:10px;color:var(--text3)">Destinations</span></div>
+          <div class="sm-trow" onclick="smTogTab(this,'farms')"><div class="sm-chk on" id="t-farms"><i class="ti ti-check" style="font-size:10px"></i></div><div class="sm-tlabel">Farms</div><span style="font-size:10px;color:var(--text3)">Farm performance</span></div>
+          <div class="sm-trow" onclick="smTogTab(this,'varieties')"><div class="sm-chk on" id="t-varieties"><i class="ti ti-check" style="font-size:10px"></i></div><div class="sm-tlabel">Varieties & colors</div><span style="font-size:10px;color:var(--text3)">SKU breakdown</span></div>
+          <div class="sm-trow" onclick="smTogTab(this,'clients')"><div class="sm-chk on" id="t-clients"><i class="ti ti-check" style="font-size:10px"></i></div><div class="sm-tlabel">Clients</div><span style="font-size:10px;color:var(--text3)">Buyer details</span></div>
+          <div class="sm-trow" onclick="smTogTab(this,'extract')"><div class="sm-chk on" id="t-extract"><i class="ti ti-check" style="font-size:10px"></i></div><div class="sm-tlabel">Data extract</div><span style="font-size:10px;color:var(--text3)">Raw export</span></div>
+        </div>
+      </div>
+      <!-- SUCCESS -->
+      <div class="sm-panel" id="smp-done">
+        <div class="sm-success">
+          <div style="width:48px;height:48px;border-radius:50%;background:#f0fdf4;border:2px solid #bbf7d0;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+            <i class="ti ti-check" style="font-size:22px;color:#16a34a"></i>
+          </div>
+          <div style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:4px">Access granted</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:14px" id="done-name"></div>
+          <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-bottom:16px" id="done-tags"></div>
+          <div style="display:flex;gap:8px;justify-content:center">
+            <button class="sm-btn-b" onclick="closeModal()">Done</button>
+            <button class="sm-btn-b" onclick="smReset()">Share another</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sm-foot" id="sm-foot">
+      <button class="sm-btn-b" id="sm-bk" onclick="smBack()" style="visibility:hidden">Back</button>
+      <button class="sm-btn-n" id="sm-nx" onclick="smNext()">Next</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Panel & Modal Controls ──
+function openPanel(product){
+  document.getElementById('access-overlay').classList.add('open');
+  document.getElementById('access-panel').classList.add('open');
+  document.getElementById('ap-sub').textContent = product==='all'?'DALos Analytics — All products':'Grapes · DALos Analytics';
+}
+function closePanel(){
+  document.getElementById('access-overlay').classList.remove('open');
+  document.getElementById('access-panel').classList.remove('open');
+}
+function openModal(){document.getElementById('share-modal-wrap').classList.add('open');}
+function closeModal(){document.getElementById('share-modal-wrap').classList.remove('open');smReset();}
+
+// ── Modal State ──
+let smStep=1,smUser=null,smRole=null,smAllTabs=true;
+const smTabs=['overview','markets','farms','varieties','clients','extract'];
+const smTabSt={};smTabs.forEach(t=>smTabSt[t]=true);
+const smDbs=['shipments','qc','harvest','budget'];
+const smDbSt={};smDbs.forEach(d=>smDbSt[d]=true);
+const smProds=['grapes','citrus','mango','pomegranate','potatoes'];
+const roleDefaults={
+  director:{farms:'all',markets:'all',varieties:'all',tabs:smTabs.slice(),dbs:smDbs.slice(),prods:smProds.slice()},
+  product_manager:{farms:'all',markets:'all',varieties:'all',tabs:smTabs.slice(),dbs:smDbs.slice(),prods:['grapes']},
+  farm_manager:{farms:['Farm A'],markets:'all',varieties:'all',tabs:['overview','farms','varieties'],dbs:['shipments','qc','harvest'],prods:['grapes']},
+  qc_analyst:{farms:['Farm A'],markets:'all',varieties:'all',tabs:['overview','farms'],dbs:['qc'],prods:['grapes']},
+  export_manager:{farms:'all',markets:['Netherlands'],varieties:'all',tabs:['overview','markets','clients'],dbs:['shipments'],prods:['grapes']},
+  finance:{farms:'all',markets:'all',varieties:'all',tabs:['overview'],dbs:['budget'],prods:smProds.slice()}
+};
+const roleLabels={director:'Director',product_manager:'Product manager',farm_manager:'Farm manager',qc_analyst:'QC analyst',export_manager:'Export manager',finance:'Finance'};
+const roleNotes={director:'Director — full access pre-filled.',product_manager:'Product manager — product-scoped pre-filled.',farm_manager:'Farm manager — Farm A pre-filled.',qc_analyst:'QC analyst — QC only pre-filled.',export_manager:'Export manager — Netherlands pre-filled.',finance:'Finance — budget only pre-filled.'};
+
+function smUpdateBar(){
+  [1,2,3,4,5].forEach(i=>{
+    const s=document.getElementById('ss'+i),n=document.getElementById('sn'+i);
+    s.className='sm-step'+(i===smStep?' active':i<smStep?' done':'');
+    n.innerHTML=i<smStep?'<i class="ti ti-check" style="font-size:10px"></i>':i;
+  });
+  [1,2,3,4].forEach(i=>document.getElementById('sl'+i).className='sm-line'+(i<smStep?' done':''));
+  document.getElementById('sm-bk').style.visibility=smStep>1?'visible':'hidden';
+  const nx=document.getElementById('sm-nx');
+  if(smStep===5){nx.className='sm-btn-grant';nx.textContent='Grant access';}
+  else{nx.className='sm-btn-n';nx.textContent='Next';}
+}
+function smShowP(id){document.querySelectorAll('.sm-panel').forEach(p=>p.className='sm-panel');document.getElementById(id).className='sm-panel active';}
+function smNext(){
+  if(smStep===1&&!smUser)return;
+  if(smStep===2&&!smRole)return;
+  if(smStep===5){smGrant();return;}
+  smStep++;smShowP('smp'+smStep);smUpdateBar();
+}
+function smBack(){if(smStep<=1)return;smStep--;smShowP('smp'+smStep);smUpdateBar();}
+
+function smSelU(row){
+  document.querySelectorAll('.sm-urow').forEach(r=>{r.classList.remove('sel');const c=r.querySelector('.sm-chk');c.className='sm-chk';c.innerHTML='';});
+  row.classList.add('sel');const c=row.querySelector('.sm-chk');c.className='sm-chk on';c.innerHTML='<i class="ti ti-check" style="font-size:10px"></i>';
+  smUser={name:row.dataset.n,role:row.dataset.r};
+  document.getElementById('sm-ucnt').textContent=smUser.name+' selected';
+}
+function smFilterU(q){document.querySelectorAll('.sm-urow').forEach(r=>r.style.display=r.dataset.n.toLowerCase().includes(q.toLowerCase())?'':'none');}
+
+function smSelRole(card){
+  document.querySelectorAll('.sm-rcard').forEach(c=>{const f=c.classList.contains('full');c.className=f?'sm-rcard full':'sm-rcard';const chk=c.querySelector('.sm-chk');if(chk){chk.className='sm-chk';chk.innerHTML='';}});
+  const f=card.classList.contains('full');card.className=f?'sm-rcard full sel':'sm-rcard sel';
+  const chk=card.querySelector('.sm-chk');if(chk){chk.className='sm-chk on';chk.innerHTML='<i class="ti ti-check" style="font-size:10px"></i>';}
+  smRole=card.dataset.role;smApplyDefaults(smRole);
+}
+function smApplyDefaults(role){
+  const d=roleDefaults[role];const note=roleNotes[role];
+  ['p3note','p4note','p5note'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=note+' Adjust as needed.';});
+  smProds.forEach(p=>{const el=document.getElementById('pc-'+p);if(!el)return;const row=el.closest('.sm-prow');const on=d.prods.includes(p);el.className='sm-chk'+(on?' on':'');el.innerHTML=on?'<i class="ti ti-check" style="font-size:10px"></i>':'';on?row.classList.add('sel'):row.classList.remove('sel');});
+  smDbs.forEach(db=>{const on=d.dbs.includes(db);smDbSt[db]=on;const el=document.getElementById('dc-'+db);if(!el)return;el.className='sm-chk'+(on?' on':'');el.innerHTML=on?'<i class="ti ti-check" style="font-size:10px"></i>':'';});
+  smSyncDbAll();
+  ['farm','market','variety'].forEach(type=>{
+    const grp=document.getElementById(type+'-chips');if(!grp)return;
+    const chips=[...grp.children];chips.forEach(c=>c.classList.remove('on'));
+    const val=type==='farm'?d.farms:type==='market'?d.markets:d.varieties;
+    if(val==='all'){chips[0].classList.add('on');}else{chips.forEach(c=>{if(val.includes(c.textContent))c.classList.add('on');});}
+  });
+  smTabs.forEach(t=>{smTabSt[t]=d.tabs.includes(t);smSyncTab(t);});
+  const allOn=smTabs.every(t=>smTabSt[t]);smAllTabs=allOn;
+  const ta=document.getElementById('tall');ta.className='sm-chk'+(allOn?' on':'');ta.innerHTML=allOn?'<i class="ti ti-check" style="font-size:10px"></i>':'';
+}
+function smTogProd(row){row.classList.toggle('sel');const chk=row.querySelector('.sm-chk');const on=row.classList.contains('sel');chk.className='sm-chk'+(on?' on':'');chk.innerHTML=on?'<i class="ti ti-check" style="font-size:10px"></i>':'';}
+function smTogAllDbs(){const allOn=smDbs.every(d=>smDbSt[d]);smDbs.forEach(db=>{smDbSt[db]=!allOn;const el=document.getElementById('dc-'+db);el.className='sm-chk'+(!allOn?' on':'');el.innerHTML=!allOn?'<i class="ti ti-check" style="font-size:10px"></i>':'';});smSyncDbAll();}
+function smTogDb(row){const db=row.dataset.db;smDbSt[db]=!smDbSt[db];const el=document.getElementById('dc-'+db);el.className='sm-chk'+(smDbSt[db]?' on':'');el.innerHTML=smDbSt[db]?'<i class="ti ti-check" style="font-size:10px"></i>':'';smSyncDbAll();}
+function smSyncDbAll(){const allOn=smDbs.every(d=>smDbSt[d]);const el=document.getElementById('db-all');el.className='sm-chk'+(allOn?' on':'');el.innerHTML=allOn?'<i class="ti ti-check" style="font-size:10px"></i>':'';}
+function smChip(chip){const par=chip.parentElement;const siblings=[...par.children];const isAll=chip.classList.contains('all');if(isAll){siblings.forEach(c=>c.classList.remove('on'));chip.classList.add('on');}else{siblings[0].classList.remove('on');chip.classList.toggle('on');if(!siblings.slice(1).some(c=>c.classList.contains('on')))siblings[0].classList.add('on');}}
+function smTogTab(row,tab){smTabSt[tab]=!smTabSt[tab];smSyncTab(tab);const allOn=smTabs.every(t=>smTabSt[t]);smAllTabs=allOn;const ta=document.getElementById('tall');ta.className='sm-chk'+(allOn?' on':'');ta.innerHTML=allOn?'<i class="ti ti-check" style="font-size:10px"></i>':'';}
+function smTogAllTabs(){smAllTabs=!smAllTabs;smTabs.forEach(t=>{smTabSt[t]=smAllTabs;smSyncTab(t);});const ta=document.getElementById('tall');ta.className='sm-chk'+(smAllTabs?' on':'');ta.innerHTML=smAllTabs?'<i class="ti ti-check" style="font-size:10px"></i>':'';}
+function smSyncTab(tab){const el=document.getElementById('t-'+tab);if(!el)return;el.className='sm-chk'+(smTabSt[tab]?' on':'');el.innerHTML=smTabSt[tab]?'<i class="ti ti-check" style="font-size:10px"></i>':'';}
+function smGrant(){
+  const activeTabs=smTabs.filter(t=>smTabSt[t]);
+  const activeDbs=smDbs.filter(d=>smDbSt[d]);
+  const activeProds=[...document.querySelectorAll('.sm-prow.sel')].map(r=>r.dataset.prod);
+  const farmSel=[...document.querySelectorAll('#farm-chips .sm-chip.on')].map(c=>c.textContent);
+  const mktSel=[...document.querySelectorAll('#market-chips .sm-chip.on')].map(c=>c.textContent);
+  document.getElementById('done-name').textContent=(smUser?smUser.name:'')+(smRole?' · '+roleLabels[smRole]:'');
+  const tags=document.getElementById('done-tags');tags.innerHTML='';
+  if(smRole)tags.innerHTML+='<span class="sm-stag" style="background:#eff6ff;border-color:#bfdbfe;color:var(--orange)">'+roleLabels[smRole]+'</span>';
+  activeProds.forEach(p=>tags.innerHTML+='<span class="sm-stag">'+p+'</span>');
+  activeDbs.forEach(d=>tags.innerHTML+='<span class="sm-stag">'+d+'</span>');
+  farmSel.forEach(f=>tags.innerHTML+='<span class="sm-stag">'+f+'</span>');
+  mktSel.forEach(m=>tags.innerHTML+='<span class="sm-stag">'+m+'</span>');
+  activeTabs.forEach(t=>tags.innerHTML+='<span class="sm-stag">'+t+'</span>');
+  document.getElementById('sm-steps').style.display='none';
+  document.getElementById('sm-foot').style.display='none';
+  smShowP('smp-done');
+}
+function smReset(){
+  smStep=1;smUser=null;smRole=null;smAllTabs=true;
+  smTabs.forEach(t=>{smTabSt[t]=true;smSyncTab(t);});
+  smDbs.forEach(d=>{smDbSt[d]=true;});
+  document.querySelectorAll('.sm-urow').forEach(r=>{r.classList.remove('sel');const c=r.querySelector('.sm-chk');c.className='sm-chk';c.innerHTML='';});
+  document.querySelectorAll('.sm-rcard').forEach(c=>{const f=c.classList.contains('full');c.className=f?'sm-rcard full':'sm-rcard';const chk=c.querySelector('.sm-chk');if(chk){chk.className='sm-chk';chk.innerHTML='';}});
+  document.getElementById('sm-ucnt').textContent='No user selected';
+  document.getElementById('sm-steps').style.display='';
+  document.getElementById('sm-foot').style.display='';
+  const ta=document.getElementById('tall');ta.className='sm-chk on';ta.innerHTML='<i class="ti ti-check" style="font-size:10px"></i>';
+  smSyncDbAll();
+  ['farm','market','variety'].forEach(type=>{const grp=document.getElementById(type+'-chips');if(!grp)return;[...grp.children].forEach((c,i)=>{c.classList.remove('on');if(i===0)c.classList.add('on');});});
+  smProds.forEach(p=>{const el=document.getElementById('pc-'+p);if(!el)return;const row=el.closest('.sm-prow');if(p==='grapes'){el.className='sm-chk on';el.innerHTML='<i class="ti ti-check" style="font-size:10px"></i>';row.classList.add('sel');}else{el.className='sm-chk';el.innerHTML='';row.classList.remove('sel');}});
+  smShowP('smp1');smUpdateBar();
+}
+smUpdateBar();
+</script>
 
 <script>
 // Live date/time in topbar
