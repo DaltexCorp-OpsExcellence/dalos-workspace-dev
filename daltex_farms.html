@@ -1,6 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script>/* DalOS session gate v1 */
+(function(){
+  var SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
+  var SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
+  var SKEY='sb-sfyjvgjwvtwkrnqrvqyc-auth-token';
+  function bounce(){var nx=encodeURIComponent(location.pathname.split('/').pop()+location.search+location.hash);location.replace('workspace.html?next='+nx);}
+  var tok=null;
+  try{
+    var raw=localStorage.getItem(SKEY);
+    if(raw){
+      var s=JSON.parse(raw);
+      var sess=(s&&s.access_token)?s:((s&&s.currentSession)?s.currentSession:null);
+      if(sess&&sess.access_token){
+        var exp=sess.expires_at?sess.expires_at*1000:0;
+        if(!exp||exp>Date.now()){tok=sess.access_token;}
+      }
+    }
+  }catch(e){}
+  if(!tok){bounce();throw new Error('DalOS: no session');}
+  window.__DALOS_TOKEN=tok;
+  var _f=window.fetch;
+  window.fetch=function(u,o){
+    o=o||{};
+    var url=(typeof u==='string')?u:((u&&u.url)||'');
+    if(url.indexOf(SB_URL)===0){
+      var h=o.headers;
+      if(h instanceof Headers){h.set('Authorization','Bearer '+window.__DALOS_TOKEN);}
+      else{o.headers=Object.assign({},h||{},{'Authorization':'Bearer '+window.__DALOS_TOKEN});}
+    }
+    return _f.call(this,u,o);
+  };
+  function wire(){
+    if(!window.supabase){return;}
+    try{
+      var sb=window.supabase.createClient(SB_URL,SB_ANON);
+      sb.auth.getSession().then(function(r){var sx=r&&r.data&&r.data.session;if(!sx){bounce();return;}window.__DALOS_TOKEN=sx.access_token;});
+      sb.auth.onAuthStateChange(function(ev,s2){if(s2&&s2.access_token){window.__DALOS_TOKEN=s2.access_token;}if(ev==='SIGNED_OUT'){bounce();}});
+    }catch(e){}
+  }
+  if(document.readyState!=='loading'){wire();}else{document.addEventListener('DOMContentLoaded',wire);}
+})();
+</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Farms · Daltex</title>
