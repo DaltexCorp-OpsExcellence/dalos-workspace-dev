@@ -115,7 +115,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .product-card:hover{box-shadow:var(--shadow2);transform:translateY(-2px);border-color:rgba(20,40,80,.2)}
 .product-card.coming{opacity:.6;cursor:default}
 .product-card.coming:hover{transform:none;box-shadow:var(--shadow)}
-.product-card.locked{opacity:.45;filter:grayscale(.6);cursor:default}
+.product-card.locked{cursor:default}
 .product-card.locked:hover{transform:none;box-shadow:var(--shadow);border-color:var(--border)}
 .product-card.locked .pc-arrow{display:none}
 .req-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;border:1.5px solid var(--orange);color:var(--orange);background:#fff;cursor:pointer;font-family:var(--font);transition:all .15s}
@@ -956,7 +956,7 @@ async function revokeUser(permId,name){
 
 // ── REQUEST ACCESS ──
 async function requestAccess(prod, prodName, userId, btn){
-  if(btn.classList.contains('sent')) return;
+  if(btn.classList.contains('sent')||btn.disabled) return;
   btn.innerHTML='<i class="ti ti-loader-2" style="font-size:12px;animation:spin 1s linear infinite"></i>Sending…';
   btn.disabled=true;
   try{
@@ -1561,13 +1561,20 @@ updateDate();
       var userJwt=(sess&&sess.access_token)||SB_ANON;
       var authH={apikey:SB_ANON,Authorization:'Bearer '+userJwt};
 
-      // Run both fetches in parallel
-      var [permRes,userRes]=await Promise.all([
+      // Run all fetches in parallel
+      var [permRes,userRes,reqRes]=await Promise.all([
         fetch(SB_URL+'/rest/v1/dal_analytics_permissions?user_id=eq.'+userId+'&select=role,config,expires_at&limit=1',{headers:authH}),
-        fetch(SB_URL+'/rest/v1/users?id=eq.'+userId+'&select=role&limit=1',{headers:authH})
+        fetch(SB_URL+'/rest/v1/users?id=eq.'+userId+'&select=role&limit=1',{headers:authH}),
+        fetch(SB_URL+'/rest/v1/dal_access_requests?user_id=eq.'+userId+'&select=product,status',{headers:authH})
       ]);
       var perms=await permRes.json();
       var uData=await userRes.json();
+      var existingReqs=await reqRes.json().catch(function(){return [];});
+
+      // Build set of already-requested products
+      var alreadyRequested=new Set(
+        Array.isArray(existingReqs)?existingReqs.map(function(r){return r.product;}):[]
+      );
 
       // Try users table first, fall back to session metadata
       var wsRole=(uData&&uData[0]&&uData[0].role)||'';
@@ -1608,10 +1615,15 @@ updateDate();
             var footer=card.querySelector('.pc-footer');
             if(footer){
               var btn=document.createElement('button');
-              btn.className='req-btn';
-              btn.dataset.prod=prod;
-              btn.innerHTML='<i class="ti ti-send" style="font-size:12px"></i>Request access';
-              btn.onclick=function(e){e.stopPropagation();requestAccess(prod,cardMap2[prod].name,userId,btn);};
+              var alreadySent=alreadyRequested.has(prod);
+              btn.className='req-btn'+(alreadySent?' sent':'');
+              if(alreadySent){
+                btn.innerHTML='<i class="ti ti-check" style="font-size:12px"></i>Already requested';
+                btn.disabled=true;
+              } else {
+                btn.innerHTML='<i class="ti ti-send" style="font-size:12px"></i>Request access';
+                btn.onclick=function(e){e.stopPropagation();requestAccess(prod,cardMap2[prod].name,userId,btn);};
+              }
               footer.appendChild(btn);
             }
           }
@@ -1651,11 +1663,17 @@ updateDate();
             var footer=card.querySelector('.pc-footer');
             if(footer){
               var btn=document.createElement('button');
-              btn.className='req-btn';
+              var alreadySent=alreadyRequested.has(prod);
+              btn.className='req-btn'+(alreadySent?' sent':'');
               btn.dataset.prod=prod;
               btn.dataset.prodname=cardMap[prod].name;
-              btn.innerHTML='<i class="ti ti-send" style="font-size:12px"></i>Request access';
-              btn.onclick=function(e){e.stopPropagation();requestAccess(prod,cardMap[prod].name,userId,btn);};
+              if(alreadySent){
+                btn.innerHTML='<i class="ti ti-check" style="font-size:12px"></i>Already requested';
+                btn.disabled=true;
+              } else {
+                btn.innerHTML='<i class="ti ti-send" style="font-size:12px"></i>Request access';
+                btn.onclick=function(e){e.stopPropagation();requestAccess(prod,cardMap[prod].name,userId,btn);};
+              }
               footer.appendChild(btn);
             }
           }
