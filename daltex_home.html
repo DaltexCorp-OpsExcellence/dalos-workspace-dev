@@ -901,6 +901,7 @@ async function loadPanelUsers(){
           +'<div class="atags">'+(tags||'<span class="atag" style="color:var(--text3)">No products set</span>')+'</div>'
         +'</div>'
         +'<div class="abtns">'
+          +'<button class="abtn-sm" title="Edit access" onclick="editUser(\''+p.id+'\',\''+escH(name)+'\','+JSON.stringify(p.role)+','+JSON.stringify(p.config)+','+JSON.stringify(p.expires_at)+')"><i class="ti ti-edit"></i></button>'
           +'<button class="abtn-sm del" title="Revoke Analytics access" onclick="revokeUser(\''+p.id+'\',\''+escH(name)+'\')" ><i class="ti ti-trash"></i></button>'
         +'</div>'
         +'</div>';
@@ -935,11 +936,92 @@ function closePanel(){
   document.getElementById('access-overlay').classList.remove('open');
   document.getElementById('access-panel').classList.remove('open');
 }
+// ── PANEL: edit existing permission ──
+let _editPermId=null; // null = new grant, string = editing existing
+
+function editUser(permId, name, role, config, expiresAt){
+  _editPermId = permId;
+  // pre-fill user display
+  smUser = {name: name, id: null}; // id not needed for PATCH by permId
+  // open modal
+  document.getElementById('share-modal-wrap').classList.add('open');
+  // update modal title to Edit mode
+  document.querySelector('.sm-title').innerHTML='<i class="ti ti-edit" style="font-size:13px;margin-right:5px"></i>Edit access — '+escH(name);
+  document.getElementById('sm-nx').textContent='Next';
+  // Skip step 1 (user already chosen) — go straight to step 2
+  smStep=2;
+  smShowP('smp2');
+  smUpdateBar();
+  // pre-fill role
+  if(role){
+    document.querySelectorAll('.sm-rcard').forEach(function(c){
+      if(c.dataset.role===role){
+        smSelRole(c);
+      }
+    });
+  }
+  // pre-fill products
+  var cfg=config||{};
+  var prods=cfg.products||[];
+  smProds.forEach(function(p){
+    var el=document.getElementById('pc-'+p);
+    if(!el) return;
+    var row=el.closest('.sm-prow');
+    var on=prods.includes(p);
+    el.className='sm-chk'+(on?' on':'');
+    el.innerHTML=on?'<i class="ti ti-check" style="font-size:10px"></i>':'';
+    on?row.classList.add('sel'):row.classList.remove('sel');
+  });
+  // pre-fill dashboards
+  var dbs=cfg.dashboards||[];
+  smDbs.forEach(function(db){
+    smDbSt[db]=dbs.includes(db);
+    var el=document.getElementById('dc-'+db);
+    if(!el) return;
+    el.className='sm-chk'+(smDbSt[db]?' on':'');
+    el.innerHTML=smDbSt[db]?'<i class="ti ti-check" style="font-size:10px"></i>':'';
+  });
+  smSyncDbAll();
+  // pre-fill filters
+  var filters=cfg.filters||{};
+  ['farm','market','variety'].forEach(function(type){
+    var grp=document.getElementById(type+'-chips');
+    if(!grp) return;
+    var chips=[...grp.children];
+    chips.forEach(function(c){c.classList.remove('on');});
+    var val=type==='farm'?filters.farms:type==='market'?filters.markets:filters.varieties;
+    if(!val||val==='all'){chips[0].classList.add('on');}
+    else{chips.forEach(function(c){if((val||[]).includes(c.textContent.trim()))c.classList.add('on');});}
+  });
+  // pre-fill tabs
+  var tabs=cfg.tabs||smTabs.slice();
+  smTabs.forEach(function(t){smTabSt[t]=tabs.includes(t);smSyncTab(t);});
+  var allOn=smTabs.every(function(t){return smTabSt[t];});
+  smAllTabs=allOn;
+  var ta=document.getElementById('tall');
+  ta.className='sm-chk'+(allOn?' on':'');
+  ta.innerHTML=allOn?'<i class="ti ti-check" style="font-size:10px"></i>':'';
+  // pre-fill expiry
+  var sel=document.querySelector('.sm-exprow select');
+  if(sel&&expiresAt){
+    var diff=Math.ceil((new Date(expiresAt)-new Date())/86400000);
+    if(diff<=7) sel.value='1 week';
+    else if(diff<=31) sel.value='1 month';
+    else if(diff<=92) sel.value='3 months';
+    else sel.value='End of season';
+  } else if(sel){sel.value='No expiry';}
+}
+
 function openModal(){
+  _editPermId=null;
+  // reset modal title for new grant
+  document.querySelector('.sm-title').innerHTML='<i class="ti ti-shield-lock" style="font-size:13px;margin-right:5px"></i>Share dashboard access';
   document.getElementById('share-modal-wrap').classList.add('open');
   loadModalUsers();
 }
 function closeModal(){document.getElementById('share-modal-wrap').classList.remove('open');smReset();}
+
+
 
 // ── MODAL: load workspace users NOT already in Analytics ──
 async function loadModalUsers(){
@@ -1011,7 +1093,7 @@ function smUpdateBar(){
   [1,2,3,4].forEach(i=>document.getElementById('sl'+i).className='sm-line'+(i<smStep?' done':''));
   document.getElementById('sm-bk').style.visibility=smStep>1?'visible':'hidden';
   const nx=document.getElementById('sm-nx');
-  if(smStep===5){nx.className='sm-btn-grant';nx.textContent='Grant access';}
+  if(smStep===5){nx.className='sm-btn-grant';nx.textContent=_editPermId?'Update access':'Grant access';}
   else{nx.className='sm-btn-n';nx.textContent='Next';}
 }
 function smShowP(id){document.querySelectorAll('.sm-panel').forEach(p=>p.className='sm-panel');document.getElementById(id).className='sm-panel active';}
@@ -1060,9 +1142,10 @@ function smTogTab(row,tab){smTabSt[tab]=!smTabSt[tab];smSyncTab(tab);const allOn
 function smTogAllTabs(){smAllTabs=!smAllTabs;smTabs.forEach(t=>{smTabSt[t]=smAllTabs;smSyncTab(t);});const ta=document.getElementById('tall');ta.className='sm-chk'+(smAllTabs?' on':'');ta.innerHTML=smAllTabs?'<i class="ti ti-check" style="font-size:10px"></i>':'';}
 function smSyncTab(tab){const el=document.getElementById('t-'+tab);if(!el)return;el.className='sm-chk'+(smTabSt[tab]?' on':'');el.innerHTML=smTabSt[tab]?'<i class="ti ti-check" style="font-size:10px"></i>':'';}
 
-// ── MODAL: Grant — saves to dal_analytics_permissions ──
+// ── MODAL: Grant/Update — saves to dal_analytics_permissions ──
 async function smGrant(){
-  if(!smUser||!smUser.id){alert('No user selected.');return;}
+  const isEdit=!!_editPermId;
+  if(!isEdit&&(!smUser||!smUser.id)){alert('No user selected.');return;}
   const nx=document.getElementById('sm-nx');
   nx.textContent='Saving…';nx.disabled=true;
   const activeTabs=smTabs.filter(t=>smTabSt[t]);
@@ -1072,56 +1155,61 @@ async function smGrant(){
   const mktSel=[...document.querySelectorAll('#market-chips .sm-chip.on')].map(c=>c.textContent.trim());
   const varSel=[...document.querySelectorAll('#variety-chips .sm-chip.on')].map(c=>c.textContent.trim());
   const expSel=document.querySelector('.sm-exprow select')?.value||'No expiry';
-  var expiresAt=null;
-  var now=new Date();
+  var expiresAt=null,now=new Date();
   if(expSel==='1 week'){expiresAt=new Date(now.getTime()+7*864e5).toISOString();}
-  else if(expSel==='1 month'){var d=new Date(now);d.setMonth(d.getMonth()+1);expiresAt=d.toISOString();}
-  else if(expSel==='3 months'){var d=new Date(now);d.setMonth(d.getMonth()+3);expiresAt=d.toISOString();}
+  else if(expSel==='1 month'){var d2=new Date(now);d2.setMonth(d2.getMonth()+1);expiresAt=d2.toISOString();}
+  else if(expSel==='3 months'){var d3=new Date(now);d3.setMonth(d3.getMonth()+3);expiresAt=d3.toISOString();}
   else if(expSel==='End of season'){expiresAt=new Date(now.getFullYear()+'-09-30T23:59:59').toISOString();}
-  const payload={
-    user_id:smUser.id,
-    role:smRole||'viewer',
-    config:{
-      products:activeProds,
-      dashboards:activeDbs,
-      filters:{
-        farms:farmSel.includes('All farms')?'all':farmSel,
-        markets:mktSel.includes('All markets')?'all':mktSel,
-        varieties:varSel.includes('All varieties')?'all':varSel
-      },
-      tabs:activeTabs
+  const config={
+    products:activeProds,dashboards:activeDbs,
+    filters:{
+      farms:farmSel.includes('All farms')?'all':farmSel,
+      markets:mktSel.includes('All markets')?'all':mktSel,
+      varieties:varSel.includes('All varieties')?'all':varSel
     },
-    expires_at:expiresAt
+    tabs:activeTabs
   };
   try{
-    var res=await fetch(SB_URL+'/rest/v1/'+DAP,{
-      method:'POST',
-      headers:Object.assign({},sbH(),{'Prefer':'resolution=merge-duplicates,return=minimal'}),
-      body:JSON.stringify(payload)
-    });
+    var res;
+    if(isEdit){
+      res=await fetch(SB_URL+'/rest/v1/'+DAP+'?id=eq.'+_editPermId,{
+        method:'PATCH',
+        headers:Object.assign({},sbH(),{'Prefer':'return=minimal'}),
+        body:JSON.stringify({role:smRole||'viewer',config,expires_at:expiresAt})
+      });
+    } else {
+      res=await fetch(SB_URL+'/rest/v1/'+DAP,{
+        method:'POST',
+        headers:Object.assign({},sbH(),{'Prefer':'resolution=merge-duplicates,return=minimal'}),
+        body:JSON.stringify({user_id:smUser.id,role:smRole||'viewer',config,expires_at:expiresAt})
+      });
+    }
     if(res.ok||res.status===201||res.status===204){
-      // Show success
       const tags=document.getElementById('done-tags');tags.innerHTML='';
-      document.getElementById('done-name').textContent=(smUser.name)+(smRole?' · '+roleLabels[smRole]:'');
+      document.getElementById('done-name').textContent=(smUser?smUser.name:'')+(smRole?' · '+roleLabels[smRole]:'');
       if(smRole)tags.innerHTML+='<span class="sm-stag" style="background:#eff6ff;border-color:#bfdbfe;color:var(--orange)">'+roleLabels[smRole]+'</span>';
       activeProds.forEach(p=>tags.innerHTML+='<span class="sm-stag">'+escH(p)+'</span>');
       activeDbs.forEach(d=>tags.innerHTML+='<span class="sm-stag">'+escH(d)+'</span>');
       document.getElementById('sm-steps').style.display='none';
       document.getElementById('sm-foot').style.display='none';
+      // update success label
+      var successTitle=document.querySelector('#smp-done [style*="font-size:15px"]');
+      if(successTitle) successTitle.textContent=isEdit?'Access updated':'Access granted';
       smShowP('smp-done');
-      loadPanelUsers(); // refresh panel in background
+      loadPanelUsers();
     } else {
       var err=await res.json().catch(()=>({}));
       alert('Failed to save: '+(err.message||res.status));
-      nx.textContent='Grant access';nx.disabled=false;
+      nx.textContent=isEdit?'Update access':'Grant access';nx.disabled=false;
     }
   }catch(e){
     alert('Error: '+e.message);
-    nx.textContent='Grant access';nx.disabled=false;
+    nx.textContent=isEdit?'Update access':'Grant access';nx.disabled=false;
   }
 }
 
 function smReset(){
+  _editPermId=null;
   smStep=1;smUser=null;smRole=null;smAllTabs=true;
   smTabs.forEach(t=>{smTabSt[t]=true;smSyncTab(t);});
   smDbs.forEach(d=>{smDbSt[d]=true;});
