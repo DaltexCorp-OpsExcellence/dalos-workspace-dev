@@ -981,8 +981,8 @@ async function requestAccess(prod, prodName, userId, btn){
       })
     });
 
-    if(res.ok||res.status===201||res.status===204){
-      // Call Edge Function to send email notification
+    if(res.ok||res.status===201||res.status===204||res.status===200){
+      // Call Edge Function to send email notification (fire and forget)
       fetch(SB_URL+'/functions/v1/Send-access-request',{
         method:'POST',
         headers:{apikey:SB_ANON,Authorization:'Bearer '+getUserJwt(),'Content-Type':'application/json'},
@@ -994,9 +994,19 @@ async function requestAccess(prod, prodName, userId, btn){
       btn.innerHTML='<i class="ti ti-check" style="font-size:12px"></i>Request sent';
       btn.disabled=false;
     } else {
-      btn.innerHTML='<i class="ti ti-send" style="font-size:12px"></i>Request access';
-      btn.disabled=false;
-      alert('Failed to send request. Please try again.');
+      // Log the actual error for debugging
+      var errBody=await res.json().catch(function(){return {};});
+      console.warn('Request save failed:',res.status, errBody);
+      // If it's a duplicate (already requested), treat as success
+      if(res.status===409||(errBody&&errBody.code==='23505')){
+        btn.className='req-btn sent';
+        btn.innerHTML='<i class="ti ti-check" style="font-size:12px"></i>Already requested';
+        btn.disabled=false;
+      } else {
+        btn.innerHTML='<i class="ti ti-send" style="font-size:12px"></i>Request access';
+        btn.disabled=false;
+        alert('Failed to send request ('+res.status+'). Please try again.');
+      }
     }
   }catch(e){
     btn.innerHTML='<i class="ti ti-send" style="font-size:12px"></i>Request access';
