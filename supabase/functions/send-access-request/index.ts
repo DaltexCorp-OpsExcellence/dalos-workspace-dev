@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const ADMIN_EMAIL = "ramy.ahmed@daltexcorp.com";
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "re_L8C9FCed_4XwiPAMYFUXhXynswX9doyv3";
 const APP_URL = "https://daltexcorp-opsexcellence.github.io/dalos-analytics-dev/daltex_home.html";
 
 const corsHeaders = {
@@ -16,31 +16,51 @@ serve(async (req) => {
   }
 
   try {
-    const { userName, userEmail, product, requestId } = await req.json();
+    const { userName, userEmail, product, prodName } = await req.json();
+    const productLabel = prodName || (product.charAt(0).toUpperCase() + product.slice(1));
 
-    const productLabel = product.charAt(0).toUpperCase() + product.slice(1);
-
-    const emailBody = `
+    const emailHtml = `
 <!DOCTYPE html>
 <html>
-<body style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#142850">
-  <div style="background:#142850;border-radius:10px;padding:20px 24px;margin-bottom:24px">
-    <span style="color:#fff;font-size:18px;font-weight:700">DAL<span style="color:#DC6428">Analytics</span></span>
+<body style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#142850;background:#f8fafc">
+  <div style="background:#142850;border-radius:12px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center">
+    <span style="color:#fff;font-size:20px;font-weight:700">DAL<span style="color:#DC6428">Analytics</span></span>
   </div>
-  <h2 style="margin:0 0 8px">New Access Request</h2>
-  <p style="color:#64748b;margin:0 0 20px">Someone is requesting access to DALos Analytics.</p>
-  <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:20px">
-    <table style="width:100%;border-collapse:collapse">
-      <tr><td style="padding:6px 0;color:#64748b;font-size:13px">Name</td><td style="padding:6px 0;font-weight:600;font-size:13px">${userName}</td></tr>
-      <tr><td style="padding:6px 0;color:#64748b;font-size:13px">Email</td><td style="padding:6px 0;font-size:13px">${userEmail}</td></tr>
-      <tr><td style="padding:6px 0;color:#64748b;font-size:13px">Product</td><td style="padding:6px 0;font-size:13px"><span style="background:#fff7ed;color:#c2410c;padding:2px 8px;border-radius:4px;font-weight:600">${productLabel}</span></td></tr>
-      <tr><td style="padding:6px 0;color:#64748b;font-size:13px">Requested</td><td style="padding:6px 0;font-size:13px">${new Date().toLocaleString('en-GB')}</td></tr>
-    </table>
+  <div style="background:#fff;border-radius:12px;padding:24px;border:1px solid #e2e8f0">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <div style="width:40px;height:40px;border-radius:50%;background:#fff7ed;display:flex;align-items:center;justify-content:center;font-size:18px">🔐</div>
+      <div>
+        <div style="font-size:16px;font-weight:700;color:#142850">New Access Request</div>
+        <div style="font-size:12px;color:#64748b">Someone is requesting access to DALos Analytics</div>
+      </div>
+    </div>
+    <div style="background:#f8fafc;border-radius:8px;padding:16px;margin-bottom:20px">
+      <table style="width:100%;border-collapse:collapse">
+        <tr>
+          <td style="padding:6px 0;color:#64748b;font-size:13px;width:100px">Name</td>
+          <td style="padding:6px 0;font-weight:600;font-size:13px">${userName}</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0;color:#64748b;font-size:13px">Email</td>
+          <td style="padding:6px 0;font-size:13px">${userEmail}</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0;color:#64748b;font-size:13px">Product</td>
+          <td style="padding:6px 0;font-size:13px">
+            <span style="background:#fff7ed;color:#c2410c;padding:3px 10px;border-radius:20px;font-weight:600;font-size:12px">${productLabel}</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:6px 0;color:#64748b;font-size:13px">Requested</td>
+          <td style="padding:6px 0;font-size:13px">${new Date().toLocaleString('en-GB', {dateStyle:'medium',timeStyle:'short'})}</td>
+        </tr>
+      </table>
+    </div>
+    <a href="${APP_URL}" style="display:inline-block;background:#142850;color:#fff;text-decoration:none;padding:11px 22px;border-radius:8px;font-weight:600;font-size:13px">
+      Review in DALos Analytics →
+    </a>
   </div>
-  <a href="${APP_URL}" style="display:inline-block;background:#142850;color:#fff;text-decoration:none;padding:10px 20px;border-radius:8px;font-weight:600;font-size:13px">
-    Review in DALos Analytics →
-  </a>
-  <p style="color:#94a3b8;font-size:11px;margin-top:24px">This notification was sent automatically by DALos Analytics.</p>
+  <p style="color:#94a3b8;font-size:11px;margin-top:16px;text-align:center">Sent automatically by DALos Analytics · Daltex Corp</p>
 </body>
 </html>`;
 
@@ -54,20 +74,20 @@ serve(async (req) => {
         from: "DALos Analytics <noreply@daltexcorp.com>",
         to: [ADMIN_EMAIL],
         subject: `Access Request: ${productLabel} — ${userName}`,
-        html: emailBody,
+        html: emailHtml,
       }),
     });
 
+    const result = await emailRes.json();
+
     if (!emailRes.ok) {
-      const err = await emailRes.json();
-      console.error("Resend error:", err);
-      return new Response(JSON.stringify({ error: err }), {
+      return new Response(JSON.stringify({ error: result }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, id: result.id }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
