@@ -119,6 +119,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .product-card.locked:hover{transform:none;box-shadow:var(--shadow);border-color:var(--border)}
 .product-card.locked .pc-arrow{display:none}
 .product-card.locked .req-btn{opacity:1;filter:none;pointer-events:all}
+.req-btn.sent{border-color:#16a34a;color:#16a34a}
+.req-btn.sent:hover{background:transparent;color:#16a34a;cursor:default}
 .req-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;border:1.5px solid var(--orange);color:var(--orange);background:#fff;cursor:pointer;font-family:var(--font);transition:all .15s}
 .req-btn:hover{background:var(--orange);color:#fff}
 .req-btn.sent{border-color:#16a34a;color:#16a34a;pointer-events:none}
@@ -1620,7 +1622,6 @@ updateDate();
               btn.className='req-btn'+(alreadySent?' sent':'');
               if(alreadySent){
                 btn.innerHTML='<i class="ti ti-check" style="font-size:12px"></i>Already requested';
-                btn.disabled=true;
               } else {
                 btn.innerHTML='<i class="ti ti-send" style="font-size:12px"></i>Request access';
                 btn.onclick=function(e){e.stopPropagation();requestAccess(prod,cardMap2[prod].name,userId,btn);};
@@ -1670,7 +1671,6 @@ updateDate();
               btn.dataset.prodname=cardMap[prod].name;
               if(alreadySent){
                 btn.innerHTML='<i class="ti ti-check" style="font-size:12px"></i>Already requested';
-                btn.disabled=true;
               } else {
                 btn.innerHTML='<i class="ti ti-send" style="font-size:12px"></i>Request access';
                 btn.onclick=function(e){e.stopPropagation();requestAccess(prod,cardMap[prod].name,userId,btn);};
