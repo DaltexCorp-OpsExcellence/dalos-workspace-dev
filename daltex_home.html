@@ -115,6 +115,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .product-card:hover{box-shadow:var(--shadow2);transform:translateY(-2px);border-color:rgba(20,40,80,.2)}
 .product-card.coming{opacity:.6;cursor:default}
 .product-card.coming:hover{transform:none;box-shadow:var(--shadow)}
+.product-card.locked{opacity:.45;filter:grayscale(.6);cursor:default}
+.product-card.locked:hover{transform:none;box-shadow:var(--shadow);border-color:var(--border)}
+.product-card.locked .pc-arrow{display:none}
+.req-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;border:1.5px solid var(--orange);color:var(--orange);background:#fff;cursor:pointer;font-family:var(--font);transition:all .15s}
+.req-btn:hover{background:var(--orange);color:#fff}
+.req-btn.sent{border-color:#16a34a;color:#16a34a;pointer-events:none}
+.req-btn.sent:hover{background:transparent;color:#16a34a}
+.ap-pending-row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid #fde68a;border-radius:8px;margin-bottom:6px;background:#fffbeb}
+.ap-approve-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;border:1px solid #bbf7d0;background:#f0fdf4;color:#16a34a;cursor:pointer;font-family:var(--font);transition:.15s}
+.ap-approve-btn:hover{background:#16a34a;color:#fff}
+.ap-decline-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;border:1px solid #fecaca;background:#fef2f2;color:#dc2626;cursor:pointer;font-family:var(--font);transition:.15s}
+.ap-decline-btn:hover{background:#dc2626;color:#fff}
 .pc-header{padding:20px 20px 16px;display:flex;align-items:flex-start;gap:14px}
 .pc-icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
 .pc-info{flex:1;min-width:0}
@@ -669,6 +681,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
   <div class="ap-body" id="ap-body">
     <button class="ap-share-btn" onclick="openModal()"><i class="ti ti-plus" style="font-size:15px"></i>Share access with someone</button>
+    <!-- Pending requests -->
+    <div id="ap-pending-wrap" style="display:none">
+      <div class="ap-sect" id="ap-pending-label" style="color:#92400e"><i class="ti ti-clock" style="font-size:11px;margin-right:4px"></i>Pending requests</div>
+      <div id="ap-pending-list"></div>
+    </div>
+    <!-- Active access -->
     <div class="ap-sect" id="ap-sect-label">Loading…</div>
     <div id="ap-user-list"><div style="text-align:center;padding:24px 0;color:var(--text3);font-size:13px"><i class="ti ti-loader-2" style="font-size:20px;display:block;margin:0 auto 8px;animation:spin 1s linear infinite"></i>Loading users…</div></div>
   </div>
@@ -925,11 +943,162 @@ async function revokeUser(permId,name){
   }catch(e){alert('Error: '+e.message);}
 }
 
-// ── PANEL & MODAL: open/close ──
+// ── REQUEST ACCESS ──
+async function requestAccess(prod, prodName, userId, btn){
+  if(btn.classList.contains('sent')) return;
+  btn.innerHTML='<i class="ti ti-loader-2" style="font-size:12px;animation:spin 1s linear infinite"></i>Sending…';
+  btn.disabled=true;
+  try{
+    // Get user info from session
+    var SKEY='sb-sfyjvgjwvtwkrnqrvqyc-auth-token';
+    var raw=localStorage.getItem(SKEY);
+    var s=JSON.parse(raw);
+    var sess=(s&&s.access_token)?s:((s&&s.currentSession)?s.currentSession:null);
+    var userEmail=(sess&&sess.user&&sess.user.email)||'';
+    var userName=(sess&&sess.user&&sess.user.user_metadata&&sess.user.user_metadata.full_name)||userEmail;
+
+    // Save request to Supabase
+    var res=await fetch(SB_URL+'/rest/v1/dal_access_requests',{
+      method:'POST',
+      headers:Object.assign({},sbH(),{'Prefer':'resolution=merge-duplicates,return=minimal'}),
+      body:JSON.stringify({
+        user_id:userId,
+        full_name:userName,
+        email:userEmail,
+        product:prod,
+        status:'pending'
+      })
+    });
+
+    if(res.ok||res.status===201||res.status===204){
+      // Open mailto to notify admin
+      var subject=encodeURIComponent('DALos Analytics — Access Request: '+prodName);
+      var body=encodeURIComponent(
+        'Hi Ramy,\n\n'+
+        userName+' ('+userEmail+') has requested access to the '+prodName+' dashboard on DALos Analytics.\n\n'+
+        'Please log in to DALos Analytics to review and approve or decline this request:\n'+
+        'https://daltexcorp-opsexcellence.github.io/dalos-analytics-dev/daltex_home.html\n\n'+
+        'Requested: '+new Date().toLocaleString('en-GB')+'\n\n'+
+        'DALos Analytics'
+      );
+      window.location.href='mailto:ramy.ahmed@daltexcorp.com?subject='+subject+'&body='+body;
+
+      // Update button to sent state
+      btn.className='req-btn sent';
+      btn.innerHTML='<i class="ti ti-check" style="font-size:12px"></i>Request sent';
+      btn.disabled=false;
+    } else {
+      btn.innerHTML='<i class="ti ti-send" style="font-size:12px"></i>Request access';
+      btn.disabled=false;
+      alert('Failed to send request. Please try again.');
+    }
+  }catch(e){
+    btn.innerHTML='<i class="ti ti-send" style="font-size:12px"></i>Request access';
+    btn.disabled=false;
+    alert('Error: '+e.message);
+  }
+}
+
+// ── PANEL: load pending requests ──
+async function loadPendingRequests(){
+  var wrap=document.getElementById('ap-pending-wrap');
+  var list=document.getElementById('ap-pending-list');
+  var label=document.getElementById('ap-pending-label');
+  if(!wrap||!list) return;
+  try{
+    var res=await fetch(SB_URL+'/rest/v1/dal_access_requests?status=eq.pending&select=id,full_name,email,product,requested_at,user_id&order=requested_at.desc',{headers:sbH()});
+    var requests=await res.json();
+    if(!Array.isArray(requests)||!requests.length){
+      wrap.style.display='none';
+      return;
+    }
+    wrap.style.display='';
+    label.innerHTML='<i class="ti ti-clock" style="font-size:11px;margin-right:4px"></i>Pending requests — '+requests.length;
+    list.innerHTML=requests.map(function(r){
+      var name=r.full_name||r.email||'Unknown';
+      var col=getAvColor(name);
+      var initials=getInitials(name);
+      var prod=r.product||'grapes';
+      var prodLabel=prod.charAt(0).toUpperCase()+prod.slice(1);
+      var timeAgo=formatTimeAgo(r.requested_at);
+      return '<div class="ap-pending-row" id="preq-'+r.id+'">'
+        +'<div class="aav" style="background:'+col[0]+';color:'+col[1]+'">'+initials+'</div>'
+        +'<div class="ainfo" style="flex:1">'
+          +'<div class="aname">'+escH(name)+'</div>'
+          +'<div class="arole-lbl">'+escH(r.email||'')+'</div>'
+          +'<div class="atags">'
+            +'<span class="atag" style="background:#fff7ed;border-color:#fed7aa;color:#c2410c">'+escH(prodLabel)+'</span>'
+            +'<span class="atag">'+timeAgo+'</span>'
+          +'</div>'
+          +'<div style="display:flex;gap:6px;margin-top:7px">'
+            +'<button class="ap-approve-btn" onclick="approveRequest(\''+r.id+'\',\''+r.user_id+'\',\''+escH(name)+'\',\''+prod+'\')"><i class="ti ti-check" style="font-size:11px"></i>Approve</button>'
+            +'<button class="ap-decline-btn" onclick="declineRequest(\''+r.id+'\',\''+escH(name)+'\')"><i class="ti ti-x" style="font-size:11px"></i>Decline</button>'
+          +'</div>'
+        +'</div>'
+        +'</div>';
+    }).join('');
+  }catch(e){
+    wrap.style.display='none';
+    console.warn('Pending requests load failed:',e.message);
+  }
+}
+
+function formatTimeAgo(iso){
+  if(!iso) return '';
+  var diff=Math.floor((new Date()-new Date(iso))/60000);
+  if(diff<1) return 'Just now';
+  if(diff<60) return diff+'m ago';
+  if(diff<1440) return Math.floor(diff/60)+'h ago';
+  return Math.floor(diff/1440)+'d ago';
+}
+
+async function approveRequest(reqId, userId, name, prod){
+  // Open share modal pre-filled for this user and product
+  _editPermId=null;
+  smUser={name:name,id:userId};
+  smRole='viewer'; // default, admin can change
+  document.querySelector('.sm-title').innerHTML='<i class="ti ti-shield-lock" style="font-size:13px;margin-right:5px"></i>Approve access — '+escH(name);
+  document.getElementById('share-modal-wrap').classList.add('open');
+  // Pre-select the requested product
+  smProds.forEach(function(p){
+    var el=document.getElementById('pc-'+p);
+    if(!el) return;
+    var row=el.closest('.sm-prow');
+    var on=(p===prod);
+    el.className='sm-chk'+(on?' on':'');
+    el.innerHTML=on?'<i class="ti ti-check" style="font-size:10px"></i>':'';
+    on?row.classList.add('sel'):row.classList.remove('sel');
+  });
+  smStep=2; smShowP('smp2'); smUpdateBar();
+  // Store reqId so we can mark as approved after grant
+  window._pendingReqId=reqId;
+}
+
+async function declineRequest(reqId, name){
+  if(!confirm('Decline access request from '+name+'?')) return;
+  try{
+    var row=document.getElementById('preq-'+reqId);
+    if(row){row.style.opacity='0.4';row.style.pointerEvents='none';}
+    var res=await fetch(SB_URL+'/rest/v1/dal_access_requests?id=eq.'+reqId,{
+      method:'PATCH',
+      headers:Object.assign({},sbH(),{'Prefer':'return=minimal'}),
+      body:JSON.stringify({status:'declined',reviewed_at:new Date().toISOString()})
+    });
+    if(res.ok||res.status===204){
+      setTimeout(function(){loadPendingRequests();},400);
+    } else {
+      if(row){row.style.opacity='';row.style.pointerEvents='';}
+      alert('Failed to decline. Try again.');
+    }
+  }catch(e){alert('Error: '+e.message);}
+}
+
+// ── PANEL: open ──
 function openPanel(product){
   document.getElementById('access-overlay').classList.add('open');
   document.getElementById('access-panel').classList.add('open');
   document.getElementById('ap-sub').textContent=product==='all'?'DALos Analytics — All products':'Grapes · DALos Analytics';
+  loadPendingRequests();
   loadPanelUsers();
 }
 function closePanel(){
@@ -1197,6 +1366,14 @@ async function smGrant(){
       if(successTitle) successTitle.textContent=isEdit?'Access updated':'Access granted';
       smShowP('smp-done');
       loadPanelUsers();
+      // If this was an approval of a pending request, mark it as approved
+      if(window._pendingReqId){
+        fetch(SB_URL+'/rest/v1/dal_access_requests?id=eq.'+window._pendingReqId,{
+          method:'PATCH',
+          headers:Object.assign({},sbH(),{'Prefer':'return=minimal'}),
+          body:JSON.stringify({status:'approved',reviewed_at:new Date().toISOString()})
+        }).then(function(){window._pendingReqId=null;loadPendingRequests();});
+      }
     } else {
       var err=await res.json().catch(()=>({}));
       alert('Failed to save: '+(err.message||res.status));
@@ -1210,6 +1387,7 @@ async function smGrant(){
 
 function smReset(){
   _editPermId=null;
+  window._pendingReqId=null;
   smStep=1;smUser=null;smRole=null;smAllTabs=true;
   smTabs.forEach(t=>{smTabSt[t]=true;smSyncTab(t);});
   smDbs.forEach(d=>{smDbSt[d]=true;});
@@ -1383,38 +1561,75 @@ updateDate();
       var expired=perm&&perm.expires_at&&new Date(perm.expires_at)<new Date();
 
       if(!perm||expired){
-        // No access at all — show locked message, cards stay hidden
-        var grid=document.querySelector('.product-grid')||document.querySelector('[class*="grid"]');
-        if(grid){
-          var msg=document.createElement('div');
-          msg.style='text-align:center;padding:48px 20px;';
-          msg.innerHTML='<i class="ti ti-lock" style="font-size:36px;display:block;margin:0 auto 12px;color:var(--orange)"></i>'
-            +'<div style="font-size:15px;font-weight:600;color:var(--navy);margin-bottom:6px">No Analytics access</div>'
-            +'<div style="font-size:13px;color:var(--text3)">Contact your administrator to request access.</div>';
-          grid.appendChild(msg);
-        }
+        // No permission at all — show all cards dimmed with request buttons
+        var cardMap2={
+          grapes:{id:'pc-grapes',name:'Grapes'},
+          citrus:{id:'pc-citrus',name:'Citrus'},
+          mango:{id:'pc-mango',name:'Mango'},
+          pomegranate:{id:'pc-pomegranate',name:'Pomegranate'},
+          potatoes:{id:'pc-potatoes',name:'Potatoes'}
+        };
+        allCards.forEach(function(c){c.style.display='';c.classList.add('locked');c.onclick=null;});
+        Object.keys(cardMap2).forEach(function(prod){
+          var card=document.getElementById(cardMap2[prod].id);
+          if(!card) return;
+          if(!card.querySelector('.req-btn')){
+            var footer=card.querySelector('.pc-footer');
+            if(footer){
+              var btn=document.createElement('button');
+              btn.className='req-btn';
+              btn.dataset.prod=prod;
+              btn.innerHTML='<i class="ti ti-send" style="font-size:12px"></i>Request access';
+              btn.onclick=function(e){e.stopPropagation();requestAccess(prod,cardMap2[prod].name,userId,btn);};
+              footer.appendChild(btn);
+            }
+          }
+        });
         return;
       }
 
-      // Has permission — show only permitted product cards
+      // Has permission — show permitted cards, dim locked ones
       var cfg=perm.config||{};
       var allowedProds=cfg.products||[];
 
-      // Map product id to card element id
-      var cardMap={grapes:'pc-grapes',citrus:'pc-citrus',mango:'pc-mango',pomegranate:'pc-pomegranate',potatoes:'pc-potatoes'};
+      // Map product name to card id and display name
+      var cardMap={
+        grapes:{id:'pc-grapes',name:'Grapes'},
+        citrus:{id:'pc-citrus',name:'Citrus'},
+        mango:{id:'pc-mango',name:'Mango'},
+        pomegranate:{id:'pc-pomegranate',name:'Pomegranate'},
+        potatoes:{id:'pc-potatoes',name:'Potatoes'}
+      };
 
-      allowedProds.forEach(function(prod){
-        var cardId=cardMap[prod];
-        if(cardId){
-          var card=document.getElementById(cardId);
-          if(card) card.style.display='';
+      // Show all cards first, then lock/dim the ones not permitted
+      allCards.forEach(function(c){c.style.display='';});
+
+      Object.keys(cardMap).forEach(function(prod){
+        var cardId=cardMap[prod].id;
+        var card=document.getElementById(cardId);
+        if(!card) return;
+        if(allowedProds.includes(prod)){
+          // Permitted — fully interactive
+          card.classList.remove('locked');
+        } else {
+          // Not permitted — dim it and add request button
+          card.classList.add('locked');
+          card.onclick=null;
+          // Add request button if not already there
+          if(!card.querySelector('.req-btn')){
+            var footer=card.querySelector('.pc-footer');
+            if(footer){
+              var btn=document.createElement('button');
+              btn.className='req-btn';
+              btn.dataset.prod=prod;
+              btn.dataset.prodname=cardMap[prod].name;
+              btn.innerHTML='<i class="ti ti-send" style="font-size:12px"></i>Request access';
+              btn.onclick=function(e){e.stopPropagation();requestAccess(prod,cardMap[prod].name,userId,btn);};
+              footer.appendChild(btn);
+            }
+          }
         }
       });
-
-      // If no products permitted — show no access message
-      if(!allowedProds.length){
-        allCards.forEach(function(c){c.style.display='none';});
-      }
 
       window.__DALOS_PERM=perm;
 
