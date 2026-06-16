@@ -216,7 +216,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div class="dash-grid">
 
     <!-- SHIPMENTS — LIVE -->
-    <a class="dash-card" href="grapes_overview_branded.html">
+    <a class="dash-card" id="dc-shipments" href="grapes_overview_branded.html">
       <div class="dc-stripe" style="background:linear-gradient(90deg,#142850,#DC6428)"></div>
       <div class="dc-body">
         <div class="dc-header">
@@ -241,7 +241,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </a>
 
     <!-- QC — LIVE -->
-    <a class="dash-card" href="daltex_qc.html">
+    <a class="dash-card" id="dc-qc" href="daltex_qc.html">
       <div class="dc-stripe" style="background:linear-gradient(90deg,#142850,#dc2626)"></div>
       <div class="dc-body">
         <div class="dc-header">
@@ -396,7 +396,59 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   document.addEventListener('DOMContentLoaded',function(){
     var av=document.getElementById('dalos-avatar');
     if(av){av.textContent=getInitials();}
+    enforceGrapesDashboardAccess();
   });
+
+  async function enforceGrapesDashboardAccess(){
+    try{
+      var raw=localStorage.getItem(SKEY);
+      if(!raw) return;
+      var s=JSON.parse(raw);
+      var sess=(s&&s.access_token)?s:((s&&s.currentSession)?s.currentSession:null);
+      var userId=sess&&sess.user&&sess.user.id;
+      if(!userId) return;
+
+      var SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
+      var SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
+      var userJwt=(sess&&sess.access_token)||SB_ANON;
+      var authH={apikey:SB_ANON,Authorization:'Bearer '+userJwt};
+
+      // Check workspace role — admins see everything
+      var uRes=await fetch(SB_URL+'/rest/v1/users?id=eq.'+userId+'&select=role&limit=1',{headers:authH});
+      var uData=await uRes.json();
+      var wsRole=(uData&&uData[0]&&uData[0].role)||'';
+      if(!wsRole){
+        var meta=(sess&&sess.user&&sess.user.user_metadata)||{};
+        wsRole=meta.role||'';
+      }
+      if(wsRole.toLowerCase()==='admin') return;
+
+      // Get permissions
+      var pRes=await fetch(SB_URL+'/rest/v1/dal_analytics_permissions?user_id=eq.'+userId+'&select=config,expires_at&limit=1',{headers:authH});
+      var perms=await pRes.json();
+      var perm=Array.isArray(perms)&&perms[0];
+      if(!perm) return;
+
+      var expired=perm.expires_at&&new Date(perm.expires_at)<new Date();
+      if(expired) return;
+
+      var cfg=perm.config||{};
+      var allowedDbs=cfg.dashboards||[];
+
+      // Map dashboard ids to card element ids
+      var dbMap={shipments:'dc-shipments',qc:'dc-qc'};
+
+      Object.keys(dbMap).forEach(function(db){
+        var card=document.getElementById(dbMap[db]);
+        if(!card) return;
+        if(!allowedDbs.includes(db)){
+          card.style.display='none';
+        }
+      });
+
+      window.__DALOS_PERM=perm;
+    }catch(e){console.warn('Dashboard access check:',e.message);}
+  }
 })();
 </script>
 </body>

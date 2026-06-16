@@ -1078,13 +1078,16 @@ function formatTimeAgo(iso){
 }
 
 async function approveRequest(reqId, userId, name, prod){
-  // Open share modal pre-filled for this user and product
+  smReset(); // reset modal state first
   _editPermId=null;
   smUser={name:name,id:userId};
-  smRole='viewer'; // default, admin can change
+  smRole='viewer';
   document.querySelector('.sm-title').innerHTML='<i class="ti ti-shield-lock" style="font-size:13px;margin-right:5px"></i>Approve access — '+escH(name);
+  // Ensure steps and footer are visible
+  var steps=document.getElementById('sm-steps');if(steps)steps.style.display='';
+  var foot=document.getElementById('sm-foot');if(foot)foot.style.display='';
   document.getElementById('share-modal-wrap').classList.add('open');
-  // Pre-select the requested product
+  // Pre-select the requested product only
   smProds.forEach(function(p){
     var el=document.getElementById('pc-'+p);
     if(!el) return;
@@ -1095,7 +1098,6 @@ async function approveRequest(reqId, userId, name, prod){
     on?row.classList.add('sel'):row.classList.remove('sel');
   });
   smStep=2; smShowP('smp2'); smUpdateBar();
-  // Store reqId so we can mark as approved after grant
   window._pendingReqId=reqId;
 }
 
@@ -1137,6 +1139,9 @@ function editUser(permId, name, role, config, expiresAt){
   _editPermId = permId;
   // pre-fill user display
   smUser = {name: name, id: null}; // id not needed for PATCH by permId
+  // Ensure steps and footer are visible
+  var steps=document.getElementById('sm-steps');if(steps)steps.style.display='';
+  var foot=document.getElementById('sm-foot');if(foot)foot.style.display='';
   // open modal
   document.getElementById('share-modal-wrap').classList.add('open');
   // update modal title to Edit mode
