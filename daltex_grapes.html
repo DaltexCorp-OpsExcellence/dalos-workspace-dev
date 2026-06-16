@@ -411,7 +411,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       var uRes=await fetch(SB_URL+'/rest/v1/users?id=eq.'+userId+'&select=role&limit=1',{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
       var uData=await uRes.json();
       var wsRole=(uData&&uData[0]&&uData[0].role)||'';
-      if(['admin','director','owner','superadmin'].includes(wsRole.toLowerCase())) return;
+      if(wsRole.toLowerCase()==='admin') return;
       var res=await fetch(SB_URL+'/rest/v1/dal_analytics_permissions?user_id=eq.'+userId+'&select=config,expires_at&limit=1',{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
       var perms=await res.json();
       var perm=Array.isArray(perms)&&perms[0];
