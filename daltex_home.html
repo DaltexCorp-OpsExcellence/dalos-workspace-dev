@@ -1242,13 +1242,26 @@ updateDate();
   const SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
   const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
   const SID='19482d39-6074-4c60-b772-ced5df1ffdcb';
-  const H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+
+  // Use logged-in user token if available, fall back to anon key
+  function getToken(){
+    try{
+      var SKEY='sb-sfyjvgjwvtwkrnqrvqyc-auth-token';
+      var raw=localStorage.getItem(SKEY);
+      if(!raw) return SB_KEY;
+      var s=JSON.parse(raw);
+      var sess=(s&&s.access_token)?s:((s&&s.currentSession)?s.currentSession:null);
+      return (sess&&sess.access_token)||SB_KEY;
+    }catch(e){return SB_KEY;}
+  }
+
+  function H(){var tok=getToken();return {'apikey':SB_KEY,'Authorization':'Bearer '+tok,'Range':'0-99999'};}
   function set(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
   function num(v){var n=parseFloat(v);return isNaN(n)?0:n;}
 
   // ── Shipments ──
   try{
-    const r=await fetch(SB_URL+'/rest/v1/grapes_shipments_view?season_id=eq.'+SID+'&select=net_weight,container_number,destination_country,variety,loading_week',{headers:H});
+    const r=await fetch(SB_URL+'/rest/v1/grapes_shipments_view?select=net_weight,container_number,destination_country,variety,loading_week',{headers:H()});
     if(r.ok){
       const rows=await r.json();
       if(rows&&rows.length){
@@ -1269,7 +1282,7 @@ updateDate();
 
   // ── QC ──
   try{
-    const r=await fetch(SB_URL+'/rest/v1/cqc_samples_export?select=report_id,major_total,minor_total&limit=5000',{headers:H});
+    const r=await fetch(SB_URL+'/rest/v1/cqc_samples_export?select=report_id,major_total,minor_total&limit=5000',{headers:H()});
     if(r.ok){
       const rows=await r.json();
       if(rows&&rows.length){
