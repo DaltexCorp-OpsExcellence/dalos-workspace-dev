@@ -369,7 +369,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div class="product-grid">
 
     <!-- GRAPES — LIVE -->
-    <div class="product-card" onclick="window.location='daltex_grapes.html'">
+    <div class="product-card" id="pc-grapes" onclick="window.location='daltex_grapes.html'">
       <span class="pc-badge badge-live"><i class="ti ti-circle-dot" style="font-size:9px"></i> Live</span>
       <div class="pc-header">
         <div class="pc-icon" style="background:#f0fdf4">🍇</div>
@@ -1342,102 +1342,87 @@ updateDate();
   });
 
   async function checkAnalyticsAccess(){
+    // Hide all product cards immediately — show only what's permitted
+    var allCards=document.querySelectorAll('.product-card');
+    allCards.forEach(function(c){c.style.display='none';});
+
     try{
       var raw=localStorage.getItem(SKEY);
-      if(!raw) return; // not logged in, bounce() handles it
+      if(!raw) return;
       var s=JSON.parse(raw);
       var sess=(s&&s.access_token)?s:((s&&s.currentSession)?s.currentSession:null);
       var userId=sess&&sess.user&&sess.user.id;
       if(!userId) return;
 
-      // Get this user's Analytics permission
       var SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
       var SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
-      var res=await fetch(SB_URL+'/rest/v1/dal_analytics_permissions?user_id=eq.'+userId+'&select=role,config,expires_at&limit=1',{
-        headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}
-      });
-      var perms=await res.json();
+      var authH={apikey:SB_ANON,Authorization:'Bearer '+SB_ANON};
 
-      // Check users table role — admins bypass permission checks AND see admin buttons
-      var uRes=await fetch(SB_URL+'/rest/v1/users?id=eq.'+userId+'&select=role&limit=1',{
-        headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}
-      });
-      var uData=await uRes.json();
+      // Run both fetches in parallel
+      var [permRes,userRes]=await Promise.all([
+        fetch(SB_URL+'/rest/v1/dal_analytics_permissions?user_id=eq.'+userId+'&select=role,config,expires_at&limit=1',{headers:authH}),
+        fetch(SB_URL+'/rest/v1/users?id=eq.'+userId+'&select=role&limit=1',{headers:authH})
+      ]);
+      var perms=await permRes.json();
+      var uData=await userRes.json();
       var wsRole=(uData&&uData[0]&&uData[0].role)||'';
       var isAdmin=(wsRole.toLowerCase()==='admin');
 
-      // Show admin-only buttons if admin
       if(isAdmin){
+        // Admin — show everything + admin buttons
+        allCards.forEach(function(c){c.style.display='';});
         var mab=document.getElementById('manage-access-btn');
         if(mab) mab.style.display='';
         var gsb=document.getElementById('grapes-share-btn');
         if(gsb) gsb.style.display='';
+        return;
       }
 
-      // Admins see everything — skip permission check
-      if(isAdmin) return;
-
-      // No permission record → show access denied on product cards
+      // Check permission record
       var perm=Array.isArray(perms)&&perms[0];
       var expired=perm&&perm.expires_at&&new Date(perm.expires_at)<new Date();
+
       if(!perm||expired){
-        // Hide all product cards, show a message
-        document.querySelectorAll('.pc').forEach(function(card){
-          card.style.opacity='0.35';
-          card.style.pointerEvents='none';
-          card.style.filter='grayscale(1)';
-        });
-        var grid=document.querySelector('.prod-grid')||document.querySelector('.pc-grid');
+        // No access at all — show locked message, cards stay hidden
+        var grid=document.querySelector('.product-grid')||document.querySelector('[class*="grid"]');
         if(grid){
           var msg=document.createElement('div');
-          msg.style='grid-column:1/-1;text-align:center;padding:32px 20px;color:var(--text3);font-size:13px;';
-          msg.innerHTML='<i class="ti ti-lock" style="font-size:28px;display:block;margin:0 auto 8px;color:var(--orange)"></i>'
-            +'<strong style="color:var(--navy)">No Analytics access</strong><br>'
-            +'Contact your administrator to request access.';
+          msg.style='text-align:center;padding:48px 20px;';
+          msg.innerHTML='<i class="ti ti-lock" style="font-size:36px;display:block;margin:0 auto 12px;color:var(--orange)"></i>'
+            +'<div style="font-size:15px;font-weight:600;color:var(--navy);margin-bottom:6px">No Analytics access</div>'
+            +'<div style="font-size:13px;color:var(--text3)">Contact your administrator to request access.</div>';
           grid.appendChild(msg);
         }
         return;
       }
 
-      // Has permission — check which products they can access
+      // Has permission — show only permitted product cards
       var cfg=perm.config||{};
       var allowedProds=cfg.products||[];
-      var allowedDbs=cfg.dashboards||[];
 
-      // If no products set → treat as no access
-      if(!allowedProds.length) return;
+      // Map product id to card element id
+      var cardMap={grapes:'pc-grapes',citrus:'pc-citrus',mango:'pc-mango',pomegranate:'pc-pomegranate',potatoes:'pc-potatoes'};
 
-      // Map product names to card selectors
-      var prodMap={
-        grapes:['daltex_grapes.html','daltex_qc.html','daltex_shipments.html'],
-        citrus:['citrus'],mango:['mango'],pomegranate:['pomegranate'],potatoes:['potatoes']
-      };
-
-      // Hide product cards not in their allowed list
-      document.querySelectorAll('.pc').forEach(function(card){
-        var link=card.querySelector('a[href]');
-        var href=(link&&link.getAttribute('href'))||'';
-        var cardProd=null;
-        Object.keys(prodMap).forEach(function(prod){
-          prodMap[prod].forEach(function(pattern){if(href.includes(pattern))cardProd=prod;});
-        });
-        // Also check card title text
-        if(!cardProd){
-          var title=(card.querySelector('.pc-name')||card.querySelector('h3')||card.querySelector('.pc-title')||{}).textContent||'';
-          Object.keys(prodMap).forEach(function(prod){if(title.toLowerCase().includes(prod))cardProd=prod;});
-        }
-        if(cardProd&&!allowedProds.includes(cardProd)){
-          card.style.opacity='0.35';
-          card.style.pointerEvents='none';
-          card.style.filter='grayscale(1)';
-          card.title='You do not have access to this product';
+      allowedProds.forEach(function(prod){
+        var cardId=cardMap[prod];
+        if(cardId){
+          var card=document.getElementById(cardId);
+          if(card) card.style.display='';
         }
       });
 
-      // Store permission in window for other scripts to use
+      // If no products permitted — show no access message
+      if(!allowedProds.length){
+        allCards.forEach(function(c){c.style.display='none';});
+      }
+
       window.__DALOS_PERM=perm;
 
-    }catch(e){console.warn('Analytics access check failed:',e.message);}
+    }catch(e){
+      // On error — show all cards (fail open) so users aren't locked out by a bug
+      allCards.forEach(function(c){c.style.display='';});
+      console.warn('Analytics access check failed:',e.message);
+    }
   }
   window.checkAnalyticsAccess=checkAnalyticsAccess;
 })();
