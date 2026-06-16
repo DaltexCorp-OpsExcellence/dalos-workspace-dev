@@ -985,7 +985,7 @@ async function requestAccess(prod, prodName, userId, btn){
       // Call Edge Function to send email notification (fire and forget)
       fetch(SB_URL+'/functions/v1/Send-access-request',{
         method:'POST',
-        headers:{apikey:SB_ANON,Authorization:'Bearer '+getUserJwt(),'Content-Type':'application/json'},
+        headers:{apikey:SB_ANON,'Content-Type':'application/json'},
         body:JSON.stringify({userName:userName,userEmail:userEmail,product:prod,prodName:prodName})
       }).then(function(r){
         r.json().then(function(d){console.log('Edge Function response:',r.status,d);});
@@ -996,15 +996,19 @@ async function requestAccess(prod, prodName, userId, btn){
       btn.innerHTML='<i class="ti ti-check" style="font-size:12px"></i>Request sent';
       btn.disabled=false;
     } else {
-      // Log the actual error for debugging
       var errBody=await res.json().catch(function(){return {};});
-      console.warn('Request save failed:',res.status, errBody);
-      // If it's a duplicate (already requested), treat as success
+      // 409 = already requested — treat as success, just resend email
       if(res.status===409||(errBody&&errBody.code==='23505')){
+        fetch(SB_URL+'/functions/v1/Send-access-request',{
+          method:'POST',
+          headers:{apikey:SB_ANON,'Content-Type':'application/json'},
+          body:JSON.stringify({userName:userName,userEmail:userEmail,product:prod,prodName:prodName})
+        }).catch(function(){});
         btn.className='req-btn sent';
-        btn.innerHTML='<i class="ti ti-check" style="font-size:12px"></i>Already requested';
+        btn.innerHTML='<i class="ti ti-check" style="font-size:12px"></i>Request sent';
         btn.disabled=false;
       } else {
+        console.warn('Request save failed:',res.status, errBody);
         btn.innerHTML='<i class="ti ti-send" style="font-size:12px"></i>Request access';
         btn.disabled=false;
         alert('Failed to send request ('+res.status+'). Please try again.');
