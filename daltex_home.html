@@ -311,6 +311,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .pc-share-btn:hover{border-color:var(--navy);color:var(--navy);background:var(--bg)}
 .manage-access-btn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#dce6f5;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);transition:.18s}
 .manage-access-btn:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.28)}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -666,69 +667,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </div>
     <button class="ap-close" onclick="closePanel()"><i class="ti ti-x"></i></button>
   </div>
-  <div class="ap-body">
+  <div class="ap-body" id="ap-body">
     <button class="ap-share-btn" onclick="openModal()"><i class="ti ti-plus" style="font-size:15px"></i>Share access with someone</button>
-    <div class="ap-sect">Active access — 5 users</div>
-    <div class="arow">
-      <div class="aav" style="background:#f0fdf4;color:#16a34a">AF</div>
-      <div class="ainfo">
-        <div class="aname">Ahmed Farouk</div>
-        <div class="arole-lbl">Farm Manager</div>
-        <div class="atags"><span class="atag">Grapes</span><span class="atag">Shipments</span><span class="atag">QC</span><span class="atag">Farm A</span></div>
-      </div>
-      <div class="abtns">
-        <button class="abtn-sm" title="Edit"><i class="ti ti-edit"></i></button>
-        <button class="abtn-sm del" title="Revoke"><i class="ti ti-trash"></i></button>
-      </div>
-    </div>
-    <div class="arow">
-      <div class="aav" style="background:#eff6ff;color:#1d4ed8">SK</div>
-      <div class="ainfo">
-        <div class="aname">Sara Khalil</div>
-        <div class="arole-lbl">QC Analyst</div>
-        <div class="atags"><span class="atag">Grapes</span><span class="atag">QC</span><span class="atag">All farms</span></div>
-      </div>
-      <div class="abtns">
-        <button class="abtn-sm"><i class="ti ti-edit"></i></button>
-        <button class="abtn-sm del"><i class="ti ti-trash"></i></button>
-      </div>
-    </div>
-    <div class="arow">
-      <div class="aav" style="background:#fff7ed;color:#c2410c">NA</div>
-      <div class="ainfo">
-        <div class="aname">Nour Adel</div>
-        <div class="arole-lbl">Logistics Lead</div>
-        <div class="atags"><span class="atag">Grapes</span><span class="atag">Shipments</span><span class="atag">Harvest</span><span class="atag">All markets</span></div>
-      </div>
-      <div class="abtns">
-        <button class="abtn-sm"><i class="ti ti-edit"></i></button>
-        <button class="abtn-sm del"><i class="ti ti-trash"></i></button>
-      </div>
-    </div>
-    <div class="arow">
-      <div class="aav" style="background:#ede9fe;color:#6d28d9">OS</div>
-      <div class="ainfo">
-        <div class="aname">Omar Saleh</div>
-        <div class="arole-lbl">Export Manager</div>
-        <div class="atags"><span class="atag">Grapes</span><span class="atag">Shipments</span><span class="atag">Netherlands</span><span class="atag">UK</span></div>
-      </div>
-      <div class="abtns">
-        <button class="abtn-sm"><i class="ti ti-edit"></i></button>
-        <button class="abtn-sm del"><i class="ti ti-trash"></i></button>
-      </div>
-    </div>
-    <div class="arow expiring">
-      <div class="aav" style="background:#fff7ed;color:#c2410c">LH</div>
-      <div class="ainfo">
-        <div class="aname">Laila Hassan</div>
-        <div class="arole-lbl">Finance Analyst</div>
-        <div class="atags"><span class="atag">Grapes</span><span class="atag">Budget</span><span class="atag warn"><i class="ti ti-clock" style="font-size:9px"></i> Expires in 3 days</span></div>
-      </div>
-      <div class="abtns">
-        <button class="abtn-sm"><i class="ti ti-edit"></i></button>
-        <button class="abtn-sm del"><i class="ti ti-trash"></i></button>
-      </div>
-    </div>
+    <div class="ap-sect" id="ap-sect-label">Loading…</div>
+    <div id="ap-user-list"><div style="text-align:center;padding:24px 0;color:var(--text3);font-size:13px"><i class="ti ti-loader-2" style="font-size:20px;display:block;margin:0 auto 8px;animation:spin 1s linear infinite"></i>Loading users…</div></div>
   </div>
 </div>
 
@@ -757,39 +699,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <!-- STEP 1: USER -->
       <div class="sm-panel active" id="smp1">
         <div class="sm-label">Select workspace user</div>
-        <div class="sm-search"><i class="ti ti-search"></i><input type="text" placeholder="Search DALos Workspace users..." oninput="smFilterU(this.value)"></div>
-        <div class="sm-ulist" id="sm-ulist">
-          <div class="sm-urow" data-n="Ahmed Farouk" data-r="Farm Manager" onclick="smSelU(this)">
-            <div class="sm-uav" style="background:#f0fdf4;color:#16a34a">AF</div>
-            <div class="sm-uinfo"><div class="sm-uname">Ahmed Farouk</div><div class="sm-urole">Farm Manager</div></div>
-            <div class="sm-chk"></div>
-          </div>
-          <div class="sm-urow" data-n="Sara Khalil" data-r="QC Analyst" onclick="smSelU(this)">
-            <div class="sm-uav" style="background:#eff6ff;color:#1d4ed8">SK</div>
-            <div class="sm-uinfo"><div class="sm-uname">Sara Khalil</div><div class="sm-urole">QC Analyst</div></div>
-            <div class="sm-chk"></div>
-          </div>
-          <div class="sm-urow" data-n="Nour Adel" data-r="Logistics Lead" onclick="smSelU(this)">
-            <div class="sm-uav" style="background:#fff7ed;color:#c2410c">NA</div>
-            <div class="sm-uinfo"><div class="sm-uname">Nour Adel</div><div class="sm-urole">Logistics Lead</div></div>
-            <div class="sm-chk"></div>
-          </div>
-          <div class="sm-urow" data-n="Omar Saleh" data-r="Export Manager" onclick="smSelU(this)">
-            <div class="sm-uav" style="background:#ede9fe;color:#6d28d9">OS</div>
-            <div class="sm-uinfo"><div class="sm-uname">Omar Saleh</div><div class="sm-urole">Export Manager</div></div>
-            <div class="sm-chk"></div>
-          </div>
-          <div class="sm-urow" data-n="Karim Mansour" data-r="Director" onclick="smSelU(this)">
-            <div class="sm-uav" style="background:#f0fdf4;color:#166534">KM</div>
-            <div class="sm-uinfo"><div class="sm-uname">Karim Mansour</div><div class="sm-urole">Director</div></div>
-            <div class="sm-chk"></div>
-          </div>
-          <div class="sm-urow" data-n="Laila Hassan" data-r="Finance Analyst" onclick="smSelU(this)">
-            <div class="sm-uav" style="background:#fff7ed;color:#c2410c">LH</div>
-            <div class="sm-uinfo"><div class="sm-uname">Laila Hassan</div><div class="sm-urole">Finance Analyst</div></div>
-            <div class="sm-chk"></div>
-          </div>
-        </div>
+        <div class="sm-search"><i class="ti ti-search"></i><input type="text" placeholder="Search DALos Workspace users..." oninput="smFilterU(this.value)" id="sm-search-input"></div>
+        <div class="sm-ulist" id="sm-ulist"><div style="text-align:center;padding:16px;color:var(--text3);font-size:12px"><i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Loading users…</div></div>
         <div id="sm-ucnt" style="font-size:11px;color:var(--text3)">No user selected</div>
       </div>
       <!-- STEP 2: ROLE -->
@@ -935,16 +846,102 @@ function signOut(){
     window.location.href='daltex_login.html';
   }
 }
+// ── Access Panel — Real Supabase Users ──
+const SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
+const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
+
+const AV_COLORS=[
+  ['#f0fdf4','#16a34a'],['#eff6ff','#1d4ed8'],['#fff7ed','#c2410c'],
+  ['#ede9fe','#6d28d9'],['#fef9c3','#92400e'],['#fdf2f8','#9d174d'],
+  ['#ecfdf5','#065f46'],['#eff6ff','#1e40af']
+];
+
+function getAvColor(name){
+  var h=0;for(var i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))%AV_COLORS.length;
+  return AV_COLORS[Math.abs(h)%AV_COLORS.length];
+}
+function getInitialsFromName(name){
+  var parts=(name||'').trim().split(/\s+/).filter(Boolean);
+  if(parts.length>=2) return (parts[0][0]+parts[1][0]).toUpperCase();
+  if(parts.length===1) return parts[0].slice(0,2).toUpperCase();
+  return '?';
+}
+
+async function loadPanelUsers(){
+  var list=document.getElementById('ap-user-list');
+  var sect=document.getElementById('ap-sect-label');
+  try{
+    var res=await fetch(SB_URL+'/rest/v1/users?select=id,full_name,email,role,active&order=full_name.asc',{
+      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}
+    });
+    var users=await res.json();
+    if(!Array.isArray(users)||users.length===0){
+      list.innerHTML='<div style="text-align:center;padding:24px 0;color:var(--text3);font-size:13px">No users found.</div>';
+      sect.textContent='Active access — 0 users';
+      return;
+    }
+    var active=users.filter(function(u){return u.active!==false;});
+    sect.textContent='Active access — '+active.length+' user'+(active.length!==1?'s':'');
+    list.innerHTML=active.map(function(u){
+      var name=u.full_name||u.email||'Unknown';
+      var initials=getInitialsFromName(name);
+      var col=getAvColor(name);
+      var role=u.role||'—';
+      return '<div class="arow" id="arow-'+u.id+'">'
+        +'<div class="aav" style="background:'+col[0]+';color:'+col[1]+'">'+initials+'</div>'
+        +'<div class="ainfo">'
+          +'<div class="aname">'+escH(name)+'</div>'
+          +'<div class="arole-lbl">'+escH(role)+'</div>'
+          +'<div class="atags"><span class="atag">'+escH(u.email||'')+'</span>'
+          +(u.active===false?'<span class="atag warn">Inactive</span>':'')
+          +'</div>'
+        +'</div>'
+        +'<div class="abtns">'
+          +'<button class="abtn-sm del" title="Revoke access" onclick="revokeUser(\''+u.id+'\',\''+escH(name)+'\')"><i class="ti ti-trash"></i></button>'
+        +'</div>'
+        +'</div>';
+    }).join('');
+  }catch(e){
+    list.innerHTML='<div style="text-align:center;padding:24px 0;color:#dc2626;font-size:13px">Failed to load users: '+e.message+'</div>';
+  }
+}
+
+function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+async function revokeUser(id,name){
+  if(!confirm('Remove '+name+' from DALos Analytics access?')) return;
+  try{
+    var res=await fetch(SB_URL+'/rest/v1/users?id=eq.'+id,{
+      method:'PATCH',
+      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({active:false})
+    });
+    if(res.ok){
+      var row=document.getElementById('arow-'+id);
+      if(row){row.style.opacity='0.4';row.style.pointerEvents='none';}
+      setTimeout(loadPanelUsers,600);
+    } else {
+      alert('Failed to revoke access. Please try again.');
+    }
+  }catch(e){
+    alert('Error: '+e.message);
+  }
+}
+
 function openPanel(product){
   document.getElementById('access-overlay').classList.add('open');
   document.getElementById('access-panel').classList.add('open');
   document.getElementById('ap-sub').textContent = product==='all'?'DALos Analytics — All products':'Grapes · DALos Analytics';
+  loadPanelUsers();
 }
 function closePanel(){
   document.getElementById('access-overlay').classList.remove('open');
   document.getElementById('access-panel').classList.remove('open');
 }
-function openModal(){document.getElementById('share-modal-wrap').classList.add('open');}
+function openModal(){
+  document.getElementById('share-modal-wrap').classList.add('open');
+  loadModalUsers();
+}
 function closeModal(){document.getElementById('share-modal-wrap').classList.remove('open');smReset();}
 
 // ── Modal State ──
@@ -992,7 +989,43 @@ function smSelU(row){
   smUser={name:row.dataset.n,role:row.dataset.r};
   document.getElementById('sm-ucnt').textContent=smUser.name+' selected';
 }
-function smFilterU(q){document.querySelectorAll('.sm-urow').forEach(r=>r.style.display=r.dataset.n.toLowerCase().includes(q.toLowerCase())?'':'none');}
+async function loadModalUsers(){
+  var list=document.getElementById('sm-ulist');
+  list.innerHTML='<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px"><i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Loading…</div>';
+  try{
+    var res=await fetch(SB_URL+'/rest/v1/users?select=id,full_name,email,role,active&active=eq.true&order=full_name.asc',{
+      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}
+    });
+    var users=await res.json();
+    if(!Array.isArray(users)||users.length===0){list.innerHTML='<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">No users found.</div>';return;}
+    window._smAllUsers=users;
+    renderModalUsers(users);
+  }catch(e){list.innerHTML='<div style="text-align:center;padding:16px;color:#dc2626;font-size:12px">Failed to load: '+e.message+'</div>';}
+}
+
+function renderModalUsers(users){
+  var list=document.getElementById('sm-ulist');
+  list.innerHTML=users.map(function(u){
+    var name=u.full_name||u.email||'Unknown';
+    var initials=getInitialsFromName(name);
+    var col=getAvColor(name);
+    var role=u.role||'—';
+    return '<div class="sm-urow" data-n="'+escH(name)+'" data-r="'+escH(role)+'" data-id="'+u.id+'" onclick="smSelU(this)">'
+      +'<div class="sm-uav" style="background:'+col[0]+';color:'+col[1]+'">'+initials+'</div>'
+      +'<div class="sm-uinfo"><div class="sm-uname">'+escH(name)+'</div><div class="sm-urole">'+escH(role)+'</div></div>'
+      +'<div class="sm-chk"></div>'
+      +'</div>';
+  }).join('');
+}
+
+function smFilterU(q){
+  var all=window._smAllUsers||[];
+  var filtered=q?all.filter(function(u){
+    var n=(u.full_name||u.email||'').toLowerCase();
+    return n.includes(q.toLowerCase());
+  }):all;
+  renderModalUsers(filtered);
+}
 
 function smSelRole(card){
   document.querySelectorAll('.sm-rcard').forEach(c=>{const f=c.classList.contains('full');c.className=f?'sm-rcard full':'sm-rcard';const chk=c.querySelector('.sm-chk');if(chk){chk.className='sm-chk';chk.innerHTML='';}});
