@@ -878,7 +878,17 @@ const AV_COLORS=[
 function getAvColor(n){var h=0;for(var i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))%AV_COLORS.length;return AV_COLORS[Math.abs(h)%AV_COLORS.length];}
 function getInitials(n){var p=(n||'').trim().split(/\s+/).filter(Boolean);return p.length>=2?(p[0][0]+p[1][0]).toUpperCase():p.length?p[0].slice(0,2).toUpperCase():'?';}
 function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function sbH(){return {apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'Content-Type':'application/json'};}
+function getUserJwt(){
+  try{
+    var SKEY='sb-sfyjvgjwvtwkrnqrvqyc-auth-token';
+    var raw=localStorage.getItem(SKEY);
+    if(!raw) return SB_ANON;
+    var s=JSON.parse(raw);
+    var sess=(s&&s.access_token)?s:((s&&s.currentSession)?s.currentSession:null);
+    return (sess&&sess.access_token)||SB_ANON;
+  }catch(e){return SB_ANON;}
+}
+function sbH(){return {apikey:SB_ANON,Authorization:'Bearer '+getUserJwt(),'Content-Type':'application/json'};}
 
 // ── PANEL: load only users with Analytics permissions ──
 async function loadPanelUsers(){
@@ -972,17 +982,12 @@ async function requestAccess(prod, prodName, userId, btn){
     });
 
     if(res.ok||res.status===201||res.status===204){
-      // Open mailto to notify admin
-      var subject=encodeURIComponent('DALos Analytics — Access Request: '+prodName);
-      var body=encodeURIComponent(
-        'Hi Ramy,\n\n'+
-        userName+' ('+userEmail+') has requested access to the '+prodName+' dashboard on DALos Analytics.\n\n'+
-        'Please log in to DALos Analytics to review and approve or decline this request:\n'+
-        'https://daltexcorp-opsexcellence.github.io/dalos-analytics-dev/daltex_home.html\n\n'+
-        'Requested: '+new Date().toLocaleString('en-GB')+'\n\n'+
-        'DALos Analytics'
-      );
-      window.location.href='mailto:ramy.ahmed@daltexcorp.com?subject='+subject+'&body='+body;
+      // Call Edge Function to send email notification
+      fetch(SB_URL+'/functions/v1/send-access-request',{
+        method:'POST',
+        headers:{apikey:SB_ANON,Authorization:'Bearer '+getUserJwt(),'Content-Type':'application/json'},
+        body:JSON.stringify({userName:userName,userEmail:userEmail,product:prod,prodName:prodName})
+      }).catch(function(e){console.warn('Email notification failed:',e.message);});
 
       // Update button to sent state
       btn.className='req-btn sent';
@@ -1535,7 +1540,10 @@ updateDate();
 
       var SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
       var SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
-      var authH={apikey:SB_ANON,Authorization:'Bearer '+SB_ANON};
+
+      // Use user's own JWT to read their row (bypasses RLS)
+      var userJwt=(sess&&sess.access_token)||SB_ANON;
+      var authH={apikey:SB_ANON,Authorization:'Bearer '+userJwt};
 
       // Run both fetches in parallel
       var [permRes,userRes]=await Promise.all([
@@ -1544,7 +1552,13 @@ updateDate();
       ]);
       var perms=await permRes.json();
       var uData=await userRes.json();
+
+      // Try users table first, fall back to session metadata
       var wsRole=(uData&&uData[0]&&uData[0].role)||'';
+      if(!wsRole){
+        var meta=(sess&&sess.user&&sess.user.user_metadata)||{};
+        wsRole=meta.role||meta.user_role||'';
+      }
       var isAdmin=(wsRole.toLowerCase()==='admin');
 
       if(isAdmin){
