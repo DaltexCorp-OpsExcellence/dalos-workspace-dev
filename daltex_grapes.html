@@ -395,7 +395,34 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   document.addEventListener('DOMContentLoaded',function(){
     var av=document.getElementById('dalos-avatar');
     if(av){av.textContent=getInitials();}
+    checkDashboardAccess('grapes');
   });
+
+  async function checkDashboardAccess(product){
+    try{
+      var raw=localStorage.getItem(SKEY);
+      if(!raw) return;
+      var s=JSON.parse(raw);
+      var sess=(s&&s.access_token)?s:((s&&s.currentSession)?s.currentSession:null);
+      var userId=sess&&sess.user&&sess.user.id;
+      if(!userId) return;
+      var SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
+      var SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
+      var uRes=await fetch(SB_URL+'/rest/v1/users?id=eq.'+userId+'&select=role&limit=1',{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+      var uData=await uRes.json();
+      var wsRole=(uData&&uData[0]&&uData[0].role)||'';
+      if(['admin','director','owner','superadmin'].includes(wsRole.toLowerCase())) return;
+      var res=await fetch(SB_URL+'/rest/v1/dal_analytics_permissions?user_id=eq.'+userId+'&select=config,expires_at&limit=1',{headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}});
+      var perms=await res.json();
+      var perm=Array.isArray(perms)&&perms[0];
+      var expired=perm&&perm.expires_at&&new Date(perm.expires_at)<new Date();
+      if(!perm||expired){window.location.replace('daltex_home.html');return;}
+      var cfg=perm.config||{};
+      if(!(cfg.products||[]).includes(product)){window.location.replace('daltex_home.html');}
+      window.__DALOS_PERM=perm;
+    }catch(e){console.warn('Dashboard access check:',e.message);}
+  }
+  window.checkDashboardAccess=checkDashboardAccess;
 })();
 </script>
 </body>

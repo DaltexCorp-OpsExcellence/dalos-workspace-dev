@@ -846,92 +846,89 @@ function signOut(){
     window.location.href='daltex_login.html';
   }
 }
-// ── Access Panel — Real Supabase Users ──
+// ── DALos Analytics — Phase 1 Access Control ──
 const SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
 const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
+const DAP='dal_analytics_permissions'; // permission table
 
 const AV_COLORS=[
   ['#f0fdf4','#16a34a'],['#eff6ff','#1d4ed8'],['#fff7ed','#c2410c'],
   ['#ede9fe','#6d28d9'],['#fef9c3','#92400e'],['#fdf2f8','#9d174d'],
-  ['#ecfdf5','#065f46'],['#eff6ff','#1e40af']
+  ['#ecfdf5','#065f46'],['#e0f2fe','#0369a1']
 ];
+function getAvColor(n){var h=0;for(var i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))%AV_COLORS.length;return AV_COLORS[Math.abs(h)%AV_COLORS.length];}
+function getInitials(n){var p=(n||'').trim().split(/\s+/).filter(Boolean);return p.length>=2?(p[0][0]+p[1][0]).toUpperCase():p.length?p[0].slice(0,2).toUpperCase():'?';}
+function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function sbH(){return {apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'Content-Type':'application/json'};}
 
-function getAvColor(name){
-  var h=0;for(var i=0;i<name.length;i++)h=(h*31+name.charCodeAt(i))%AV_COLORS.length;
-  return AV_COLORS[Math.abs(h)%AV_COLORS.length];
-}
-function getInitialsFromName(name){
-  var parts=(name||'').trim().split(/\s+/).filter(Boolean);
-  if(parts.length>=2) return (parts[0][0]+parts[1][0]).toUpperCase();
-  if(parts.length===1) return parts[0].slice(0,2).toUpperCase();
-  return '?';
-}
-
+// ── PANEL: load only users with Analytics permissions ──
 async function loadPanelUsers(){
   var list=document.getElementById('ap-user-list');
   var sect=document.getElementById('ap-sect-label');
+  list.innerHTML='<div style="text-align:center;padding:24px 0;color:var(--text3);font-size:13px"><i class="ti ti-loader-2" style="font-size:20px;display:block;margin:0 auto 8px;animation:spin 1s linear infinite"></i>Loading…</div>';
   try{
-    var res=await fetch(SB_URL+'/rest/v1/users?select=id,full_name,email,role,active&order=full_name.asc',{
-      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}
-    });
-    var users=await res.json();
-    if(!Array.isArray(users)||users.length===0){
-      list.innerHTML='<div style="text-align:center;padding:24px 0;color:var(--text3);font-size:13px">No users found.</div>';
-      sect.textContent='Active access — 0 users';
+    // Join permissions with users
+    var res=await fetch(SB_URL+'/rest/v1/'+DAP+'?select=id,role,config,expires_at,user_id,users!dal_analytics_permissions_user_id_fkey(id,full_name,email,role)&order=users(full_name).asc',{headers:sbH()});
+    var perms=await res.json();
+    if(!Array.isArray(perms)){throw new Error(perms.message||'Failed to load');}
+    // Filter out expired
+    var now=new Date();
+    var active=perms.filter(function(p){return !p.expires_at||new Date(p.expires_at)>now;});
+    sect.textContent='Analytics access — '+active.length+' user'+(active.length!==1?'s':'');
+    if(!active.length){
+      list.innerHTML='<div style="text-align:center;padding:24px 0;color:var(--text3);font-size:13px">No users have been granted access yet.<br>Click <b>Share access</b> to add someone.</div>';
       return;
     }
-    var active=users.filter(function(u){return u.active!==false;});
-    sect.textContent='Active access — '+active.length+' user'+(active.length!==1?'s':'');
-    list.innerHTML=active.map(function(u){
+    list.innerHTML=active.map(function(p){
+      var u=p.users||{};
       var name=u.full_name||u.email||'Unknown';
-      var initials=getInitialsFromName(name);
+      var initials=getInitials(name);
       var col=getAvColor(name);
-      var role=u.role||'—';
-      return '<div class="arow" id="arow-'+u.id+'">'
+      var role=p.role||'viewer';
+      var cfg=p.config||{};
+      var prods=(cfg.products||[]);
+      var dbs=(cfg.dashboards||[]);
+      var expiring=p.expires_at&&(new Date(p.expires_at)-now)<3*24*3600*1000;
+      var expDays=p.expires_at?Math.ceil((new Date(p.expires_at)-now)/86400000):null;
+      var tags=prods.map(function(x){return '<span class="atag">'+escH(x)+'</span>';}).join('')
+        +dbs.map(function(x){return '<span class="atag">'+escH(x)+'</span>';}).join('')
+        +(expiring?'<span class="atag warn"><i class="ti ti-clock" style="font-size:9px"></i> Expires in '+expDays+' day'+(expDays!==1?'s':'')+'</span>':'');
+      return '<div class="arow'+(expiring?' expiring':'')+'" id="arow-'+p.id+'">'
         +'<div class="aav" style="background:'+col[0]+';color:'+col[1]+'">'+initials+'</div>'
         +'<div class="ainfo">'
           +'<div class="aname">'+escH(name)+'</div>'
-          +'<div class="arole-lbl">'+escH(role)+'</div>'
-          +'<div class="atags"><span class="atag">'+escH(u.email||'')+'</span>'
-          +(u.active===false?'<span class="atag warn">Inactive</span>':'')
-          +'</div>'
+          +'<div class="arole-lbl">'+escH(role.replace(/_/g,' '))+'</div>'
+          +'<div class="atags">'+(tags||'<span class="atag" style="color:var(--text3)">No products set</span>')+'</div>'
         +'</div>'
         +'<div class="abtns">'
-          +'<button class="abtn-sm del" title="Revoke access" onclick="revokeUser(\''+u.id+'\',\''+escH(name)+'\')"><i class="ti ti-trash"></i></button>'
+          +'<button class="abtn-sm del" title="Revoke Analytics access" onclick="revokeUser(\''+p.id+'\',\''+escH(name)+'\')" ><i class="ti ti-trash"></i></button>'
         +'</div>'
         +'</div>';
     }).join('');
   }catch(e){
-    list.innerHTML='<div style="text-align:center;padding:24px 0;color:#dc2626;font-size:13px">Failed to load users: '+e.message+'</div>';
+    list.innerHTML='<div style="text-align:center;padding:24px 0;color:#dc2626;font-size:13px">Failed to load: '+escH(e.message)+'</div>';
   }
 }
 
-function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-
-async function revokeUser(id,name){
-  if(!confirm('Remove '+name+' from DALos Analytics access?')) return;
+// ── PANEL: revoke — deletes from dal_analytics_permissions only ──
+async function revokeUser(permId,name){
+  if(!confirm('Revoke DALos Analytics access for '+name+'?\nThis will NOT affect their DALos Workspace account.')) return;
   try{
-    var res=await fetch(SB_URL+'/rest/v1/users?id=eq.'+id,{
-      method:'PATCH',
-      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'Content-Type':'application/json','Prefer':'return=minimal'},
-      body:JSON.stringify({active:false})
+    var row=document.getElementById('arow-'+permId);
+    if(row){row.style.opacity='0.4';row.style.pointerEvents='none';}
+    var res=await fetch(SB_URL+'/rest/v1/'+DAP+'?id=eq.'+permId,{
+      method:'DELETE',headers:sbH()
     });
-    if(res.ok){
-      var row=document.getElementById('arow-'+id);
-      if(row){row.style.opacity='0.4';row.style.pointerEvents='none';}
-      setTimeout(loadPanelUsers,600);
-    } else {
-      alert('Failed to revoke access. Please try again.');
-    }
-  }catch(e){
-    alert('Error: '+e.message);
-  }
+    if(res.ok||res.status===204){setTimeout(loadPanelUsers,400);}
+    else{if(row){row.style.opacity='';row.style.pointerEvents='';}alert('Failed to revoke. Try again.');}
+  }catch(e){alert('Error: '+e.message);}
 }
 
+// ── PANEL & MODAL: open/close ──
 function openPanel(product){
   document.getElementById('access-overlay').classList.add('open');
   document.getElementById('access-panel').classList.add('open');
-  document.getElementById('ap-sub').textContent = product==='all'?'DALos Analytics — All products':'Grapes · DALos Analytics';
+  document.getElementById('ap-sub').textContent=product==='all'?'DALos Analytics — All products':'Grapes · DALos Analytics';
   loadPanelUsers();
 }
 function closePanel(){
@@ -944,7 +941,50 @@ function openModal(){
 }
 function closeModal(){document.getElementById('share-modal-wrap').classList.remove('open');smReset();}
 
-// ── Modal State ──
+// ── MODAL: load workspace users NOT already in Analytics ──
+async function loadModalUsers(){
+  var list=document.getElementById('sm-ulist');
+  list.innerHTML='<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px"><i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Loading…</div>';
+  try{
+    // Get all workspace users
+    var [uRes,pRes]=await Promise.all([
+      fetch(SB_URL+'/rest/v1/users?select=id,full_name,email,role,active&active=eq.true&order=full_name.asc',{headers:sbH()}),
+      fetch(SB_URL+'/rest/v1/'+DAP+'?select=user_id',{headers:sbH()})
+    ]);
+    var users=await uRes.json();
+    var perms=await pRes.json();
+    if(!Array.isArray(users)){throw new Error('Could not load users');}
+    // Filter out users already granted access
+    var alreadyIn=new Set((Array.isArray(perms)?perms:[]).map(function(p){return p.user_id;}));
+    var available=users.filter(function(u){return !alreadyIn.has(u.id);});
+    window._smAllUsers=available;
+    renderModalUsers(available);
+    if(!available.length){
+      list.innerHTML='<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">All workspace users already have Analytics access.</div>';
+    }
+  }catch(e){list.innerHTML='<div style="text-align:center;padding:16px;color:#dc2626;font-size:12px">Failed to load: '+escH(e.message)+'</div>';}
+}
+
+function renderModalUsers(users){
+  var list=document.getElementById('sm-ulist');
+  if(!users.length){list.innerHTML='<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">No users found.</div>';return;}
+  list.innerHTML=users.map(function(u){
+    var name=u.full_name||u.email||'Unknown';
+    var col=getAvColor(name);
+    return '<div class="sm-urow" data-n="'+escH(name)+'" data-r="'+escH(u.role||'')+'" data-id="'+u.id+'" onclick="smSelU(this)">'
+      +'<div class="sm-uav" style="background:'+col[0]+';color:'+col[1]+'">'+getInitials(name)+'</div>'
+      +'<div class="sm-uinfo"><div class="sm-uname">'+escH(name)+'</div><div class="sm-urole">'+escH(u.role||'Workspace user')+'</div></div>'
+      +'<div class="sm-chk"></div>'
+      +'</div>';
+  }).join('');
+}
+
+function smFilterU(q){
+  var all=window._smAllUsers||[];
+  renderModalUsers(q?all.filter(function(u){return (u.full_name||u.email||'').toLowerCase().includes(q.toLowerCase());}):all);
+}
+
+// ── MODAL: state ──
 let smStep=1,smUser=null,smRole=null,smAllTabs=true;
 const smTabs=['overview','markets','farms','varieties','clients','extract'];
 const smTabSt={};smTabs.forEach(t=>smTabSt[t]=true);
@@ -960,7 +1000,7 @@ const roleDefaults={
   finance:{farms:'all',markets:'all',varieties:'all',tabs:['overview'],dbs:['budget'],prods:smProds.slice()}
 };
 const roleLabels={director:'Director',product_manager:'Product manager',farm_manager:'Farm manager',qc_analyst:'QC analyst',export_manager:'Export manager',finance:'Finance'};
-const roleNotes={director:'Director — full access pre-filled.',product_manager:'Product manager — product-scoped pre-filled.',farm_manager:'Farm manager — Farm A pre-filled.',qc_analyst:'QC analyst — QC only pre-filled.',export_manager:'Export manager — Netherlands pre-filled.',finance:'Finance — budget only pre-filled.'};
+const roleNotes={director:'Director — full access pre-filled.',product_manager:'Product manager pre-filled.',farm_manager:'Farm manager — Farm A pre-filled.',qc_analyst:'QC analyst pre-filled.',export_manager:'Export manager pre-filled.',finance:'Finance pre-filled.'};
 
 function smUpdateBar(){
   [1,2,3,4,5].forEach(i=>{
@@ -986,47 +1026,9 @@ function smBack(){if(smStep<=1)return;smStep--;smShowP('smp'+smStep);smUpdateBar
 function smSelU(row){
   document.querySelectorAll('.sm-urow').forEach(r=>{r.classList.remove('sel');const c=r.querySelector('.sm-chk');c.className='sm-chk';c.innerHTML='';});
   row.classList.add('sel');const c=row.querySelector('.sm-chk');c.className='sm-chk on';c.innerHTML='<i class="ti ti-check" style="font-size:10px"></i>';
-  smUser={name:row.dataset.n,role:row.dataset.r};
+  smUser={name:row.dataset.n,role:row.dataset.r,id:row.dataset.id};
   document.getElementById('sm-ucnt').textContent=smUser.name+' selected';
 }
-async function loadModalUsers(){
-  var list=document.getElementById('sm-ulist');
-  list.innerHTML='<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px"><i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Loading…</div>';
-  try{
-    var res=await fetch(SB_URL+'/rest/v1/users?select=id,full_name,email,role,active&active=eq.true&order=full_name.asc',{
-      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}
-    });
-    var users=await res.json();
-    if(!Array.isArray(users)||users.length===0){list.innerHTML='<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">No users found.</div>';return;}
-    window._smAllUsers=users;
-    renderModalUsers(users);
-  }catch(e){list.innerHTML='<div style="text-align:center;padding:16px;color:#dc2626;font-size:12px">Failed to load: '+e.message+'</div>';}
-}
-
-function renderModalUsers(users){
-  var list=document.getElementById('sm-ulist');
-  list.innerHTML=users.map(function(u){
-    var name=u.full_name||u.email||'Unknown';
-    var initials=getInitialsFromName(name);
-    var col=getAvColor(name);
-    var role=u.role||'—';
-    return '<div class="sm-urow" data-n="'+escH(name)+'" data-r="'+escH(role)+'" data-id="'+u.id+'" onclick="smSelU(this)">'
-      +'<div class="sm-uav" style="background:'+col[0]+';color:'+col[1]+'">'+initials+'</div>'
-      +'<div class="sm-uinfo"><div class="sm-uname">'+escH(name)+'</div><div class="sm-urole">'+escH(role)+'</div></div>'
-      +'<div class="sm-chk"></div>'
-      +'</div>';
-  }).join('');
-}
-
-function smFilterU(q){
-  var all=window._smAllUsers||[];
-  var filtered=q?all.filter(function(u){
-    var n=(u.full_name||u.email||'').toLowerCase();
-    return n.includes(q.toLowerCase());
-  }):all;
-  renderModalUsers(filtered);
-}
-
 function smSelRole(card){
   document.querySelectorAll('.sm-rcard').forEach(c=>{const f=c.classList.contains('full');c.className=f?'sm-rcard full':'sm-rcard';const chk=c.querySelector('.sm-chk');if(chk){chk.className='sm-chk';chk.innerHTML='';}});
   const f=card.classList.contains('full');card.className=f?'sm-rcard full sel':'sm-rcard sel';
@@ -1034,8 +1036,8 @@ function smSelRole(card){
   smRole=card.dataset.role;smApplyDefaults(smRole);
 }
 function smApplyDefaults(role){
-  const d=roleDefaults[role];const note=roleNotes[role];
-  ['p3note','p4note','p5note'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=note+' Adjust as needed.';});
+  const d=roleDefaults[role];const note=(roleNotes[role]||'')+' Adjust as needed.';
+  ['p3note','p4note','p5note'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=note;});
   smProds.forEach(p=>{const el=document.getElementById('pc-'+p);if(!el)return;const row=el.closest('.sm-prow');const on=d.prods.includes(p);el.className='sm-chk'+(on?' on':'');el.innerHTML=on?'<i class="ti ti-check" style="font-size:10px"></i>':'';on?row.classList.add('sel'):row.classList.remove('sel');});
   smDbs.forEach(db=>{const on=d.dbs.includes(db);smDbSt[db]=on;const el=document.getElementById('dc-'+db);if(!el)return;el.className='sm-chk'+(on?' on':'');el.innerHTML=on?'<i class="ti ti-check" style="font-size:10px"></i>':'';});
   smSyncDbAll();
@@ -1057,34 +1059,78 @@ function smChip(chip){const par=chip.parentElement;const siblings=[...par.childr
 function smTogTab(row,tab){smTabSt[tab]=!smTabSt[tab];smSyncTab(tab);const allOn=smTabs.every(t=>smTabSt[t]);smAllTabs=allOn;const ta=document.getElementById('tall');ta.className='sm-chk'+(allOn?' on':'');ta.innerHTML=allOn?'<i class="ti ti-check" style="font-size:10px"></i>':'';}
 function smTogAllTabs(){smAllTabs=!smAllTabs;smTabs.forEach(t=>{smTabSt[t]=smAllTabs;smSyncTab(t);});const ta=document.getElementById('tall');ta.className='sm-chk'+(smAllTabs?' on':'');ta.innerHTML=smAllTabs?'<i class="ti ti-check" style="font-size:10px"></i>':'';}
 function smSyncTab(tab){const el=document.getElementById('t-'+tab);if(!el)return;el.className='sm-chk'+(smTabSt[tab]?' on':'');el.innerHTML=smTabSt[tab]?'<i class="ti ti-check" style="font-size:10px"></i>':'';}
-function smGrant(){
+
+// ── MODAL: Grant — saves to dal_analytics_permissions ──
+async function smGrant(){
+  if(!smUser||!smUser.id){alert('No user selected.');return;}
+  const nx=document.getElementById('sm-nx');
+  nx.textContent='Saving…';nx.disabled=true;
   const activeTabs=smTabs.filter(t=>smTabSt[t]);
   const activeDbs=smDbs.filter(d=>smDbSt[d]);
   const activeProds=[...document.querySelectorAll('.sm-prow.sel')].map(r=>r.dataset.prod);
-  const farmSel=[...document.querySelectorAll('#farm-chips .sm-chip.on')].map(c=>c.textContent);
-  const mktSel=[...document.querySelectorAll('#market-chips .sm-chip.on')].map(c=>c.textContent);
-  document.getElementById('done-name').textContent=(smUser?smUser.name:'')+(smRole?' · '+roleLabels[smRole]:'');
-  const tags=document.getElementById('done-tags');tags.innerHTML='';
-  if(smRole)tags.innerHTML+='<span class="sm-stag" style="background:#eff6ff;border-color:#bfdbfe;color:var(--orange)">'+roleLabels[smRole]+'</span>';
-  activeProds.forEach(p=>tags.innerHTML+='<span class="sm-stag">'+p+'</span>');
-  activeDbs.forEach(d=>tags.innerHTML+='<span class="sm-stag">'+d+'</span>');
-  farmSel.forEach(f=>tags.innerHTML+='<span class="sm-stag">'+f+'</span>');
-  mktSel.forEach(m=>tags.innerHTML+='<span class="sm-stag">'+m+'</span>');
-  activeTabs.forEach(t=>tags.innerHTML+='<span class="sm-stag">'+t+'</span>');
-  document.getElementById('sm-steps').style.display='none';
-  document.getElementById('sm-foot').style.display='none';
-  smShowP('smp-done');
+  const farmSel=[...document.querySelectorAll('#farm-chips .sm-chip.on')].map(c=>c.textContent.trim());
+  const mktSel=[...document.querySelectorAll('#market-chips .sm-chip.on')].map(c=>c.textContent.trim());
+  const varSel=[...document.querySelectorAll('#variety-chips .sm-chip.on')].map(c=>c.textContent.trim());
+  const expSel=document.querySelector('.sm-exprow select')?.value||'No expiry';
+  var expiresAt=null;
+  var now=new Date();
+  if(expSel==='1 week'){expiresAt=new Date(now.getTime()+7*864e5).toISOString();}
+  else if(expSel==='1 month'){var d=new Date(now);d.setMonth(d.getMonth()+1);expiresAt=d.toISOString();}
+  else if(expSel==='3 months'){var d=new Date(now);d.setMonth(d.getMonth()+3);expiresAt=d.toISOString();}
+  else if(expSel==='End of season'){expiresAt=new Date(now.getFullYear()+'-09-30T23:59:59').toISOString();}
+  const payload={
+    user_id:smUser.id,
+    role:smRole||'viewer',
+    config:{
+      products:activeProds,
+      dashboards:activeDbs,
+      filters:{
+        farms:farmSel.includes('All farms')?'all':farmSel,
+        markets:mktSel.includes('All markets')?'all':mktSel,
+        varieties:varSel.includes('All varieties')?'all':varSel
+      },
+      tabs:activeTabs
+    },
+    expires_at:expiresAt
+  };
+  try{
+    var res=await fetch(SB_URL+'/rest/v1/'+DAP,{
+      method:'POST',
+      headers:Object.assign({},sbH(),{'Prefer':'resolution=merge-duplicates,return=minimal'}),
+      body:JSON.stringify(payload)
+    });
+    if(res.ok||res.status===201||res.status===204){
+      // Show success
+      const tags=document.getElementById('done-tags');tags.innerHTML='';
+      document.getElementById('done-name').textContent=(smUser.name)+(smRole?' · '+roleLabels[smRole]:'');
+      if(smRole)tags.innerHTML+='<span class="sm-stag" style="background:#eff6ff;border-color:#bfdbfe;color:var(--orange)">'+roleLabels[smRole]+'</span>';
+      activeProds.forEach(p=>tags.innerHTML+='<span class="sm-stag">'+escH(p)+'</span>');
+      activeDbs.forEach(d=>tags.innerHTML+='<span class="sm-stag">'+escH(d)+'</span>');
+      document.getElementById('sm-steps').style.display='none';
+      document.getElementById('sm-foot').style.display='none';
+      smShowP('smp-done');
+      loadPanelUsers(); // refresh panel in background
+    } else {
+      var err=await res.json().catch(()=>({}));
+      alert('Failed to save: '+(err.message||res.status));
+      nx.textContent='Grant access';nx.disabled=false;
+    }
+  }catch(e){
+    alert('Error: '+e.message);
+    nx.textContent='Grant access';nx.disabled=false;
+  }
 }
+
 function smReset(){
   smStep=1;smUser=null;smRole=null;smAllTabs=true;
   smTabs.forEach(t=>{smTabSt[t]=true;smSyncTab(t);});
   smDbs.forEach(d=>{smDbSt[d]=true;});
   document.querySelectorAll('.sm-urow').forEach(r=>{r.classList.remove('sel');const c=r.querySelector('.sm-chk');c.className='sm-chk';c.innerHTML='';});
   document.querySelectorAll('.sm-rcard').forEach(c=>{const f=c.classList.contains('full');c.className=f?'sm-rcard full':'sm-rcard';const chk=c.querySelector('.sm-chk');if(chk){chk.className='sm-chk';chk.innerHTML='';}});
-  document.getElementById('sm-ucnt').textContent='No user selected';
-  document.getElementById('sm-steps').style.display='';
-  document.getElementById('sm-foot').style.display='';
-  const ta=document.getElementById('tall');ta.className='sm-chk on';ta.innerHTML='<i class="ti ti-check" style="font-size:10px"></i>';
+  const ucnt=document.getElementById('sm-ucnt');if(ucnt)ucnt.textContent='No user selected';
+  const steps=document.getElementById('sm-steps');if(steps)steps.style.display='';
+  const foot=document.getElementById('sm-foot');if(foot)foot.style.display='';
+  const ta=document.getElementById('tall');if(ta){ta.className='sm-chk on';ta.innerHTML='<i class="ti ti-check" style="font-size:10px"></i>';}
   smSyncDbAll();
   ['farm','market','variety'].forEach(type=>{const grp=document.getElementById(type+'-chips');if(!grp)return;[...grp.children].forEach((c,i)=>{c.classList.remove('on');if(i===0)c.classList.add('on');});});
   smProds.forEach(p=>{const el=document.getElementById('pc-'+p);if(!el)return;const row=el.closest('.sm-prow');if(p==='grapes'){el.className='sm-chk on';el.innerHTML='<i class="ti ti-check" style="font-size:10px"></i>';row.classList.add('sel');}else{el.className='sm-chk';el.innerHTML='';row.classList.remove('sel');}});
@@ -1190,7 +1236,101 @@ updateDate();
   document.addEventListener('DOMContentLoaded',function(){
     var av=document.getElementById('dalos-avatar');
     if(av){ av.textContent=getInitials(); }
+    // ── Phase 1: block products/dashboards based on permissions ──
+    checkAnalyticsAccess();
   });
+
+  async function checkAnalyticsAccess(){
+    try{
+      var raw=localStorage.getItem(SKEY);
+      if(!raw) return; // not logged in, bounce() handles it
+      var s=JSON.parse(raw);
+      var sess=(s&&s.access_token)?s:((s&&s.currentSession)?s.currentSession:null);
+      var userId=sess&&sess.user&&sess.user.id;
+      if(!userId) return;
+
+      // Get this user's Analytics permission
+      var SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
+      var SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
+      var res=await fetch(SB_URL+'/rest/v1/dal_analytics_permissions?user_id=eq.'+userId+'&select=role,config,expires_at&limit=1',{
+        headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}
+      });
+      var perms=await res.json();
+
+      // Check users table role — admins/directors bypass permission checks
+      var uRes=await fetch(SB_URL+'/rest/v1/users?id=eq.'+userId+'&select=role&limit=1',{
+        headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}
+      });
+      var uData=await uRes.json();
+      var wsRole=(uData&&uData[0]&&uData[0].role)||'';
+      var isAdmin=['admin','director','owner','superadmin'].includes((wsRole||'').toLowerCase());
+
+      // Admins see everything
+      if(isAdmin) return;
+
+      // No permission record → show access denied on product cards
+      var perm=Array.isArray(perms)&&perms[0];
+      var expired=perm&&perm.expires_at&&new Date(perm.expires_at)<new Date();
+      if(!perm||expired){
+        // Hide all product cards, show a message
+        document.querySelectorAll('.pc').forEach(function(card){
+          card.style.opacity='0.35';
+          card.style.pointerEvents='none';
+          card.style.filter='grayscale(1)';
+        });
+        var grid=document.querySelector('.prod-grid')||document.querySelector('.pc-grid');
+        if(grid){
+          var msg=document.createElement('div');
+          msg.style='grid-column:1/-1;text-align:center;padding:32px 20px;color:var(--text3);font-size:13px;';
+          msg.innerHTML='<i class="ti ti-lock" style="font-size:28px;display:block;margin:0 auto 8px;color:var(--orange)"></i>'
+            +'<strong style="color:var(--navy)">No Analytics access</strong><br>'
+            +'Contact your administrator to request access.';
+          grid.appendChild(msg);
+        }
+        return;
+      }
+
+      // Has permission — check which products they can access
+      var cfg=perm.config||{};
+      var allowedProds=cfg.products||[];
+      var allowedDbs=cfg.dashboards||[];
+
+      // If no products set → treat as no access
+      if(!allowedProds.length) return;
+
+      // Map product names to card selectors
+      var prodMap={
+        grapes:['daltex_grapes.html','daltex_qc.html','daltex_shipments.html'],
+        citrus:['citrus'],mango:['mango'],pomegranate:['pomegranate'],potatoes:['potatoes']
+      };
+
+      // Hide product cards not in their allowed list
+      document.querySelectorAll('.pc').forEach(function(card){
+        var link=card.querySelector('a[href]');
+        var href=(link&&link.getAttribute('href'))||'';
+        var cardProd=null;
+        Object.keys(prodMap).forEach(function(prod){
+          prodMap[prod].forEach(function(pattern){if(href.includes(pattern))cardProd=prod;});
+        });
+        // Also check card title text
+        if(!cardProd){
+          var title=(card.querySelector('.pc-name')||card.querySelector('h3')||card.querySelector('.pc-title')||{}).textContent||'';
+          Object.keys(prodMap).forEach(function(prod){if(title.toLowerCase().includes(prod))cardProd=prod;});
+        }
+        if(cardProd&&!allowedProds.includes(cardProd)){
+          card.style.opacity='0.35';
+          card.style.pointerEvents='none';
+          card.style.filter='grayscale(1)';
+          card.title='You do not have access to this product';
+        }
+      });
+
+      // Store permission in window for other scripts to use
+      window.__DALOS_PERM=perm;
+
+    }catch(e){console.warn('Analytics access check failed:',e.message);}
+  }
+  window.checkAnalyticsAccess=checkAnalyticsAccess;
 })();
 </script>
 </body>
