@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const ADMIN_EMAIL = "ramy.ahmed@daltexcorp.com";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "re_L8C9FCed_4XwiPAMYFUXhXynswX9doyv3";
-const APP_URL = "https://daltexcorp-opsexcellence.github.io/dalos-analytics-dev/daltex_home.html";
+const APP_URL = "https://daltexcorp-opsexcellence.github.io/dalos-workspace-dev/daltex_home.html";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
