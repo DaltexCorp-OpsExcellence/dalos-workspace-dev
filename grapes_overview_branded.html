@@ -936,9 +936,31 @@ function compute(data) {
   return s;
 }
 
+// Build DAILY-format aggregation from a set of raw rows (respects field-level filters)
+function __buildDaily(rows){
+  const byDate={};
+  rows.forEach(r=>{
+    const d=r.loading_date; if(!d) return;
+    if(!byDate[d]) byDate[d]={date:d,week:parseInt(r.shipping_week)||0,
+      nw:0,ct:0,c1_nw:0,farms:{},markets:{},varieties:{},colors:{},sources:{},statuses:{}};
+    const row=byDate[d];
+    const nw=parseFloat(r.net_weight)||0;
+    row.nw+=nw; row.ct++;
+    if(parseInt(r.daltex_class)===1) row.c1_nw+=nw;
+    if(r.farm_source)       row.farms[r.farm_source]=(row.farms[r.farm_source]||0)+nw;
+    if(r.receiving_country) row.markets[r.receiving_country]=(row.markets[r.receiving_country]||0)+nw;
+    if(r.variety)           row.varieties[r.variety]=(row.varieties[r.variety]||0)+nw;
+    if(r.color)             row.colors[r.color]=(row.colors[r.color]||0)+nw;
+    if(r.source_type)       row.sources[r.source_type]=(row.sources[r.source_type]||0)+nw;
+    if(r.shipping_status)   row.statuses[r.shipping_status]=(row.statuses[r.shipping_status]||0)+nw;
+  });
+  return Object.values(byDate).sort((a,b)=>a.date.localeCompare(b.date));
+}
+
 // ── RENDER ALL ──
 function renderAll() {
-  const data = filteredData();
+  // Build daily data from FILTERED raw rows so every chart respects all filters
+  const data = __buildDaily(__filteredRows());
   const s = compute(data);
   renderContext(data, s);
   renderKPIs(s);
