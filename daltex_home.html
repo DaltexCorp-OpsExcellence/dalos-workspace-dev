@@ -1337,7 +1337,7 @@ function smSelRole(card){
 function smApplyDefaults(role){
   const d=roleDefaults[role];const note=(roleNotes[role]||'')+' Adjust as needed.';
   ['p3note','p4note','p5note'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=note;});
-  smProds.forEach(p=>{const el=document.getElementById('pc-'+p);if(!el)return;const row=el.closest('.sm-prow');const on=d.prods.includes(p);el.className='sm-chk'+(on?' on':'');el.innerHTML=on?'<i class="ti ti-check" style="font-size:10px"></i>':'';on?row.classList.add('sel'):row.classList.remove('sel');});
+  smProds.forEach(p=>{const el=document.getElementById('mpc-'+p);if(!el)return;const row=el.closest('.sm-prow');const on=d.prods.includes(p);el.className='sm-chk'+(on?' on':'');el.innerHTML=on?'<i class="ti ti-check" style="font-size:10px"></i>':'';on?row.classList.add('sel'):row.classList.remove('sel');});
   smDbs.forEach(db=>{const on=d.dbs.includes(db);smDbSt[db]=on;const el=document.getElementById('dc-'+db);if(!el)return;el.className='sm-chk'+(on?' on':'');el.innerHTML=on?'<i class="ti ti-check" style="font-size:10px"></i>':'';});
   smSyncDbAll();
   ['farm','market','variety'].forEach(type=>{
@@ -1447,7 +1447,7 @@ function smReset(){
   const ta=document.getElementById('tall');if(ta){ta.className='sm-chk on';ta.innerHTML='<i class="ti ti-check" style="font-size:10px"></i>';}
   smSyncDbAll();
   ['farm','market','variety'].forEach(type=>{const grp=document.getElementById(type+'-chips');if(!grp)return;[...grp.children].forEach((c,i)=>{c.classList.remove('on');if(i===0)c.classList.add('on');});});
-  smProds.forEach(p=>{const el=document.getElementById('pc-'+p);if(!el)return;const row=el.closest('.sm-prow');if(p==='grapes'){el.className='sm-chk on';el.innerHTML='<i class="ti ti-check" style="font-size:10px"></i>';row.classList.add('sel');}else{el.className='sm-chk';el.innerHTML='';row.classList.remove('sel');}});
+  smProds.forEach(p=>{const el=document.getElementById('mpc-'+p);if(!el)return;const row=el.closest('.sm-prow');if(p==='grapes'){el.className='sm-chk on';el.innerHTML='<i class="ti ti-check" style="font-size:10px"></i>';row.classList.add('sel');}else{el.className='sm-chk';el.innerHTML='';row.classList.remove('sel');}});
   smShowP('smp1');smUpdateBar();
 }
 smUpdateBar();
