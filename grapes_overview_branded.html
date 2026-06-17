@@ -455,6 +455,10 @@ input, select, button { font-family: var(--font); }
 
 @keyframes fadein { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
 .fade-in > * { animation: fadein .25s ease both; }
+@keyframes shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
+.sk{background:var(--bg);background-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.06) 40px,transparent 80px);background-size:600px 100%;background-repeat:no-repeat;animation:shimmer 1.4s infinite linear;border-radius:8px;display:inline-block}
+.sk-kcard{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px}
+.sk-chart{padding:6px 0}
 .fade-in > *:nth-child(1){animation-delay:.03s}
 .fade-in > *:nth-child(2){animation-delay:.06s}
 .fade-in > *:nth-child(3){animation-delay:.09s}
@@ -1300,7 +1304,22 @@ async function runAI() {
 function aiQ(q) { document.getElementById('ai-in').value=q; runAI(); }
 
 // ── INIT ──
-// Don't render with empty/cached data — wait for live Supabase data
+// Show skeleton placeholders immediately, then load live data
+function showSkeletons(){
+  var kg=document.getElementById('kpi-grid');
+  if(kg){var c='';for(var i=0;i<6;i++){c+='<div class="sk-kcard"><div class="sk" style="height:11px;width:55%;margin-bottom:14px"></div><div class="sk" style="height:26px;width:75%;margin-bottom:10px"></div><div class="sk" style="height:9px;width:90%"></div></div>';}kg.innerHTML=c;}
+  var ws=document.getElementById('wide-stats');
+  if(ws){var w='';for(var j=0;j<4;j++){w+='<div class="sk" style="height:54px;width:100%;margin:4px"></div>';}ws.innerHTML=w;}
+  var wc=document.getElementById('weekly-chart');
+  if(wc){wc.innerHTML='<div class="sk-chart"><div style="display:flex;align-items:flex-end;gap:6px;height:140px">'+Array(8).fill(0).map(function(){return '<div class="sk" style="flex:1;height:'+(30+Math.random()*60)+'%"></div>';}).join('')+'</div></div>';}
+  var cd=document.getElementById('colour-donut');
+  if(cd){cd.innerHTML='<div style="display:flex;justify-content:center;padding:10px"><div class="sk" style="width:120px;height:120px;border-radius:50%"></div></div>';}
+  ['chart-markets','chart-farms','chart-varieties'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el){el.innerHTML=Array(5).fill(0).map(function(){return '<div style="margin-bottom:11px"><div class="sk" style="height:10px;width:'+(40+Math.random()*40)+'%;margin-bottom:5px"></div><div class="sk" style="height:8px;width:100%"></div></div>';}).join('');}
+  });
+}
+showSkeletons();
 loadLiveData();
 </script>
 <script>
