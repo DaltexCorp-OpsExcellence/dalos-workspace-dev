@@ -1395,7 +1395,7 @@ async function smGrant(){
         body:JSON.stringify({role:smRole||'viewer',config,expires_at:expiresAt})
       });
     } else {
-      res=await fetch(SB_URL+'/rest/v1/'+DAP,{
+      res=await fetch(SB_URL+'/rest/v1/'+DAP+'?on_conflict=user_id',{
         method:'POST',
         headers:Object.assign({},sbH(),{'Prefer':'resolution=merge-duplicates,return=minimal'}),
         body:JSON.stringify({user_id:smUser.id,role:smRole||'viewer',config,expires_at:expiresAt})
