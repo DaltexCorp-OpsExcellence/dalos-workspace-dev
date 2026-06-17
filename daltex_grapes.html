@@ -109,6 +109,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .dash-card{background:var(--white);border-radius:var(--r2);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;transition:all .2s;text-decoration:none;display:flex;flex-direction:column}
 .dash-card:hover{box-shadow:var(--shadow2);transform:translateY(-2px);border-color:rgba(20,40,80,.2)}
 .dash-card.coming{opacity:.55;pointer-events:none}
+.dash-card.locked{opacity:.4;filter:grayscale(.7);pointer-events:none;cursor:default}
 .dc-stripe{height:4px}
 .dc-body{padding:20px;flex:1}
 .dc-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
@@ -216,7 +217,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div class="dash-grid">
 
     <!-- SHIPMENTS — LIVE -->
-    <a class="dash-card" id="dc-shipments" href="grapes_overview_branded.html" style="display:none">
+    <a class="dash-card" id="dc-shipments" href="grapes_overview_branded.html">
       <div class="dc-stripe" style="background:linear-gradient(90deg,#142850,#DC6428)"></div>
       <div class="dc-body">
         <div class="dc-header">
@@ -241,7 +242,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </a>
 
     <!-- QC — LIVE -->
-    <a class="dash-card" id="dc-qc" href="daltex_qc.html" style="display:none">
+    <a class="dash-card" id="dc-qc" href="daltex_qc.html">
       <div class="dc-stripe" style="background:linear-gradient(90deg,#142850,#dc2626)"></div>
       <div class="dc-body">
         <div class="dc-header">
@@ -439,22 +440,22 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       var dbMap={shipments:'dc-shipments',qc:'dc-qc'};
 
       if(wsRole.toLowerCase()==='admin'){
-        // Admin — show all cards
+        // Admin — all cards fully visible
         Object.values(dbMap).forEach(function(id){
           var c=document.getElementById(id);
-          if(c) c.style.display='';
+          if(c) c.classList.remove('locked');
         });
         return;
       }
 
-      // Show only permitted dashboards
+      // Dim non-permitted dashboards
       Object.keys(dbMap).forEach(function(db){
         var card=document.getElementById(dbMap[db]);
         if(!card) return;
-        if(allowedDbs.includes(db)){
-          card.style.display='';
+        if(!allowedDbs.includes(db)){
+          card.classList.add('locked');
+          card.removeAttribute('href'); // prevent clicking
         }
-        // else stays hidden (display:none from HTML)
       });
 
       window.__DALOS_PERM=perm;
