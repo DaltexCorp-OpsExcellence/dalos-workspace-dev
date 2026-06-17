@@ -1169,14 +1169,20 @@ function editUser(permId, name, role, config, expiresAt){
   smStep=2;
   smShowP('smp2');
   smUpdateBar();
-  // pre-fill role
-  if(role){
-    document.querySelectorAll('.sm-rcard').forEach(function(c){
-      if(c.dataset.role===role){
-        smSelRole(c);
-      }
-    });
-  }
+  // pre-fill role — set smRole directly, highlight card WITHOUT applying defaults
+  smRole = role || 'viewer';
+  document.querySelectorAll('.sm-rcard').forEach(function(c){
+    var isFull=c.classList.contains('full');
+    if(c.dataset.role===role){
+      c.className=isFull?'sm-rcard full sel':'sm-rcard sel';
+      var chk=c.querySelector('.sm-chk');
+      if(chk){chk.className='sm-chk on';chk.innerHTML='<i class="ti ti-check" style="font-size:10px"></i>';}
+    } else {
+      c.className=isFull?'sm-rcard full':'sm-rcard';
+      var chk2=c.querySelector('.sm-chk');
+      if(chk2){chk2.className='sm-chk';chk2.innerHTML='';}
+    }
+  });
   // pre-fill products
   var cfg=config||{};
   var prods=cfg.products||[];
@@ -1316,7 +1322,7 @@ function smUpdateBar(){
 function smShowP(id){document.querySelectorAll('.sm-panel').forEach(p=>p.className='sm-panel');document.getElementById(id).className='sm-panel active';}
 function smNext(){
   if(smStep===1&&!smUser)return;
-  if(smStep===2&&!smRole)return;
+  if(smStep===2&&!smRole&&!_editPermId)return;
   if(smStep===5){smGrant();return;}
   smStep++;smShowP('smp'+smStep);smUpdateBar();
 }
