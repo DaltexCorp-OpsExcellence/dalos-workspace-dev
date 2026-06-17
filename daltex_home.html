@@ -1093,7 +1093,7 @@ async function approveRequest(reqId, userId, name, prod){
   document.getElementById('share-modal-wrap').classList.add('open');
   // Pre-select the requested product only
   smProds.forEach(function(p){
-    var el=document.getElementById('pc-'+p);
+    var el=document.getElementById('mpc-'+p);
     if(!el) return;
     var row=el.closest('.sm-prow');
     var on=(p===prod);
@@ -1181,7 +1181,7 @@ function editUser(permId, name, role, config, expiresAt){
   var cfg=config||{};
   var prods=cfg.products||[];
   smProds.forEach(function(p){
-    var el=document.getElementById('pc-'+p);
+    var el=document.getElementById('mpc-'+p);
     if(!el) return;
     var row=el.closest('.sm-prow');
     var on=prods.includes(p);

@@ -429,23 +429,30 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       var wsRole=(uData&&uData[0]&&uData[0].role)||'';
       if(!wsRole){
         var meta=(sess&&sess.user&&sess.user.user_metadata)||{};
-        wsRole=meta.role||'';
+        wsRole=meta.role||meta.user_role||'';
       }
+
+      // Admin — unlock everything immediately and return
       if(wsRole.toLowerCase()==='admin'){
-        // Admin handled inside dbMap loop below
+        document.getElementById('dc-shipments')&&document.getElementById('dc-shipments').classList.remove('locked');
+        document.getElementById('dc-qc')&&document.getElementById('dc-qc').classList.remove('locked');
+        var ds=document.getElementById('dc-shipments');if(ds)ds.setAttribute('href','grapes_overview_branded.html');
+        var dq=document.getElementById('dc-qc');if(dq)dq.setAttribute('href','daltex_qc.html');
+        return;
       }
 
       // Get permissions
       var pRes=await fetch(SB_URL+'/rest/v1/dal_analytics_permissions?user_id=eq.'+userId+'&select=config,expires_at&limit=1',{headers:authH});
       var perms=await pRes.json();
       var perm=Array.isArray(perms)&&perms[0];
-      if(!perm) return;
-
-      var expired=perm.expires_at&&new Date(perm.expires_at)<new Date();
-      if(expired) return;
-
-      var cfg=perm.config||{};
-      var allowedDbs=cfg.dashboards||[];
+      var allowedDbs=[];
+      if(perm){
+        var expired=perm.expires_at&&new Date(perm.expires_at)<new Date();
+        if(!expired){
+          var cfg=perm.config||{};
+          allowedDbs=cfg.dashboards||[];
+        }
+      }
 
       // Map dashboard ids to card element ids
       var dbMap={shipments:'dc-shipments',qc:'dc-qc'};
