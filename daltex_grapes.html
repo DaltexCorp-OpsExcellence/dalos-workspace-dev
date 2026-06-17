@@ -216,7 +216,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div class="dash-grid">
 
     <!-- SHIPMENTS — LIVE -->
-    <a class="dash-card" id="dc-shipments" href="grapes_overview_branded.html">
+    <a class="dash-card" id="dc-shipments" href="grapes_overview_branded.html" style="display:none">
       <div class="dc-stripe" style="background:linear-gradient(90deg,#142850,#DC6428)"></div>
       <div class="dc-body">
         <div class="dc-header">
@@ -241,7 +241,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </a>
 
     <!-- QC — LIVE -->
-    <a class="dash-card" id="dc-qc" href="daltex_qc.html">
+    <a class="dash-card" id="dc-qc" href="daltex_qc.html" style="display:none">
       <div class="dc-stripe" style="background:linear-gradient(90deg,#142850,#dc2626)"></div>
       <div class="dc-body">
         <div class="dc-header">
@@ -438,12 +438,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       // Map dashboard ids to card element ids
       var dbMap={shipments:'dc-shipments',qc:'dc-qc'};
 
+      if(wsRole.toLowerCase()==='admin'){
+        // Admin — show all cards
+        Object.values(dbMap).forEach(function(id){
+          var c=document.getElementById(id);
+          if(c) c.style.display='';
+        });
+        return;
+      }
+
+      // Show only permitted dashboards
       Object.keys(dbMap).forEach(function(db){
         var card=document.getElementById(dbMap[db]);
         if(!card) return;
-        if(!allowedDbs.includes(db)){
-          card.style.display='none';
+        if(allowedDbs.includes(db)){
+          card.style.display='';
         }
+        // else stays hidden (display:none from HTML)
       });
 
       window.__DALOS_PERM=perm;
