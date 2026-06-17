@@ -1506,7 +1506,7 @@ updateDate();
 
   // ── Shipments ──
   try{
-    const r=await fetch(SB_URL+'/rest/v1/grapes_shipments_view?select=net_weight,container_number,receiving_country,variety,shipping_week',{headers:H()});
+    const r=await fetch(SB_URL+'/rest/v1/grapes_shipments_view?season_id=eq.'+SID+'&select=net_weight,container_number,receiving_country,variety,shipping_week',{headers:H()});
     if(r.ok){
       const rows=await r.json();
       if(rows&&rows.length){
