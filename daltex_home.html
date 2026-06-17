@@ -1506,7 +1506,7 @@ updateDate();
 
   // ── Shipments ──
   try{
-    const r=await fetch(SB_URL+'/rest/v1/grapes_shipments_view?select=net_weight,container_number,receiving_country,variety,loading_date',{headers:H()});
+    const r=await fetch(SB_URL+'/rest/v1/grapes_shipments_view?select=net_weight,container_number,receiving_country,variety,shipping_week',{headers:H()});
     if(r.ok){
       const rows=await r.json();
       if(rows&&rows.length){
@@ -1516,13 +1516,7 @@ updateDate();
         var topM=Object.entries(mkts).sort((a,b)=>b[1]-a[1])[0];
         const vars={};rows.forEach(r=>{var v=r.variety||'';vars[v]=(vars[v]||0)+num(r.net_weight);});
         var topV=Object.entries(vars).sort((a,b)=>b[1]-a[1])[0];
-        const wks=[...new Set(rows.map(r=>{
-          if(!r.loading_date) return null;
-          var t=new Date(r.loading_date+'T00:00:00');
-          t.setDate(t.getDate()+3-((t.getDay()+6)%7));
-          var w1=new Date(t.getFullYear(),0,4);
-          return 1+Math.round(((t-w1)/864e5-3+((w1.getDay()+6)%7))/7);
-        }).filter(Boolean))].sort((a,b)=>a-b);
+        const wks=[...new Set(rows.map(r=>r.shipping_week).filter(Boolean))].sort((a,b)=>a-b);
         var nwTxt = nw>=1000?(nw/1000).toFixed(1)+'kT':nw.toFixed(1)+' T';
         set('h-nw-top', nwTxt);
         set('h-nw2', nwTxt);
