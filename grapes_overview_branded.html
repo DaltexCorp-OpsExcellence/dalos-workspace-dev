@@ -561,7 +561,7 @@ input, select, button { font-family: var(--font); }
 <div class="page-header">
   <div>
     <div class="page-title">Grapes Shipments <span>— Overview</span></div>
-    <div class="page-subtitle" id="page-sub">Season 2025/26 · 12 May – 01 Jun 2026 · 97 containers · 10 markets</div>
+    <div class="page-subtitle" id="page-sub">Loading season data…</div>
   </div>
   <div class="season-toggle">
     <button class="s-btn on">2025/26</button>
@@ -940,9 +940,11 @@ function compute(data) {
   s.ct      = __ctCount(__filteredRows());
   s.c1pct   = s.nw > 0 ? s.c1_nw / s.nw * 100 : 0;
   s.daltex  = s.nw > 0 ? (s.sources['Daltex Farms']||0) / s.nw * 100 : 0;
-  s.py_nw   = (typeof window.__PY_TOTAL==='number' && window.__PY_TOTAL>0) ? window.__PY_TOTAL : 1085.0;
-  s.yoy     = (s.nw - s.py_nw) / s.py_nw * 100;
-  s.coverage= s.nw / 2314.14 * 100;
+  s.py_nw   = (typeof window.__PY_TOTAL==='number' && window.__PY_TOTAL>0) ? window.__PY_TOTAL : 0;
+  s.yoy     = s.py_nw>0 ? (s.nw - s.py_nw) / s.py_nw * 100 : 0;
+  // Full season total = sum of ALL rows (unfiltered), computed live
+  var fullSeasonNw = __ROWS.reduce(function(a,r){return a+(parseFloat(r.net_weight)||0);},0);
+  s.coverage= fullSeasonNw>0 ? s.nw / fullSeasonNw * 100 : 0;
   return s;
 }
 
@@ -1248,9 +1250,7 @@ SELECTED PERIOD:
 - Varieties: ${Object.entries(s.varieties).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v.toFixed(1)}T`).join(', ')}
 - Colours: ${Object.entries(s.colors).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v.toFixed(1)}T (${(v/s.nw*100).toFixed(1)}%)`).join(', ')}
 
-FULL SEASON CONTEXT (2025/26): 1,285.85T · 97 containers · 10 markets · 7 farms · 6 varieties · 4 weeks (19-22)
-KEY ALERTS: Menia farm 79.2% Class 1 (critical quality issue) · Russia 0% Class 1 (verify) · Early Flame 63.9% Class 1 (worst variety) · UK 71.6% concentration risk
-KEY OPPORTUNITIES: UAE +73% YoY · Star Light +78% YoY · Arra 30 100% Class 1`;
+FULL SEASON CONTEXT (2025/26): ${__ROWS.reduce(function(a,r){return a+(parseFloat(r.net_weight)||0);},0).toFixed(2)}T · ${__FULL_CT} containers · ${new Set(__ROWS.map(function(r){return r.destination_country;}).filter(Boolean)).size} markets · ${new Set(__ROWS.map(function(r){return r.sample_farm||r.farm;}).filter(Boolean)).size} farms · ${new Set(__ROWS.map(function(r){return r.variety;}).filter(Boolean)).size} varieties`;
 }
 
 async function runAI() {
@@ -1278,7 +1278,7 @@ async function runAI() {
       .replace(/\n•/g,'<br><br>•')
       .replace(/\n\n/g,'<br><br>')
       .replace(/\n/g,'<br>') +
-      `<div class="ai-src"><i class="ti ti-database"></i> Based on real Daltex 2025/26 grapes shipments · ${s.nw.toFixed(1)}T selected · Last entry 01 Jun 2026</div>`;
+      `<div class="ai-src"><i class="ti ti-database"></i> Based on real Daltex 2025/26 grapes shipments · ${s.nw.toFixed(1)}T selected</div>`;
     res.classList.add('show');
   } catch(e) {
     txt.innerHTML='<span style="color:var(--red)">Connection error. Please try again.</span>';
