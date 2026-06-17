@@ -365,7 +365,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="hero-stats">
       <div class="hstat"><div class="hstat-val">1</div><div class="hstat-lbl">Live Product</div></div>
       <div class="hstat"><div class="hstat-val">4</div><div class="hstat-lbl">Products Planned</div></div>
-      <div class="hstat"><div class="hstat-val" id="h-nw2">—</div><div class="hstat-lbl">Season NW</div></div>
+      <div class="hstat"><div class="hstat-val" id="h-nw-top">—</div><div class="hstat-lbl">Season NW</div></div>
       <div class="hstat"><div class="hstat-val">2025/26</div><div class="hstat-lbl">Active Season</div></div>
     </div>
   </div>
@@ -1517,7 +1517,9 @@ updateDate();
         const vars={};rows.forEach(r=>{var v=r.variety||'';vars[v]=(vars[v]||0)+num(r.net_weight);});
         var topV=Object.entries(vars).sort((a,b)=>b[1]-a[1])[0];
         const wks=[...new Set(rows.map(r=>r.loading_week).filter(Boolean))].sort((a,b)=>a-b);
-        set('h-nw2', nw>=1000?(nw/1000).toFixed(1)+'kT':nw.toFixed(1)+' T');
+        var nwTxt = nw>=1000?(nw/1000).toFixed(1)+'kT':nw.toFixed(1)+' T';
+        set('h-nw-top', nwTxt);
+        set('h-nw2', nwTxt);
         set('h-ctr', ctrs);
         set('h-mkt', topM?topM[0]+' '+Math.round(topM[1]/nw*100)+'%':'—');
         set('h-wks', wks.length?'W'+wks[0]+' – W'+wks[wks.length-1]:'—');
