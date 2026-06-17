@@ -1033,6 +1033,7 @@ async function loadPendingRequests(){
   try{
     var res=await fetch(SB_URL+'/rest/v1/dal_access_requests?status=eq.pending&select=id,full_name,email,product,requested_at,user_id&order=requested_at.desc',{headers:sbH()});
     var requests=await res.json();
+    list.innerHTML=''; // always clear first
     if(!Array.isArray(requests)||!requests.length){
       wrap.style.display='none';
       return;
@@ -1099,25 +1100,31 @@ async function approveRequest(reqId, userId, name, prod){
   });
   smStep=2; smShowP('smp2'); smUpdateBar();
   window._pendingReqId=reqId;
+  // Remove from pending immediately for instant feedback
+  var pendingRow=document.getElementById('preq-'+reqId);
+  if(pendingRow){
+    pendingRow.style.transition='opacity .3s';
+    pendingRow.style.opacity='0';
+    setTimeout(function(){if(pendingRow.parentNode)pendingRow.parentNode.removeChild(pendingRow);loadPendingRequests();},350);
+  }
 }
 
 async function declineRequest(reqId, name){
   if(!confirm('Decline access request from '+name+'?')) return;
+  // Remove row immediately from DOM for instant feedback
+  var row=document.getElementById('preq-'+reqId);
+  if(row){
+    row.style.transition='opacity .3s';
+    row.style.opacity='0';
+    setTimeout(function(){if(row.parentNode)row.parentNode.removeChild(row);loadPendingRequests();},350);
+  }
   try{
-    var row=document.getElementById('preq-'+reqId);
-    if(row){row.style.opacity='0.4';row.style.pointerEvents='none';}
-    var res=await fetch(SB_URL+'/rest/v1/dal_access_requests?id=eq.'+reqId,{
+    await fetch(SB_URL+'/rest/v1/dal_access_requests?id=eq.'+reqId,{
       method:'PATCH',
       headers:Object.assign({},sbH(),{'Prefer':'return=minimal'}),
       body:JSON.stringify({status:'declined',reviewed_at:new Date().toISOString()})
     });
-    if(res.ok||res.status===204){
-      setTimeout(function(){loadPendingRequests();},400);
-    } else {
-      if(row){row.style.opacity='';row.style.pointerEvents='';}
-      alert('Failed to decline. Try again.');
-    }
-  }catch(e){alert('Error: '+e.message);}
+  }catch(e){console.warn('Decline update failed:',e.message);}
 }
 
 // ── PANEL: open ──
