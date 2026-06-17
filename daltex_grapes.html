@@ -109,8 +109,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .dash-card{background:var(--white);border-radius:var(--r2);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;transition:all .2s;text-decoration:none;display:flex;flex-direction:column}
 .dash-card:hover{box-shadow:var(--shadow2);transform:translateY(-2px);border-color:rgba(20,40,80,.2)}
 .dash-card.coming{opacity:.55;pointer-events:none}
-.dash-card.locked{opacity:.4;filter:grayscale(.7);pointer-events:none;cursor:default}
-.dash-card.locked .dc-req-btn{opacity:1!important;filter:none!important;pointer-events:all!important;position:relative;z-index:10}
+.dash-card.locked{cursor:default;position:relative}
+.dash-card.locked::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,.6);filter:grayscale(1);pointer-events:none;z-index:1;border-radius:inherit}
+.dash-card.locked .dc-req-btn{position:relative;z-index:2;pointer-events:all!important}
 .dc-req-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;border:1.5px solid #DC6428;color:#DC6428;background:#fff;cursor:pointer;font-family:inherit;transition:all .15s}
 .dc-req-btn:hover{background:#DC6428;color:#fff}
 .dc-req-btn.sent{border-color:#16a34a;color:#16a34a;cursor:default}
