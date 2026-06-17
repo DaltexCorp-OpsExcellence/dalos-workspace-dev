@@ -458,6 +458,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       var dbMap={shipments:'dc-shipments',qc:'dc-qc'};
       var dbNames={shipments:'Shipments',qc:'Quality Control'};
 
+      // Explicitly re-lock all cards first (clean slate for non-admin)
+      Object.values(dbMap).forEach(function(id){
+        var c=document.getElementById(id);
+        if(c){c.classList.add('locked');}
+      });
+
       // Fetch existing requests to know if already requested
       var reqRes=await fetch(SB_URL+'/rest/v1/dal_access_requests?user_id=eq.'+userId+'&select=product,status',{headers:authH});
       var existingReqs=await reqRes.json().catch(function(){return [];});
@@ -469,11 +475,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       Object.keys(dbMap).forEach(function(db){
         var card=document.getElementById(dbMap[db]);
         if(!card) return;
-        if(wsRole.toLowerCase()==='admin'||allowedDbs.includes(db)){
+        if(allowedDbs.includes(db)){
           card.classList.remove('locked');
           if(db==='shipments') card.setAttribute('href','grapes_overview_branded.html');
           if(db==='qc') card.setAttribute('href','daltex_qc.html');
         } else {
+          // Stays locked — remove href to prevent navigation
+          card.removeAttribute('href');
           // Add request button to footer if not already there
           if(!card.querySelector('.dc-req-btn')){
             var footer=card.querySelector('.dc-footer');
