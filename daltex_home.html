@@ -1395,11 +1395,24 @@ async function smGrant(){
         body:JSON.stringify({role:smRole||'viewer',config,expires_at:expiresAt})
       });
     } else {
-      res=await fetch(SB_URL+'/rest/v1/'+DAP+'?on_conflict=user_id',{
-        method:'POST',
-        headers:Object.assign({},sbH(),{'Prefer':'resolution=merge-duplicates,return=minimal'}),
-        body:JSON.stringify({user_id:smUser.id,role:smRole||'viewer',config,expires_at:expiresAt})
-      });
+      // Check if user already has a permission record
+      var checkRes=await fetch(SB_URL+'/rest/v1/'+DAP+'?user_id=eq.'+smUser.id+'&select=id&limit=1',{headers:sbH()});
+      var existing=await checkRes.json();
+      if(Array.isArray(existing)&&existing.length>0){
+        // Update existing record
+        res=await fetch(SB_URL+'/rest/v1/'+DAP+'?id=eq.'+existing[0].id,{
+          method:'PATCH',
+          headers:Object.assign({},sbH(),{'Prefer':'return=minimal'}),
+          body:JSON.stringify({role:smRole||'viewer',config,expires_at:expiresAt})
+        });
+      } else {
+        // Insert new record
+        res=await fetch(SB_URL+'/rest/v1/'+DAP,{
+          method:'POST',
+          headers:Object.assign({},sbH(),{'Prefer':'return=minimal'}),
+          body:JSON.stringify({user_id:smUser.id,role:smRole||'viewer',config,expires_at:expiresAt})
+        });
+      }
     }
     if(res.ok||res.status===201||res.status===204){
       const tags=document.getElementById('done-tags');tags.innerHTML='';
