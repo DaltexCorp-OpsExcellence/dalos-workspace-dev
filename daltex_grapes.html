@@ -217,7 +217,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div class="dash-grid">
 
     <!-- SHIPMENTS — LIVE -->
-    <a class="dash-card" id="dc-shipments" href="grapes_overview_branded.html">
+    <a class="dash-card locked" id="dc-shipments" href="grapes_overview_branded.html">
       <div class="dc-stripe" style="background:linear-gradient(90deg,#142850,#DC6428)"></div>
       <div class="dc-body">
         <div class="dc-header">
@@ -242,7 +242,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </a>
 
     <!-- QC — LIVE -->
-    <a class="dash-card" id="dc-qc" href="daltex_qc.html">
+    <a class="dash-card locked" id="dc-qc" href="daltex_qc.html">
       <div class="dc-stripe" style="background:linear-gradient(90deg,#142850,#dc2626)"></div>
       <div class="dc-body">
         <div class="dc-header">
@@ -422,7 +422,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         var meta=(sess&&sess.user&&sess.user.user_metadata)||{};
         wsRole=meta.role||'';
       }
-      if(wsRole.toLowerCase()==='admin') return;
+      if(wsRole.toLowerCase()==='admin'){
+        // Admin handled inside dbMap loop below
+      }
 
       // Get permissions
       var pRes=await fetch(SB_URL+'/rest/v1/dal_analytics_permissions?user_id=eq.'+userId+'&select=config,expires_at&limit=1',{headers:authH});
@@ -439,22 +441,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       // Map dashboard ids to card element ids
       var dbMap={shipments:'dc-shipments',qc:'dc-qc'};
 
-      if(wsRole.toLowerCase()==='admin'){
-        // Admin — all cards fully visible
-        Object.values(dbMap).forEach(function(id){
-          var c=document.getElementById(id);
-          if(c) c.classList.remove('locked');
-        });
-        return;
-      }
-
-      // Dim non-permitted dashboards
+      // Unlock permitted dashboards (all start locked in HTML)
       Object.keys(dbMap).forEach(function(db){
         var card=document.getElementById(dbMap[db]);
         if(!card) return;
-        if(!allowedDbs.includes(db)){
-          card.classList.add('locked');
-          card.removeAttribute('href'); // prevent clicking
+        if(wsRole.toLowerCase()==='admin'||allowedDbs.includes(db)){
+          card.classList.remove('locked');
+          // restore href if removed previously
+          if(db==='shipments') card.setAttribute('href','grapes_overview_branded.html');
+          if(db==='qc') card.setAttribute('href','daltex_qc.html');
         }
       });
 
