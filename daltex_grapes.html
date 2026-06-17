@@ -109,7 +109,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .dash-card{background:var(--white);border-radius:var(--r2);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;transition:all .2s;text-decoration:none;display:flex;flex-direction:column}
 .dash-card:hover{box-shadow:var(--shadow2);transform:translateY(-2px);border-color:rgba(20,40,80,.2)}
 .dash-card.coming{opacity:.55;pointer-events:none}
-.dash-card.locked{opacity:.4;filter:grayscale(.7);pointer-events:none;cursor:default}
+.dash-card.locked{opacity:.4;filter:grayscale(.7);cursor:default}
+.dash-card.locked .dc-req-btn{opacity:1;filter:none;pointer-events:all}
+.dc-req-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;border:1.5px solid #DC6428;color:#DC6428;background:#fff;cursor:pointer;font-family:inherit;transition:all .15s}
+.dc-req-btn:hover{background:#DC6428;color:#fff}
+.dc-req-btn.sent{border-color:#16a34a;color:#16a34a;cursor:default}
+@keyframes spin{to{transform:rotate(360deg)}}
 .dc-stripe{height:4px}
 .dc-body{padding:20px;flex:1}
 .dc-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
@@ -440,22 +445,93 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
       // Map dashboard ids to card element ids
       var dbMap={shipments:'dc-shipments',qc:'dc-qc'};
+      var dbNames={shipments:'Shipments',qc:'Quality Control'};
 
-      // Unlock permitted dashboards (all start locked in HTML)
+      // Fetch existing requests to know if already requested
+      var reqRes=await fetch(SB_URL+'/rest/v1/dal_access_requests?user_id=eq.'+userId+'&select=product,status',{headers:authH});
+      var existingReqs=await reqRes.json().catch(function(){return [];});
+      var alreadyRequested=new Set(
+        Array.isArray(existingReqs)?existingReqs.map(function(r){return r.product;}):[]
+      );
+
+      // Unlock permitted dashboards, add request button to locked ones
       Object.keys(dbMap).forEach(function(db){
         var card=document.getElementById(dbMap[db]);
         if(!card) return;
         if(wsRole.toLowerCase()==='admin'||allowedDbs.includes(db)){
           card.classList.remove('locked');
-          // restore href if removed previously
           if(db==='shipments') card.setAttribute('href','grapes_overview_branded.html');
           if(db==='qc') card.setAttribute('href','daltex_qc.html');
+        } else {
+          // Add request button to footer if not already there
+          if(!card.querySelector('.dc-req-btn')){
+            var footer=card.querySelector('.dc-footer');
+            if(footer){
+              var already=alreadyRequested.has(db);
+              var btn=document.createElement('button');
+              btn.className='dc-req-btn'+(already?' sent':'');
+              btn.innerHTML=already
+                ?'<i class="ti ti-check" style="font-size:12px"></i>Already requested'
+                :'<i class="ti ti-send" style="font-size:12px"></i>Request access';
+              if(!already){
+                btn.onclick=function(e){
+                  e.preventDefault();e.stopPropagation();
+                  requestDashboardAccess(db,dbNames[db],userId,btn);
+                };
+              }
+              footer.appendChild(btn);
+            }
+          }
         }
       });
 
       window.__DALOS_PERM=perm;
     }catch(e){console.warn('Dashboard access check:',e.message);}
   }
+
+  async function requestDashboardAccess(db, dbName, userId, btn){
+    if(btn.classList.contains('sent')||btn.disabled) return;
+    btn.innerHTML='<i class="ti ti-loader-2" style="font-size:12px;animation:spin 1s linear infinite"></i>Sending…';
+    btn.disabled=true;
+    try{
+      var SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
+      var SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
+      var SKEY='sb-sfyjvgjwvtwkrnqrvqyc-auth-token';
+      var raw=localStorage.getItem(SKEY);
+      var s=JSON.parse(raw);
+      var sess=(s&&s.access_token)?s:((s&&s.currentSession)?s.currentSession:null);
+      var userEmail=(sess&&sess.user&&sess.user.email)||'';
+      var userName=(sess&&sess.user&&sess.user.user_metadata&&sess.user.user_metadata.full_name)||userEmail;
+      var userJwt=(sess&&sess.access_token)||SB_ANON;
+      var authH={apikey:SB_ANON,Authorization:'Bearer '+userJwt,'Content-Type':'application/json'};
+
+      // Save request — use 'grapes-'+db as product to distinguish from product-level requests
+      var res=await fetch(SB_URL+'/rest/v1/dal_access_requests',{
+        method:'POST',
+        headers:Object.assign({},authH,{'Prefer':'resolution=merge-duplicates,return=minimal'}),
+        body:JSON.stringify({user_id:userId,full_name:userName,email:userEmail,product:'grapes-'+db,status:'pending'})
+      });
+
+      if(res.ok||res.status===201||res.status===204||res.status===200||res.status===409){
+        // Send email notification
+        fetch(SB_URL+'/functions/v1/Send-access-request',{
+          method:'POST',
+          headers:{apikey:SB_ANON,'Content-Type':'application/json'},
+          body:JSON.stringify({userName:userName,userEmail:userEmail,product:'grapes-'+db,prodName:'Grapes — '+dbName})
+        }).catch(function(){});
+        btn.className='dc-req-btn sent';
+        btn.innerHTML='<i class="ti ti-check" style="font-size:12px"></i>Request sent';
+        btn.disabled=false;
+      } else {
+        btn.innerHTML='<i class="ti ti-send" style="font-size:12px"></i>Request access';
+        btn.disabled=false;
+      }
+    }catch(e){
+      btn.innerHTML='<i class="ti ti-send" style="font-size:12px"></i>Request access';
+      btn.disabled=false;
+    }
+  }
+  window.requestDashboardAccess=requestDashboardAccess;
 })();
 </script>
 </body>
