@@ -845,20 +845,8 @@ async function loadLiveData() {
 
 
 // ── REAL DATA (from actual Excel file analysis) ──
-const DAILY = [
-  {date:'2026-05-12',week:19,nw:36.92,ct:3,c1_nw:36.92,farms:{Hana:24.44,Salma:12.48},markets:{UK:36.92},varieties:{Flame:24.44,Prime:12.48},colors:{Red:24.44,White:12.48},sources:{'Daltex Farms':36.92},statuses:{Delivered:36.92}},
-  {date:'2026-05-16',week:19,nw:13.73,ct:1,c1_nw:13.73,farms:{Menia:13.73},markets:{Holland:13.73},varieties:{Prime:13.73},colors:{White:13.73},sources:{'Daltex Farms':13.73},statuses:{Shipped:13.73}},
-  {date:'2026-05-17',week:20,nw:191.40,ct:15,c1_nw:178.67,farms:{Hana:109.56,Salma:44.96,Menia:36.88},markets:{UK:141.50,Slovenia:37.42,Switzerland:12.48},varieties:{Flame:109.56,Prime:44.96,'Arra 30':36.88},colors:{Red:147.0,White:44.4},sources:{'Daltex Farms':191.40},statuses:{Shipped:191.40}},
-  {date:'2026-05-19',week:20,nw:12.48,ct:1,c1_nw:12.48,farms:{Menia:12.48},markets:{Holland:12.48},varieties:{'Arra 30':12.48},colors:{White:12.48},sources:{'Daltex Farms':12.48},statuses:{Shipped:12.48}},
-  {date:'2026-05-20',week:20,nw:180.90,ct:14,c1_nw:165.82,farms:{Hana:84.74,Salma:59.68,'El khier':36.48},markets:{UK:155.90,Switzerland:25.0},varieties:{Flame:84.74,Prime:59.68,'Early Pearl':21.96,'Star Light':14.52},colors:{Red:84.74,White:59.68,Black:21.96},sources:{'Daltex Farms':180.90},statuses:{Shipped:180.90}},
-  {date:'2026-05-22',week:20,nw:152.73,ct:12,c1_nw:140.25,farms:{Hana:62.40,Salma:53.76,'El khier':36.57},markets:{UK:128.73,Norway:24.0},varieties:{Flame:62.40,Prime:53.76,'Early Flame':12.38,'Star Light':24.19},colors:{Red:74.78,White:53.76,Black:24.19},sources:{'Daltex Farms':152.73},statuses:{Shipped:152.73}},
-  {date:'2026-05-23',week:20,nw:144.66,ct:11,c1_nw:132.18,farms:{Menia:87.24,'El khier':57.42},markets:{UK:107.26,Holland:37.40},varieties:{Prime:87.24,Flame:57.42},colors:{White:87.24,Red:57.42},sources:{'Daltex Farms':144.66},statuses:{Shipped:144.66}},
-  {date:'2026-05-24',week:20,nw:269.44,ct:20,c1_nw:247.04,farms:{Menia:107.12,Salma:87.52,'Akram Shawky':74.80},markets:{UK:182.14,Switzerland:34.80,Norway:25.92,Latvia:14.88,'South Africa':12.48,UAE:15.60},varieties:{Flame:107.12,Prime:87.52,'Arra 30':40.73,'Star Light':21.00,'Early Flame':12.35},colors:{Red:128.12,White:141.32},sources:{'Daltex Farms':194.64,'Out Source':74.80},statuses:{Shipped:269.44}},
-  {date:'2026-05-30',week:21,nw:173.45,ct:13,c1_nw:173.45,farms:{Hana:86.54,Salma:62.16,'Dina Farms':24.75},markets:{UK:124.05,Switzerland:24.80,Slovenia:24.60},varieties:{Flame:86.54,Prime:62.16,'Arra 30':24.75},colors:{Red:86.54,White:86.91},sources:{'Daltex Farms':148.70,'Out Source':24.75},statuses:{Shipped:173.45}},
-  {date:'2026-05-31',week:21,nw:13.73,ct:1,c1_nw:13.73,farms:{Menia:13.73},markets:{Norway:13.73},varieties:{Prime:13.73},colors:{White:13.73},sources:{'Daltex Farms':13.73},statuses:{Shipped:13.73}},
-  {date:'2026-06-01',week:22,nw:96.41,ct:7,c1_nw:55.88,farms:{'Dina Farms':47.66,Menia:24.00,'El khier':24.75},markets:{UK:44.57,Spain:12.50,Latvia:12.50,Russia:15.93,'South Africa':12.48},varieties:{Prime:72.16,'Arra 30':3.77,'Star Light':20.48},colors:{Red:20.48,White:75.93},sources:{'Daltex Farms':24.00,'Out Source':72.41},statuses:{Shipped:96.41,Delivered:92.41}},
-];
-const PRIOR_WEEKLY = {19:42.7, 20:576.3, 21:374.4, 22:92.0};
+const DAILY = [];
+const PRIOR_WEEKLY = {};
 
 // ── FILTER STATE ──
 let DEF_FROM='2026-05-12', DEF_TO='2026-06-01';
@@ -1290,10 +1278,7 @@ async function runAI() {
 function aiQ(q) { document.getElementById('ai-in').value=q; runAI(); }
 
 // ── INIT ──
-renderAll();
-
-// Start with cached data, then load live
-renderAll();
+// Don't render with empty/cached data — wait for live Supabase data
 loadLiveData();
 </script>
 <script>
