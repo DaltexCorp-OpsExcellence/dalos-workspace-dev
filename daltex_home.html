@@ -933,11 +933,14 @@ async function loadPanelUsers(){
           +'<div class="atags">'+(tags||'<span class="atag" style="color:var(--text3)">No products set</span>')+'</div>'
         +'</div>'
         +'<div class="abtns">'
-          +'<button class="abtn-sm" title="Edit access" onclick="editUser(\''+p.id+'\',\''+escH(name)+'\','+JSON.stringify(p.role)+','+JSON.stringify(p.config)+','+JSON.stringify(p.expires_at)+')"><i class="ti ti-edit"></i></button>'
+          +'<button class="abtn-sm" title="Edit access" onclick="editUserById(\''+p.id+'\')" ><i class="ti ti-edit"></i></button>'
           +'<button class="abtn-sm del" title="Revoke Analytics access" onclick="revokeUser(\''+p.id+'\',\''+escH(name)+'\')" ><i class="ti ti-trash"></i></button>'
         +'</div>'
         +'</div>';
     }).join('');
+    // Store perm data for editUserById lookup
+    window._permMap={};
+    active.forEach(function(p){window._permMap[p.id]=p;});
   }catch(e){
     list.innerHTML='<div style="text-align:center;padding:24px 0;color:#dc2626;font-size:13px">Failed to load: '+escH(e.message)+'</div>';
   }
@@ -1141,6 +1144,14 @@ function closePanel(){
 }
 // ── PANEL: edit existing permission ──
 let _editPermId=null; // null = new grant, string = editing existing
+
+function editUserById(permId){
+  var p=window._permMap&&window._permMap[permId];
+  if(!p){console.warn('Perm not found:',permId);return;}
+  var u=p.users||{};
+  var name=u.full_name||u.email||'Unknown';
+  editUser(p.id, name, p.role, p.config, p.expires_at);
+}
 
 function editUser(permId, name, role, config, expiresAt){
   _editPermId = permId;
