@@ -966,7 +966,9 @@ function renderDim(rows,field,label){
    +'</div>'
    +cc('Trend by '+({daily:'Day',weekly:'Week',monthly:'Month',seasonal:'Season'})[S.gran],'avg total defect % · top 5 '+label.toLowerCase()+'s','<div style="position:relative;height:240px"><canvas id="ch-trend"></canvas></div>')
    +'<div style="height:12px"></div>'
-   +cc(label+' Heatmap','avg % per cell · tap a row label to filter','<div id="dimhm-wrap" style="overflow:auto"></div>','<div class="cc-actions" style="flex-wrap:wrap;gap:8px;align-items:center"><span style="font-size:10px;color:#8a95b0">Columns</span><span class="seg" style="display:inline-flex;gap:0">'+bOpts.map((o,i)=>'<button class="cc-btn'+(i===0?' on':'')+'" onclick="setDHMb(\''+o[0]+'\',this)">'+o[1]+'</button>').join('')+'</span><span style="font-size:10px;color:#8a95b0;margin-left:6px">Metric</span><span class="seg" style="display:inline-flex;gap:0">'+[['total','Total'],['major','Major'],['minor','Minor']].map((o,i)=>'<button class="cc-btn'+(i===0?' on':'')+'" onclick="setDHMm(\''+o[0]+'\',this)">'+o[1]+'</button>').join('')+'</span></div>')
+   +cc('Pareto — Defect Contribution','bars = avg % · line = cumulative share of total defects','<div style="position:relative;height:260px"><canvas id="ch-dim-pareto"></canvas></div>')
+   +'<div style="height:12px"></div>'
+   +cc(label+' Heatmap','avg % per cell · tap a row label to filter','<div id="dimhm-wrap" style="overflow:auto"></div>','<div class="cc-actions" style="flex-wrap:wrap;gap:8px;align-items:center"><span style="font-size:10px;color:#8a95b0">Columns</span><span class="seg" style="display:inline-flex;gap:0">'+bOpts.map((o,i)=>'<button class="cc-btn'+(i===0?' on':'')+'" onclick="setDHMb(\''+o[0]+'\',this)">'+o[1]+'</button>').join('')+'</span><span style="font-size:10px;color:#8a95b0;margin-left:6px">Metric</span><select id="dhm-metric" onchange="setDHMmSel(this.value)" style="font-family:var(--font);font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text);cursor:pointer"><option value="total">Total</option><option value="major">Major</option><option value="minor">Minor</option><optgroup label="Major reasons">'+MAJ.map(function(d){return '<option value="r:'+d[0]+'">'+d[1]+'</option>';}).join('')+'</optgroup><optgroup label="Minor reasons">'+MIN.map(function(d){return '<option value="r:'+d[0]+'">'+d[1]+'</option>';}).join('')+'</optgroup></select></div>')
    +'<div style="height:12px"></div>'
    +cc(label+' Detail','click any row to expand defect breakdown · sorted by total defect %',
      '<div style="overflow-x:auto;margin:-4px">'
@@ -1219,6 +1221,15 @@ function renderDim(rows,field,label){
   mkChart('ch-trend',{type:'line',data:{labels:periods,datasets:top5.map((k,i)=>({label:k,data:periods.map(p=>{const rs=g[k].filter(r=>perKey(r)===p);return rs.length?r2(cavg(rs,r=>num(r.grand_total))):null;}),borderColor:PAL[i],backgroundColor:PAL[i],spanGaps:true,tension:.3,pointRadius:3}))},
    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}},datalabels:{align:'top',anchor:'center',offset:6,backgroundColor:'rgba(255,255,255,.85)',borderRadius:3,padding:{top:1,bottom:1,left:3,right:3},font:{family:"'IBM Plex Mono'",size:8,weight:'700'},color:c=>c.dataset.borderColor,formatter:v=>(v==null?'':(Math.round(v*100)/100)+'%'),display:c=>c.dataIndex===c.dataset.data.length-1&&c.dataset.data[c.dataIndex]!=null}},scales:{x:{grid:{display:false},ticks:{font:{family:"'IBM Plex Mono'",size:9}}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:9},callback:v=>v+'%'}}}}});
   renderDimHM();
+  var dhmSel=document.getElementById('dhm-metric');if(dhmSel)dhmSel.value=DHMm;
+  // Pareto for this dimension selection — defect reasons ranked + cumulative line on top
+  var dpar=ALLDEF.map(d=>({n:d[1],sev:d[2],v:cavg(rows,r=>num(r[d[0]]))})).sort((a,b)=>b.v-a.v);
+  var dtot=dpar.reduce((s,p)=>s+p.v,0)||1;var dcum=0;var dcumArr=dpar.map(p=>{dcum+=p.v;return r2(dcum/dtot*100);});
+  mkChart('ch-dim-pareto',{data:{labels:dpar.map(p=>p.n),datasets:[
+    {type:'bar',data:dpar.map(p=>r2(p.v)),backgroundColor:dpar.map(p=>p.sev==='maj'?MAJC:MINC),borderRadius:3,yAxisID:'y',order:2},
+    {type:'line',data:dcumArr,borderColor:'#142850',backgroundColor:'#142850',borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#142850',tension:.3,yAxisID:'y1',order:0}]},
+   options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{display:c=>c.dataset.type!=='line'&&+c.dataset.data[c.dataIndex]>0,anchor:'end',align:'end',offset:2,font:{family:"'IBM Plex Mono'",size:8,weight:'600'},color:'#475569',formatter:v=>(Math.round(v*100)/100)+'%'},tooltip:{callbacks:{label:c=>c.dataset.type==='line'?(' cumulative '+c.raw+'%'):(' avg '+c.raw+'%')}}},
+    scales:{x:{ticks:{font:{size:9},maxRotation:45,minRotation:45},grid:{display:false}},y:{title:{display:true,text:'avg %',font:{size:9}},grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:9}}},y1:{position:'right',min:0,max:100,grid:{display:false},ticks:{callback:v=>v+'%',font:{family:"'IBM Plex Mono'",size:9}}}}}});
   }));
 
   // ── AUTO INSIGHTS + AI ──
@@ -1235,14 +1246,27 @@ function renderDim(rows,field,label){
 let DHMb='reasons',DHMm='total';
 function setDHMb(k,btn){DHMb=k;btn.parentElement.querySelectorAll('.cc-btn').forEach(b=>b.classList.toggle('on',b===btn));renderDimHM();}
 function setDHMm(k,btn){DHMm=k;btn.parentElement.querySelectorAll('.cc-btn').forEach(b=>b.classList.toggle('on',b===btn));renderDimHM();}
+function setDHMmSel(v){DHMm=v;renderDimHM();}
 function dimToggle(i){var r=document.getElementById('dimx-'+i);if(!r)return;var open=r.style.display!=='none';r.style.display=open?'none':'table-row';var ic=document.getElementById('dimc-'+i);if(ic)ic.className='ti ti-chevron-'+(open?'right':'down');}
 function dimHMDrill(el){var D=window.__DIM;if(!D)return;var val=el.dataset.v,field=D.field;var ms=document.querySelector('.ms[data-f="'+field+'"]');if(ms){S[field]=[val];ms.querySelectorAll('input[data-v]').forEach(i=>{i.checked=(i.dataset.v===val);});var a=ms.querySelector('.ms-all input');if(a)a.checked=false;syncMS(ms,field);}else{S[field]=[val];}window.scrollTo({top:0,behavior:'smooth'});apply();}
 function renderDimHM(){
   var D=window.__DIM;if(!D)return;var field=D.field,rows=D.rows;
   var rowVals=D.items.map(o=>o.k).slice(0,25);
   var defs,colLabels,cellFn;
-  if(DHMb==='reasons'){defs=DHMm==='major'?MAJ:DHMm==='minor'?MIN:ALLDEF.map(d=>[d[0],d[1]]);colLabels=defs.map(d=>d[1]);cellFn=function(rs,ci){return rs.length?cavg(rs,r=>num(r[defs[ci][0]])):null;};}
-  else{var sf=DIMS[DHMb][0];var bvals=[...new Set(rows.map(r=>norm(r[sf])).filter(Boolean))].sort();colLabels=bvals;var metric=DHMm==='major'?'major_total':DHMm==='minor'?'minor_total':'grand_total';cellFn=function(rs,ci){var sub=rs.filter(r=>norm(r[sf])===bvals[ci]);return sub.length?cavg(sub,r=>num(r[metric])):null;};}
+  // Detect individual reason metric (value prefixed "r:")
+  var reasonKey=(typeof DHMm==='string'&&DHMm.indexOf('r:')===0)?DHMm.slice(2):null;
+  if(DHMb==='reasons'){
+    // Columns are defect reasons. If a single reason is chosen, show only that column; else all/major/minor.
+    if(reasonKey){defs=ALLDEF.filter(function(d){return d[0]===reasonKey;}).map(function(d){return [d[0],d[1]];});}
+    else{defs=DHMm==='major'?MAJ:DHMm==='minor'?MIN:ALLDEF.map(d=>[d[0],d[1]]);}
+    colLabels=defs.map(d=>d[1]);
+    cellFn=function(rs,ci){return rs.length?cavg(rs,r=>num(r[defs[ci][0]])):null;};
+  } else {
+    // Columns are a dimension breakdown; metric decides which defect value fills each cell.
+    var sf=DIMS[DHMb][0];var bvals=[...new Set(rows.map(r=>norm(r[sf])).filter(Boolean))].sort();colLabels=bvals;
+    var metric=reasonKey?reasonKey:(DHMm==='major'?'major_total':DHMm==='minor'?'minor_total':'grand_total');
+    cellFn=function(rs,ci){var sub=rs.filter(r=>norm(r[sf])===bvals[ci]);return sub.length?cavg(sub,r=>num(r[metric])):null;};
+  }
   if(!colLabels.length){document.getElementById('dimhm-wrap').innerHTML='<div style="color:#8a95b0;font-size:12px;padding:8px">No data for this breakdown.</div>';return;}
   var mx=0,matrix={};rowVals.forEach(rv=>{var rs=D.g[rv]||[];matrix[rv]=colLabels.map((_,ci)=>{var v=cellFn(rs,ci);if(v!=null&&v>mx)mx=v;return v;});});
   var lblW=Math.min(160,Math.max(90,...rowVals.map(v=>v.length*7+10)));
