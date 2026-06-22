@@ -623,6 +623,37 @@ const VAR_COL={Prime:'#142850',Flame:'#DC6428',"Early Flame":'#e8872e',"Star Lig
 const CLR_COL={Red:'#DC6428',White:'#8a95b0',Black:'#142850'};
 
 let S={market:'',variety:'',color:'',fromDate:'2026-05-12',toDate:'2026-06-01',week:'',sortCol:'nw',sortDir:-1,mainMetric:'nw',weekView:'stacked',heatMetric:'nw'};
+let __ALLROWS=[];   // raw shipment rows kept so cross-tabs can be rebuilt against active filters
+
+// Build all market cross-tabs from a set of raw rows (same logic for full season or a filtered subset).
+function buildRAW(rows){
+  const mm={};
+  rows.forEach(r=>{const c=norm(r.receiving_country);if(!c)return;if(!mm[c])mm[c]={c,nw:0,pallets:0,ctr:{}};mm[c].nw+=num(r.net_weight);mm[c].pallets+=num(r.pallet_qty)||num(r.pallet_count);if(r.container_number)__ctAdd(mm[c],r);});
+  const by_mkt=Object.values(mm).map(o=>({c:o.c,nw:r2(o.nw),pallets:r2(o.pallets),containers:__ctClusters(o.ctr)})).sort((a,b)=>b.nw-a.nw);
+  const by_mkt_variety=sum2N(rows,r=>norm(r.receiving_country),r=>norm(r.variety)).map(o=>({c:o.a,v:o.b,nw:r2(o.nw)}));
+  const by_mkt_color  =sum2N(rows,r=>norm(r.receiving_country),r=>norm(r.color)).map(o=>({c:o.a,col:o.b,nw:r2(o.nw)}));
+  const by_mkt_client =sum2N(rows,r=>norm(r.receiving_country),r=>norm(r.client)).map(o=>({c:o.a,cl:o.b,nw:r2(o.nw)}));
+  const by_mkt_cls    =sum2N(rows,r=>norm(r.receiving_country),r=>parseInt(r.daltex_class)).filter(o=>!isNaN(o.b)).map(o=>({c:o.a,cls:o.b,nw:r2(o.nw)}));
+  const mwM={};rows.forEach(r=>{const c=norm(r.receiving_country),w=parseInt(r.shipping_week)||0;if(!c||!w)return;const k=c+'\u0001'+w;if(!mwM[k])mwM[k]={c,wk:w,nw:0,ctr:{}};mwM[k].nw+=num(r.net_weight);if(r.container_number)__ctAdd(mwM[k],r);});
+  const by_mkt_week=Object.values(mwM).map(o=>({c:o.c,wk:o.wk,nw:r2(o.nw),ctr:__ctClusters(o.ctr)}));
+  const ldM={};
+  rows.forEach(r=>{const c=norm(r.receiving_country),ld=r.loading_date;if(!c||!ld)return;const k=c+'\u0001'+ld;if(!ldM[k])ldM[k]={c,ld,nw:0,ctr:{}};ldM[k].nw+=num(r.net_weight);if(r.container_number)__ctAdd(ldM[k],r);});
+  const by_mkt_ld=Object.values(ldM).map(o=>({c:o.c,ld:o.ld,nw:r2(o.nw),ctr:__ctClusters(o.ctr)})).sort((a,b)=>a.ld.localeCompare(b.ld));
+  const portM={};
+  rows.forEach(r=>{const c=norm(r.receiving_country),p=norm(r.receiving_port);if(!c||!p)return;(portM[c]=portM[c]||{})[p]=(portM[c][p]||0)+num(r.net_weight);});
+  const ports={};Object.keys(portM).forEach(c=>{ports[c]=Object.keys(portM[c]).sort((a,b)=>portM[c][b]-portM[c][a]).join(', ');});
+  return {by_mkt,by_mkt_variety,by_mkt_color,by_mkt_client,by_mkt_cls,by_mkt_week,by_mkt_ld,ports};
+}
+
+// Apply the active row-level filters (date, week, variety, color) — NOT market, so charts can still show all markets when only a market is highlighted. Market filter stays handled downstream.
+function __filteredRows(){
+  let rows=__ALLROWS;
+  if(S.week)            rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===S.week);
+  else if(S.fromDate!==__LDF||S.toDate!==__LDT) rows=rows.filter(r=>r.loading_date&&r.loading_date>=S.fromDate&&r.loading_date<=S.toDate);
+  if(S.variety)         rows=rows.filter(r=>norm(r.variety)===S.variety);
+  if(S.color)           rows=rows.filter(r=>norm(r.color)===S.color);
+  return rows;
+}
 let __LDF='2026-05-12',__LDT='2026-06-01';
 let barChart,donutChart,weeklyChart,classDonut;
 
@@ -651,26 +682,8 @@ async function loadLiveData(){
   try{
     const [cur,prior0]=await Promise.all([sbFetch(SID_CUR),sbFetch(SID_PRIOR)]);const __cmd=cur.reduce((m,r)=>(r.loading_date&&r.loading_date>m)?r.loading_date:m,'');const __pc=__cmd?((parseInt(__cmd.slice(0,4))-1)+__cmd.slice(4)):'';const prior=prior0.filter(r=>r.loading_date&&__pc&&r.loading_date<=__pc);/* YoY: prior season up to the same calendar date one year earlier *//* YoY = season-to-date vs prior season through same shipping week */
 
-    // by_mkt: nw, pallets, containers
-    const mm={};
-    cur.forEach(r=>{const c=norm(r.receiving_country);if(!c)return;if(!mm[c])mm[c]={c,nw:0,pallets:0,ctr:{}};mm[c].nw+=num(r.net_weight);mm[c].pallets+=num(r.pallet_qty)||num(r.pallet_count);if(r.container_number)__ctAdd(mm[c],r);});
-    const by_mkt=Object.values(mm).map(o=>({c:o.c,nw:r2(o.nw),pallets:r2(o.pallets),containers:__ctClusters(o.ctr)})).sort((a,b)=>b.nw-a.nw);
-
-    const by_mkt_variety=sum2N(cur,r=>norm(r.receiving_country),r=>norm(r.variety)).map(o=>({c:o.a,v:o.b,nw:r2(o.nw)}));
-    const by_mkt_color  =sum2N(cur,r=>norm(r.receiving_country),r=>norm(r.color)).map(o=>({c:o.a,col:o.b,nw:r2(o.nw)}));
-    const by_mkt_client =sum2N(cur,r=>norm(r.receiving_country),r=>norm(r.client)).map(o=>({c:o.a,cl:o.b,nw:r2(o.nw)}));
-    const by_mkt_cls    =sum2N(cur,r=>norm(r.receiving_country),r=>parseInt(r.daltex_class)).filter(o=>!isNaN(o.b)).map(o=>({c:o.a,cls:o.b,nw:r2(o.nw)}));
-    const mwM={};cur.forEach(r=>{const c=norm(r.receiving_country),w=parseInt(r.shipping_week)||0;if(!c||!w)return;const k=c+'\u0001'+w;if(!mwM[k])mwM[k]={c,wk:w,nw:0,ctr:{}};mwM[k].nw+=num(r.net_weight);if(r.container_number)__ctAdd(mwM[k],r);});
-    const by_mkt_week=Object.values(mwM).map(o=>({c:o.c,wk:o.wk,nw:r2(o.nw),ctr:__ctClusters(o.ctr)}));
-    const ldM={};
-    cur.forEach(r=>{const c=norm(r.receiving_country),ld=r.loading_date;if(!c||!ld)return;const k=c+'\u0001'+ld;if(!ldM[k])ldM[k]={c,ld,nw:0,ctr:{}};ldM[k].nw+=num(r.net_weight);if(r.container_number)__ctAdd(ldM[k],r);});
-    const by_mkt_ld=Object.values(ldM).map(o=>({c:o.c,ld:o.ld,nw:r2(o.nw),ctr:__ctClusters(o.ctr)})).sort((a,b)=>a.ld.localeCompare(b.ld));
-
-    const portM={};
-    cur.forEach(r=>{const c=norm(r.receiving_country),p=norm(r.receiving_port);if(!c||!p)return;(portM[c]=portM[c]||{})[p]=(portM[c][p]||0)+num(r.net_weight);});
-    const mode2=o=>{let b=null,c=-1;for(const k in o){if(o[k]>c){c=o[k];b=k;}}return b;};
-    const ports={};Object.keys(portM).forEach(c=>{ports[c]=Object.keys(portM[c]).sort((a,b)=>portM[c][b]-portM[c][a]).join(', ');});
-    RAW={by_mkt,by_mkt_variety,by_mkt_color,by_mkt_client,by_mkt_cls,by_mkt_week,by_mkt_ld,ports};
+    __ALLROWS=cur;            // keep raw rows so RAW can be rebuilt against active filters
+    RAW=buildRAW(cur);        // initial full-season cross-tabs
 
     PRIOR_MKT=sumByN(prior,r=>norm(r.receiving_country)); Object.keys(PRIOR_MKT).forEach(k=>PRIOR_MKT[k]=r2(PRIOR_MKT[k]));
     PRIOR_TOTAL=r2(prior.reduce((s,r)=>s+num(r.net_weight),0));
@@ -707,36 +720,18 @@ async function loadLiveData(){
 
 
 function filteredMkts(){
+  // RAW is already rebuilt from rows matching date/week/variety/colour filters (see render()).
+  // So here we only apply the market highlight filter and sort.
   let base = RAW.by_mkt.map(r=>({...r}));
   if(S.market) base=base.filter(r=>r.c===S.market);
-
-  // Re-scale NW based on date+week filter using by_mkt_ld / by_mkt_week
-  if(S.week){
-    const scaled={};
-    RAW.by_mkt_week.filter(r=>inWeek(r.wk)).forEach(r=>{scaled[r.c]=(scaled[r.c]||0)+r.nw;});
-    base=base.map(r=>({...r,nw:scaled[r.c]||0})).filter(r=>r.nw>0);
-  } else if(S.fromDate!==__LDF||S.toDate!==__LDT){
-    const scaled={};
-    RAW.by_mkt_ld.filter(r=>inDateRange(r.ld)).forEach(r=>{scaled[r.c]=(scaled[r.c]||0)+r.nw;});
-    base=base.map(r=>({...r,nw:scaled[r.c]||0})).filter(r=>r.nw>0);
-  }
-
-  // Variety filter: use by_mkt_variety
-  if(S.variety){
-    const vmap={};
-    RAW.by_mkt_variety.filter(r=>r.v===S.variety).forEach(r=>{vmap[r.c]=r.nw;});
-    base=base.map(r=>({...r,nw:vmap[r.c]||0})).filter(r=>r.nw>0);
-  }
-  if(S.color){
-    const cmap={};
-    RAW.by_mkt_color.filter(r=>r.col===S.color).forEach(r=>{cmap[r.c]=r.nw;});
-    base=base.map(r=>({...r,nw:cmap[r.c]||0})).filter(r=>r.nw>0);
-  }
-  return base.sort((a,b)=>b.nw-a.nw);
+  return base.filter(r=>r.nw>0).sort((a,b)=>b.nw-a.nw);
 }
 
 /* ── RENDER ── */
 function render(){
+  // Rebuild all cross-tabs from rows matching the active date/week/variety/colour filters,
+  // so every chart (Class Distribution, Net-Weight Heatmap, Colour, Clients, Weekly, …) reflects them.
+  if(__ALLROWS.length) RAW=buildRAW(__filteredRows());
   const mkts=filteredMkts();
   const total=mkts.reduce((s,r)=>s+r.nw,0);
   renderKPIs(mkts,total);
