@@ -469,12 +469,6 @@ input,select,button{font-family:var(--font)}
   <div class="fgrp"><div class="flab">Container</div><div class="ms" data-f="container_number"></div></div>
   <div class="fgrp"><div class="flab">QC Score</div><div class="ms" data-f="sample_score"></div></div>
   <div class="fgrp"><div class="flab">Commodity</div><div class="ms-btn" style="cursor:default;background:var(--bg2)">Grapes</div></div>
-  <div class="fgrp"><div class="flab">View</div><div class="gran" id="gran">
-    <button data-g="daily" onclick="setGran('daily',this)">Daily</button>
-    <button data-g="weekly" class="on" onclick="setGran('weekly',this)">Weekly</button>
-    <button data-g="monthly" onclick="setGran('monthly',this)">Monthly</button>
-    <button data-g="seasonal" onclick="setGran('seasonal',this)">Season</button>
-  </div></div>
   <button class="reset-btn" onclick="resetF()"><i class="ti ti-rotate"></i> Reset</button>
 </div>
 <div class="fchips" id="fchips"></div>
@@ -597,7 +591,7 @@ function syncMS(el,f){
   else{lbl.textContent='Multiple';cnt.style.display='';cnt.textContent=n;}
 }
 function setDate(){S.from=document.getElementById('f-from').value;S.to=document.getElementById('f-to').value;apply();}
-function setGran(g,btn){S.gran=g;document.querySelectorAll('#gran button').forEach(b=>b.classList.toggle('on',b===btn));apply();}
+function setGran(g,btn){S.gran=g;apply();}
 function resetF(){
   MSF.forEach(f=>S[f]=[]);S.from=LDF;S.to=LDT;
   document.getElementById('f-from').value=LDF;document.getElementById('f-to').value=LDT;
@@ -964,7 +958,8 @@ function renderDim(rows,field,label){
      +'</div>')
    +cc('Defect Reason Mix by '+label,'share of avg total defects','<div style="position:relative;height:'+dh+'px" id="dim-mix-wrap"><canvas id="ch-mix"></canvas></div>')
    +'</div>'
-   +cc('Trend by '+({daily:'Day',weekly:'Week',monthly:'Month',seasonal:'Season'})[S.gran],'avg total defect % · top 5 '+label.toLowerCase()+'s','<div style="position:relative;height:240px"><canvas id="ch-trend"></canvas></div>')
+   +cc('Trend by '+({daily:'Day',weekly:'Week',monthly:'Month',seasonal:'Season'})[S.gran],'avg total defect % · top 5 '+label.toLowerCase()+'s','<div style="position:relative;height:240px"><canvas id="ch-trend"></canvas></div>',
+     '<div class="cc-actions"><span class="seg" style="display:inline-flex;gap:0">'+[['daily','Daily'],['weekly','Weekly'],['monthly','Monthly'],['seasonal','Season']].map(function(o){return '<button class="cc-btn'+(S.gran===o[0]?' on':'')+'" onclick="setGran(\''+o[0]+'\',this)">'+o[1]+'</button>';}).join('')+'</span></div>')
    +'<div style="height:12px"></div>'
    +cc('Pareto — Defect Contribution','bars = avg % · line = cumulative share of total defects','<div style="position:relative;height:260px"><canvas id="ch-dim-pareto"></canvas></div>')
    +'<div style="height:12px"></div>'
