@@ -1131,17 +1131,22 @@ function renderColourDonut(s) {
   const tot  = data.reduce((t,[k,v])=>t+v,0);
   if (!tot) { document.getElementById('colour-donut').innerHTML='<span style="color:var(--text3);font-size:11px">No data</span>'; return; }
 
-  const r=32,cx=38,cy=38;
+  const r=34, ri=20, cx=40, cy=40;
   let angle=-Math.PI/2, paths='';
   data.forEach(([k,v])=>{
     const slice=v/tot*2*Math.PI;
-    const x1=cx+r*Math.cos(angle),y1=cy+r*Math.sin(angle);
-    angle+=slice;
-    const x2=cx+r*Math.cos(angle),y2=cy+r*Math.sin(angle);
+    const a1=angle, a2=angle+slice;
+    angle=a2;
     const large=slice>Math.PI?1:0;
-    paths+=`<path d="M${cx},${cy}L${x1},${y1}A${r},${r} 0 ${large} 1 ${x2},${y2}Z" fill="${COLS[k]||'#999'}" stroke="white" stroke-width="2"/>`;
+    const ox1=cx+r*Math.cos(a1),  oy1=cy+r*Math.sin(a1);
+    const ox2=cx+r*Math.cos(a2),  oy2=cy+r*Math.sin(a2);
+    const ix2=cx+ri*Math.cos(a2), iy2=cy+ri*Math.sin(a2);
+    const ix1=cx+ri*Math.cos(a1), iy1=cy+ri*Math.sin(a1);
+    // donut segment: outer arc forward, inner arc back
+    paths+=`<path d="M${ox1},${oy1} A${r},${r} 0 ${large} 1 ${ox2},${oy2} L${ix2},${iy2} A${ri},${ri} 0 ${large} 0 ${ix1},${iy1} Z" fill="${COLS[k]||'#999'}" stroke="white" stroke-width="1.5"/>`;
   });
-  paths+=`<text x="${cx}" y="${cy-3}" text-anchor="middle" font-size="10" font-weight="700" fill="var(--navy)" font-family="'IBM Plex Mono',monospace">${tot.toFixed(0)}</text><text x="${cx}" y="${cy+9}" text-anchor="middle" font-size="8" fill="var(--text3)">T</text>`;
+  // center number sits in the hollow middle (white background) so it's always readable
+  paths+=`<text x="${cx}" y="${cy-1}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--navy)" font-family="'IBM Plex Mono',monospace">${tot.toFixed(0)}</text><text x="${cx}" y="${cy+9}" text-anchor="middle" font-size="7" fill="var(--text3)" font-family="'IBM Plex Mono',monospace">tonnes</text>`;
 
   const rows = data.map(([k,v])=>`
     <div class="donut-row">
@@ -1150,7 +1155,7 @@ function renderColourDonut(s) {
     </div>`).join('');
 
   document.getElementById('colour-donut').innerHTML =
-    `<div class="donut-wrap"><svg width="76" height="76" viewBox="0 0 76 76">${paths}</svg><div class="donut-legend">${rows}</div></div>`;
+    `<div class="donut-wrap"><svg width="80" height="80" viewBox="0 0 80 80">${paths}</svg><div class="donut-legend">${rows}</div></div>`;
 }
 
 // ── SOURCE SPLIT ──
