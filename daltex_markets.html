@@ -1128,12 +1128,12 @@ function renderClassBreakdown(){
 
   document.getElementById('class-breakdown').innerHTML=rows.map(r=>`
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
-      <div style="font-size:10px;color:var(--text2);width:74px;flex-shrink:0;font-family:var(--mono)">${flagImg(r.m)} ${r.m}</div>
+      <div style="font-size:10px;color:var(--text2);width:100px;flex-shrink:0;font-family:var(--mono);display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden">${flagImg(r.m)}<span style="overflow:hidden;text-overflow:ellipsis">${r.m}</span></div>
       <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;display:flex">
         <div style="width:${r.c1pct}%;background:var(--navy)"></div>
         <div style="width:${100-r.c1pct}%;background:var(--orange)"></div>
       </div>
-      <div style="font-size:9px;font-family:var(--mono);color:var(--text3);width:28px;text-align:right">${r.c1pct}%</div>
+      <div style="font-size:9px;font-family:var(--mono);color:var(--text3);width:28px;text-align:right;flex-shrink:0">${r.c1pct}%</div>
     </div>`).join('')+
   `<div style="display:flex;gap:10px;margin-top:8px">
     <div class="cl-item"><div class="cl-rect" style="background:var(--navy)"></div><span style="font-size:10px">Class 1</span></div>
