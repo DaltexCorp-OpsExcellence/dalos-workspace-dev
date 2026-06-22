@@ -692,7 +692,7 @@ async function loadLiveData(){
     PRIOR_MKT_WEEKLY=nestWkN(prior,r=>norm(r.receiving_country));
 
     fillSel('f-week',[...new Set(cur.map(r=>parseInt(r.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b).map(w=>({v:w,t:'W'+w})));
-    fillSel('f-market',by_mkt.map(x=>x.c).sort().map(x=>({v:x,t:x})));
+    fillSel('f-market',RAW.by_mkt.map(x=>x.c).sort().map(x=>({v:x,t:x})));
     fillSel('f-variety',[...new Set(cur.map(r=>norm(r.variety)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
     fillSel('f-color',[...new Set(cur.map(r=>norm(r.color)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
     {const __lds=cur.map(r=>r.loading_date).filter(Boolean).sort();
@@ -701,10 +701,10 @@ async function loadLiveData(){
        if(__ff){__ff.min=__LDF;__ff.max=__LDT;__ff.value=__LDF;}
        if(__ft){__ft.min=__LDF;__ft.max=__LDT;__ft.value=__LDT;}
        S.fromDate=__LDF;S.toDate=__LDT;}
-     const __tot=by_mkt.reduce((a,r)=>a+r.nw,0);
+     const __tot=RAW.by_mkt.reduce((a,r)=>a+r.nw,0);
      const __yo=PRIOR_TOTAL>0?((__tot-PRIOR_TOTAL)/PRIOR_TOTAL*100):null;
      const __fmtD=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
-     let __sub='Season 2025/26 &middot; '+__fmtD(__LDF)+' \u2013 '+__fmtD(__LDT)+' &middot; '+by_mkt.length+' markets &middot; '+__tot.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1})+' T net weight';
+     let __sub='Season 2025/26 &middot; '+__fmtD(__LDF)+' \u2013 '+__fmtD(__LDT)+' &middot; '+RAW.by_mkt.length+' markets &middot; '+__tot.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1})+' T net weight';
      if(__yo!==null) __sub+=' <span class="season-badge"><i class="ti ti-trending-'+(__yo>=0?'up':'down')+'" style="font-size:10px"></i> '+(__yo>=0?'+':'')+__yo.toFixed(1)+'% vs 2024/25</span>';
      const __hs=document.getElementById('hdr-sub'); if(__hs) __hs.innerHTML=__sub;}
 
