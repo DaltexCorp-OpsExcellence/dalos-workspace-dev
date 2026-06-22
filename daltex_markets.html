@@ -624,6 +624,7 @@ const CLR_COL={Red:'#DC6428',White:'#8a95b0',Black:'#142850'};
 
 let S={market:'',variety:'',color:'',fromDate:'2026-05-12',toDate:'2026-06-01',week:'',sortCol:'nw',sortDir:-1,mainMetric:'nw',weekView:'stacked',heatMetric:'nw'};
 let __ALLROWS=[];   // raw shipment rows kept so cross-tabs can be rebuilt against active filters
+let __LIVE_OK=false;
 
 // Build all market cross-tabs from a set of raw rows (same logic for full season or a filtered subset).
 function buildRAW(rows){
@@ -715,12 +716,12 @@ async function loadLiveData(){
 
     const __maxLD=cur.reduce((m,r)=>(r.loading_date&&r.loading_date>m)?r.loading_date:m,'');const __ctc=(function(){var o={};cur.forEach(function(r){var cn=(r.container_number||'').replace(/\s+/g,' ').trim();if(!cn)return;(o[cn]=o[cn]||[]).push(r.loading_date);});var t=0;for(var k in o){var ds=o[k].filter(Boolean).map(function(d){return +new Date(d+'T00:00:00');}).sort(function(a,b){return a-b;});if(!ds.length){t++;continue;}var c=1,p=ds[0];for(var i=1;i<ds.length;i++){if((ds[i]-p)/86400000>7)c++;p=ds[i];}t+=c;}return t;})();const __fmtLD=__maxLD?new Date(__maxLD+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';
     document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='<div class="live-dot"></div> Live &middot; '+__ctc+' containers &middot; '+__fmtLD;b.style.opacity='';});
-    render();
+    __LIVE_OK=true;
   }catch(e){
-    console.warn('Markets: Supabase unavailable, using cache:',e.message);
-    document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='&#9888; Offline &middot; Cache';b.style.opacity='.7';});
-    render();
+    console.warn('Markets: Supabase unavailable, using cache:',e.message,e);
+    document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='&#9888; Offline &middot; '+(e&&e.message?String(e.message).slice(0,60):'Cache');b.style.opacity='.7';b.title=String(e&&e.stack||e);});
   }
+  render();
 }
 
 
@@ -735,8 +736,9 @@ function filteredMkts(){
 /* ── RENDER ── */
 function render(){
   // Rebuild all cross-tabs from rows matching the active date/week/variety/colour filters,
-  // so every chart (Class Distribution, Net-Weight Heatmap, Colour, Clients, Weekly, …) reflects them.
-  if(__ALLROWS.length) RAW=buildRAW(__filteredRows());
+  // so every chart reflects them. Guarded so a rebuild issue never blanks the dashboard.
+  try{ if(__ALLROWS&&__ALLROWS.length) RAW=buildRAW(__filteredRows()); }
+  catch(err){ console.warn('Markets: filter rebuild failed, showing unfiltered data:',err); }
   const mkts=filteredMkts();
   const total=mkts.reduce((s,r)=>s+r.nw,0);
   renderKPIs(mkts,total);
