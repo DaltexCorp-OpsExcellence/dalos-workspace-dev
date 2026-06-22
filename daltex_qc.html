@@ -851,8 +851,8 @@ function renderOverview(rows){
    +cc('Pareto — Defect Contribution','bars = avg % · line = cumulative share of total defects','<div style="position:relative;height:260px"><canvas id="ch-pareto"></canvas></div>')
    +cc('Score Distribution','sample QC scores','<div style="position:relative;height:220px"><canvas id="ch-score"></canvas></div><div id="score-leg" class="chart-legend" style="margin-top:8px"></div>')
    +'</div>'
-   +cc('Defect Heatmap','avg total defect % per cell','<div id="hm-wrap" style="overflow:auto"></div>',
-      '<div class="cc-actions">'+[['fv','Farm × Variety'],['fc','Farm × Client'],['vc','Variety × Client'],['pv','Packhouse × Variety']].map((o,i)=>'<button class="cc-btn'+(i===0?' on':'')+'" onclick="setHM(\''+o[0]+'\',this)">'+o[1]+'</button>').join('')+'</div>')
+   +cc('Defect Heatmap','avg defect % per cell · container-level','<div id="hm-wrap" style="overflow:auto"></div>',
+      '<div class="cc-actions" style="flex-wrap:wrap;gap:8px;align-items:center">'+'<span class="seg" style="display:inline-flex;gap:0">'+[['fv','Farm \u00D7 Variety'],['fc','Farm \u00D7 Client'],['vc','Variety \u00D7 Client'],['pv','Packhouse \u00D7 Variety']].map(function(o,i){return '<button class="cc-btn'+(i===0?' on':'')+'" onclick="setHM(\''+o[0]+'\',this)">'+o[1]+'</button>';}).join('')+'</span>'+'<span style="font-size:10px;color:#8a95b0;margin-left:6px">Defect</span>'+'<select id="hm-metric" onchange="setHMM(this.value)" style="font-family:var(--font);font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text);cursor:pointer">'+'<option value="grand_total">All defects (total)</option><option value="major_total">All major</option><option value="minor_total">All minor</option>'+'<optgroup label="Major reasons">'+MAJ.map(function(d){return '<option value="'+d[0]+'">'+d[1]+'</option>';}).join('')+'</optgroup>'+'<optgroup label="Minor reasons">'+MIN.map(function(d){return '<option value="'+d[0]+'">'+d[1]+'</option>';}).join('')+'</optgroup>'+'</select></div>')
    +'<div style="height:12px"></div>'
    +'<div class="rc-grid" id="rc-grid"></div>';
   // major/minor breakdown
@@ -864,8 +864,8 @@ function renderOverview(rows){
   const par=ALLDEF.map(d=>({n:d[1],sev:d[2],v:cavg(rows,r=>num(r[d[0]]))})).sort((a,b)=>b.v-a.v);
   const tot=par.reduce((s,p)=>s+p.v,0)||1;let cum=0;const cumArr=par.map(p=>{cum+=p.v;return r2(cum/tot*100);});
   mkChart('ch-pareto',{data:{labels:par.map(p=>p.n),datasets:[
-    {type:'bar',data:par.map(p=>r2(p.v)),backgroundColor:par.map(p=>p.sev==='maj'?MAJC:MINC),borderRadius:3,yAxisID:'y'},
-    {type:'line',data:cumArr,borderColor:'#142850',backgroundColor:'#142850',pointRadius:3,tension:.3,yAxisID:'y1'}]},
+    {type:'bar',data:par.map(p=>r2(p.v)),backgroundColor:par.map(p=>p.sev==='maj'?MAJC:MINC),borderRadius:3,yAxisID:'y',order:2},
+    {type:'line',data:cumArr,borderColor:'#142850',backgroundColor:'#142850',borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#142850',tension:.3,yAxisID:'y1',order:0,z:10}]},
    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{display:c=>c.dataset.type!=='line'&&+c.dataset.data[c.dataIndex]>0,anchor:'end',align:'end',offset:2,font:{family:"'IBM Plex Mono'",size:8,weight:'600'},color:'#475569',formatter:v=>(Math.round(v*100)/100)+'%'},tooltip:{callbacks:{label:c=>c.dataset.type==='line'?(' cumulative '+c.raw+'%'):(' avg '+c.raw+'%')}}},
     scales:{x:{ticks:{font:{size:9},maxRotation:45,minRotation:45},grid:{display:false}},y:{title:{display:true,text:'avg %',font:{size:9}},grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:9}}},y1:{position:'right',min:0,max:100,grid:{display:false},ticks:{callback:v=>v+'%',font:{family:"'IBM Plex Mono'",size:9}}}}}});
   // score donut
@@ -873,6 +873,7 @@ function renderOverview(rows){
   mkChart('ch-score',{type:'doughnut',data:{labels:sk,datasets:[{data:sk.map(k=>sg[k].length),backgroundColor:sk.map((k,i)=>({GREEN:'#16a34a',AMBER:'#d97706',PASS:'#2563eb',WHITE:'#94a3b8',BLUE:'#0891b2'})[k]||PAL[i%PAL.length]),borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false},datalabels:{color:'#fff',textStrokeColor:'rgba(0,0,0,.4)',textStrokeWidth:2,anchor:'center',align:'center',font:{family:"'IBM Plex Mono'",size:11,weight:'700'},formatter:v=>(+v>0?v:''),display:c=>+c.dataset.data[c.dataIndex]>=3}}}});
   document.getElementById('score-leg').innerHTML=sk.map((k,i)=>'<div class="cl-item"><div class="cl-rect" style="background:'+(({GREEN:'#16a34a',AMBER:'#d97706',PASS:'#2563eb',WHITE:'#94a3b8',BLUE:'#0891b2'})[k]||PAL[i%PAL.length])+'"></div>'+esc(k)+' <span style="font-family:var(--mono);font-size:10px;color:#8a95b0">'+sg[k].length+'</span></div>').join('');
   renderHM(rows);
+  var hmSel=document.getElementById('hm-metric');if(hmSel)hmSel.value=HMM;
   // root cause
   const rcDims=[['sample_farm','farm','Top Farms','ti-building'],['variety','variety','Top Varieties','ti-plant-2'],['client','client','Top Clients','ti-users'],['packhouse','packhouse','Top Packhouses','ti-home-cog']];
   let rcHtml=rcDims.map(d=>{
@@ -909,18 +910,24 @@ function renderOverview(rows){
 
 }
 let HMC='fv';
+let HMM='grand_total';
 function setHM(k,btn){HMC=k;btn.parentElement.querySelectorAll('.cc-btn').forEach(b=>b.classList.toggle('on',b===btn));renderHM(F());}
+function setHMM(v){HMM=v;renderHM(F());}
 function renderHM(rows){
   const combos={fv:['sample_farm','variety'],fc:['sample_farm','client'],vc:['variety','client'],pv:['packhouse','variety']};
   const [ra,rb]=combos[HMC];
   const av=[...new Set(rows.map(r=>norm(r[ra])).filter(Boolean))].sort(),bv=[...new Set(rows.map(r=>norm(r[rb])).filter(Boolean))].sort();
-  const cell={};rows.forEach(r=>{const a=norm(r[ra]),b=norm(r[rb]);if(!a||!b)return;const k=a+'\u0001'+b;(cell[k]=cell[k]||[]).push(num(r.grand_total));});
-  let mx=0;Object.values(cell).forEach(arr=>{const m=arr.reduce((s,v)=>s+v,0)/arr.length;if(m>mx)mx=m;});
+  // group rows per cell, then container-average the selected defect metric
+  const cell={};rows.forEach(r=>{const a=norm(r[ra]),b=norm(r[rb]);if(!a||!b)return;const k=a+'\u0001'+b;(cell[k]=cell[k]||[]).push(r);});
+  let mx=0;Object.values(cell).forEach(rs=>{const m=cavg(rs,r=>num(r[HMM]));if(m>mx)mx=m;});
+  // label for tooltip/header note
+  var metricLbl=HMM==='grand_total'?'total':HMM==='major_total'?'major':HMM==='minor_total'?'minor':(ALLDEF.filter(function(d){return d[0]===HMM;})[0]||['','that reason'])[1];
   let h='<div style="display:flex;gap:3px;margin-bottom:4px"><div style="width:110px;flex-shrink:0"></div>'+bv.map(b=>'<div class="heat-hdr-cell" style="font-size:10px">'+esc(b)+'</div>').join('')+'</div>';
   av.forEach(a=>{h+='<div style="display:flex;gap:3px;margin-bottom:3px"><div class="heat-lbl" style="width:110px">'+esc(a)+'</div>'+bv.map(b=>{
-    const arr=cell[a+'\u0001'+b];if(!arr)return '<div class="heat-cell" style="background:var(--bg2);color:#8a95b0">–</div>';
-    const m=arr.reduce((s,v)=>s+v,0)/arr.length,t=mx>0?m/mx:0;
-    return '<div class="heat-cell" title="'+esc(a)+' × '+esc(b)+' · '+arr.length+' samples" style="background:rgba(220,38,38,'+(0.08+t*0.8).toFixed(2)+');color:'+(t>0.55?'#fff':'#7f1d1d')+'">'+fmt(m,1)+'</div>';
+    const rs=cell[a+'\u0001'+b];if(!rs)return '<div class="heat-cell" style="background:var(--bg2);color:#8a95b0">–</div>';
+    const m=cavg(rs,r=>num(r[HMM])),t=mx>0?m/mx:0;
+    const nc=new Set(rs.map(r=>norm(r.container_number)).filter(Boolean)).size;
+    return '<div class="heat-cell" title="'+esc(a)+' × '+esc(b)+' · '+esc(metricLbl)+' · '+nc+' containers, '+rs.length+' samples" style="background:rgba(220,38,38,'+(0.08+t*0.8).toFixed(2)+');color:'+(t>0.55?'#fff':'#7f1d1d')+'">'+fmt(m,1)+'</div>';
   }).join('')+'</div>';});
   document.getElementById('hm-wrap').innerHTML=h||'No data';
 }
