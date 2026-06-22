@@ -849,8 +849,6 @@ function renderBarVariety(vars){
         const fmtT=v=>v>=1000?(v/1000).toFixed(1)+'k':(v>=100?Math.round(v):v.toFixed(1));
         ctx.font="600 9px 'IBM Plex Mono'";ctx.fillStyle='#142850';
         chart.getDatasetMeta(0).data.forEach((bar,i)=>{if(curr[i]>0) ctx.fillText(fmtT(curr[i]),bar.x,bar.y-4);});
-        ctx.font="400 8px 'IBM Plex Mono'";ctx.fillStyle='#8a95b0';
-        chart.getDatasetMeta(1).data.forEach((bar,i)=>{if(prior[i]>0) ctx.fillText(fmtT(prior[i]),bar.x,bar.y+10);});
         ctx.restore();
       }}
     }
