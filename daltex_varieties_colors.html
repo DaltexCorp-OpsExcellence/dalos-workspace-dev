@@ -610,6 +610,44 @@ const CCOL = {Red:'#DC6428',White:'#8a95b0',Black:'#142850'};
 let TOTAL_NW = 1285.85;
 
 let S={variety:'',color:'',market:'',farm:'',week:'',fromDate:'2026-05-12',toDate:'2026-06-01',varSortCol:'nw',varSortDir:-1,colSortCol:'nw',colSortDir:-1,varWeekView:'stacked',colWeekView:'stacked'};
+let __ROWS=[];   // raw shipment rows kept so cross-tabs can be rebuilt against active filters
+
+// Rebuild all variety/colour cross-tabs from a set of rows (self-contained).
+function buildVarColData(rows){
+  const num=v=>{const n=parseFloat(v);return isNaN(n)?0:n;};
+  const r2=x=>Math.round(x*100)/100;
+  const norm=s=>s==null?'':String(s).trim();
+  const mode=o=>{let b=null,c=-1;for(const k in o){if(o[k]>c){c=o[k];b=k;}}return b;};
+  const sum2N=(rows,fa,fb)=>{const m={};rows.forEach(r=>{const a=fa(r),b=fb(r);if((!a&&a!==0)||b===''||b==null)return;const key=a+'\u0001'+b;if(!m[key])m[key]={a,b,nw:0};m[key].nw+=num(r.net_weight);});return Object.values(m);};
+  const dimAgg=(rows,kf,withColor)=>{const m={};rows.forEach(r=>{const k=kf(r);if(!k)return;if(!m[k])m[k]={k,nw:0,pallets:0,ctr:{},sc:new Set(),col:{}};const o=m[k];o.nw+=num(r.net_weight);o.pallets+=num(r.pallet_count);if(r.container_number)__ctAdd(o,r);o.sc.add((r.container_number||'')+'\u0001'+(r.carta||''));if(withColor){const c=norm(r.color);if(c)o.col[c]=(o.col[c]||0)+num(r.net_weight);}});return m;};
+  const vm=dimAgg(rows,r=>norm(r.variety),true);
+  const VARIETIES=Object.values(vm).map(o=>({v:o.k,nw:r2(o.nw),pallets:r2(o.pallets),containers:__ctClusters(o.ctr),shipments:o.sc.size,color:mode(o.col)||''})).sort((a,b)=>b.nw-a.nw);
+  const cm=dimAgg(rows,r=>norm(r.color),false);
+  const COLORS=Object.values(cm).map(o=>({c:o.k,nw:r2(o.nw),pallets:r2(o.pallets),containers:__ctClusters(o.ctr),shipments:o.sc.size})).sort((a,b)=>b.nw-a.nw);
+  return {
+    VARIETIES, COLORS,
+    VAR_MKT : sum2N(rows,r=>norm(r.variety),r=>norm(r.receiving_country)).map(o=>({v:o.a,m:o.b,nw:r2(o.nw)})),
+    COL_MKT : sum2N(rows,r=>norm(r.color),r=>norm(r.receiving_country)).map(o=>({c:o.a,m:o.b,nw:r2(o.nw)})),
+    VAR_FARM: sum2N(rows,r=>norm(r.variety),r=>norm(r.farm_source)).map(o=>({v:o.a,f:o.b,nw:r2(o.nw)})),
+    COL_FARM: sum2N(rows,r=>norm(r.color),r=>norm(r.farm_source)).map(o=>({c:o.a,f:o.b,nw:r2(o.nw)})),
+    VAR_WEEK: sum2N(rows,r=>norm(r.variety),r=>parseInt(r.shipping_week)||0).map(o=>({v:o.a,wk:o.b,nw:r2(o.nw)})),
+    COL_WEEK: sum2N(rows,r=>norm(r.color),r=>parseInt(r.shipping_week)||0).map(o=>({c:o.a,wk:o.b,nw:r2(o.nw)})),
+    VAR_CLS : sum2N(rows,r=>norm(r.variety),r=>parseInt(r.daltex_class)).filter(o=>!isNaN(o.b)).map(o=>({v:o.a,cls:o.b,nw:r2(o.nw)})),
+    COL_CLS : sum2N(rows,r=>norm(r.color),r=>parseInt(r.daltex_class)).filter(o=>!isNaN(o.b)).map(o=>({c:o.a,cls:o.b,nw:r2(o.nw)}))
+  };
+}
+
+// Active row-level filters that reshape cross-tabs: market, farm, week, date.
+// (variety/color stay as highlights applied in filteredVarieties/filteredColors.)
+function __vcFilteredRows(){
+  const norm=s=>s==null?'':String(s).trim();
+  let rows=__ROWS;
+  if(S.market) rows=rows.filter(r=>norm(r.receiving_country)===S.market);
+  if(S.farm)   rows=rows.filter(r=>norm(r.farm_source)===S.farm);
+  if(S.week)   rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===S.week);
+  if(S.fromDate&&S.toDate&&(S.fromDate!=='2026-05-12'||S.toDate!=='2026-06-01')) rows=rows.filter(r=>r.loading_date&&r.loading_date>=S.fromDate&&r.loading_date<=S.toDate);
+  return rows;
+}
 let barVarChart,barColChart,donutVarChart,donutColChart,varWkChart,colWkChart;
 
 /* ── FILTER ── */
@@ -635,6 +673,8 @@ async function loadLiveData(){
   function dimAgg(rows,kf,withColor){const m={};rows.forEach(r=>{const k=kf(r);if(!k)return;if(!m[k])m[k]={k,nw:0,pallets:0,ctr:{},sc:new Set(),col:{}};const o=m[k];o.nw+=num(r.net_weight);o.pallets+=num(r.pallet_count);if(r.container_number)__ctAdd(o,r);o.sc.add((r.container_number||'')+'\u0001'+(r.carta||''));if(withColor){const c=norm(r.color);if(c)o.col[c]=(o.col[c]||0)+num(r.net_weight);}});return m;}
   try{
     const [cur,prior0]=await Promise.all([sbFetch(SID_CUR),sbFetch(SID_PRIOR)]);const __cmd=cur.reduce((m,r)=>(r.loading_date&&r.loading_date>m)?r.loading_date:m,'');const __pc=__cmd?((parseInt(__cmd.slice(0,4))-1)+__cmd.slice(4)):'';const prior=prior0.filter(r=>r.loading_date&&__pc&&r.loading_date<=__pc);/* YoY: prior season up to the same calendar date one year earlier *//* YoY = season-to-date vs prior season through same shipping week */
+
+    __ROWS=cur;
 
     const vm=dimAgg(cur,r=>norm(r.variety),true);
     VARIETIES=Object.values(vm).map(o=>({v:o.k,nw:r2(o.nw),pallets:r2(o.pallets),containers:__ctClusters(o.ctr),shipments:o.sc.size,color:mode(o.col)||''})).sort((a,b)=>b.nw-a.nw);
@@ -664,57 +704,38 @@ async function loadLiveData(){
 
     const __maxLD=cur.reduce((m,r)=>(r.loading_date&&r.loading_date>m)?r.loading_date:m,'');const __ctc=(function(){var o={};cur.forEach(function(r){var cn=(r.container_number||'').replace(/\s+/g,' ').trim();if(!cn)return;(o[cn]=o[cn]||[]).push(r.loading_date);});var t=0;for(var k in o){var ds=o[k].filter(Boolean).map(function(d){return +new Date(d+'T00:00:00');}).sort(function(a,b){return a-b;});if(!ds.length){t++;continue;}var c=1,p=ds[0];for(var i=1;i<ds.length;i++){if((ds[i]-p)/86400000>7)c++;p=ds[i];}t+=c;}return t;})();const __fmtLD=__maxLD?new Date(__maxLD+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';
     document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='<div class="live-dot"></div> Live &middot; '+__ctc+' containers &middot; '+__fmtLD;b.style.opacity='';});
-    render();
   }catch(e){
     console.warn('Varieties/Colors: Supabase unavailable, using cache:',e.message);
     document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='&#9888; Offline &middot; Cache';b.style.opacity='.7';});
-    render();
   }
+  render();
 }
 
 
 function filteredVarieties(){
+  // VARIETIES already rebuilt from rows matching market/farm/week/date. Apply variety/color highlight only.
   let base=VARIETIES.map(r=>({...r}));
   if(S.variety) base=base.filter(r=>r.v===S.variety);
   if(S.color) base=base.filter(r=>r.color===S.color);
-  if(S.market){
-    const mm={};VAR_MKT.filter(r=>r.m===S.market).forEach(r=>{mm[r.v]=r.nw;});
-    base=base.map(r=>({...r,nw:mm[r.v]||0})).filter(r=>r.nw>0);
-  }
-  if(S.farm){
-    const fm={};VAR_FARM.filter(r=>r.f===S.farm).forEach(r=>{fm[r.v]=r.nw;});
-    base=base.map(r=>({...r,nw:fm[r.v]||0})).filter(r=>r.nw>0);
-  }
-  if(S.week){
-    const wm={};VAR_WEEK.filter(r=>String(r.wk)===S.week).forEach(r=>{wm[r.v]=r.nw;});
-    base=base.map(r=>({...r,nw:wm[r.v]||0})).filter(r=>r.nw>0);
-  }
-  return base.sort((a,b)=>b.nw-a.nw);
+  return base.filter(r=>r.nw>0).sort((a,b)=>b.nw-a.nw);
 }
 function filteredColors(){
+  // COLORS already rebuilt from rows matching market/farm/week/date. Apply color/variety highlight only.
   let base=COLORS.map(r=>({...r}));
   if(S.color) base=base.filter(r=>r.c===S.color);
   if(S.variety){
     const match=VARIETIES.find(v=>v.v===S.variety);
     if(match) base=base.filter(r=>r.c===match.color);
   }
-  if(S.market){
-    const mm={};COL_MKT.filter(r=>r.m===S.market).forEach(r=>{mm[r.c]=r.nw;});
-    base=base.map(r=>({...r,nw:mm[r.c]||0})).filter(r=>r.nw>0);
-  }
-  if(S.farm){
-    const fm={};COL_FARM.filter(r=>r.f===S.farm).forEach(r=>{fm[r.c]=r.nw;});
-    base=base.map(r=>({...r,nw:fm[r.c]||0})).filter(r=>r.nw>0);
-  }
-  if(S.week){
-    const wm={};COL_WEEK.filter(r=>String(r.wk)===S.week).forEach(r=>{wm[r.c]=r.nw;});
-    base=base.map(r=>({...r,nw:wm[r.c]||0})).filter(r=>r.nw>0);
-  }
-  return base.sort((a,b)=>b.nw-a.nw);
+  return base.filter(r=>r.nw>0).sort((a,b)=>b.nw-a.nw);
 }
 
 /* ── RENDER ── */
 function render(){
+  // Rebuild all variety/colour cross-tabs from rows matching market/farm/week/date,
+  // so every chart, heatmap and class breakdown reflects the active filters. Guarded.
+  try{ if(__ROWS&&__ROWS.length){ const d=buildVarColData(__vcFilteredRows()); VARIETIES=d.VARIETIES;COLORS=d.COLORS;VAR_MKT=d.VAR_MKT;COL_MKT=d.COL_MKT;VAR_FARM=d.VAR_FARM;COL_FARM=d.COL_FARM;VAR_WEEK=d.VAR_WEEK;COL_WEEK=d.COL_WEEK;VAR_CLS=d.VAR_CLS;COL_CLS=d.COL_CLS; } }
+  catch(err){ console.warn('Varieties/Colors: filter rebuild failed, showing unfiltered:',err); }
   const vars=filteredVarieties();const cols=filteredColors();
   const vTotal=vars.reduce((s,r)=>s+r.nw,0);
   const cTotal=cols.reduce((s,r)=>s+r.nw,0);
