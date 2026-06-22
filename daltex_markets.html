@@ -211,7 +211,8 @@ input,select,button{font-family:var(--font)}
 
 /* HEATMAP */
 .heat-row{display:flex;align-items:center;gap:3px;margin-bottom:3px}
-.heat-lbl{font-size:12px;color:var(--text2);width:90px;flex-shrink:0;font-family:var(--mono);font-weight:500}
+.heat-lbl{font-size:12px;color:var(--text2);width:112px;flex-shrink:0;font-family:var(--mono);font-weight:500;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden}
+.heat-lbl span{overflow:hidden;text-overflow:ellipsis}
 .heat-cell{height:26px;border-radius:3px;flex:1;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:600;position:relative;cursor:default}
 .heat-hdr-row{display:flex;align-items:center;gap:3px;margin-bottom:4px}
 .heat-hdr-lbl{width:90px;flex-shrink:0}
@@ -1159,7 +1160,7 @@ function renderHeatmap(){
   </div>`;
   shown.forEach(m=>{
     html+=`<div class="heat-row">
-      <div class="heat-lbl">${flagImg(m)} ${m}</div>
+      <div class="heat-lbl">${flagImg(m)}<span>${m}</span></div>
       ${weeks.map(w=>{
         const row=RAW.by_mkt_week.find(r=>r.c===m&&r.wk===w);
         const v=row?(metric==='nw'?row.nw:row.ctr):0;
@@ -1187,7 +1188,7 @@ function renderColorDist(){
     const tot=rows.reduce((s,r)=>s+r.nw,0)||1;
     const parts=colors.map(col=>({col,nw:rows.find(r=>r.col===col)?.nw||0})).filter(p=>p.nw>0);
     return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
-      <div style="font-size:12px;font-weight:500;color:var(--text2);width:92px;flex-shrink:0">${flagImg(m)} ${m}</div>
+      <div style="font-size:12px;font-weight:500;color:var(--text2);width:112px;flex-shrink:0;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden">${flagImg(m)}<span style="overflow:hidden;text-overflow:ellipsis">${m}</span></div>
       <div class="stacked-row" style="flex:1">${parts.map(p=>`<div style="flex:${p.nw};background:${CLR_COL[p.col]};height:8px;border-radius:4px" title="${p.col}: ${p.nw.toFixed(1)}T (${(p.nw/tot*100).toFixed(1)}%)"></div>`).join('')}</div>
       <div style="font-size:12px;color:var(--text3);font-family:var(--mono);width:104px;text-align:right">${parts.map(p=>`${p.col[0]}${(p.nw/tot*100).toFixed(1)}%`).join(' ')}</div>
     </div>`;
