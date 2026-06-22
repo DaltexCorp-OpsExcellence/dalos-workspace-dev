@@ -719,7 +719,7 @@ async function loadLiveData(){
     __LIVE_OK=true;
   }catch(e){
     console.warn('Markets: Supabase unavailable, using cache:',e.message,e);
-    document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='&#9888; Offline &middot; '+(e&&e.message?String(e.message).slice(0,60):'Cache');b.style.opacity='.7';b.title=String(e&&e.stack||e);});
+    document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='&#9888; Offline &middot; Cache';b.style.opacity='.7';});
   }
   render();
 }

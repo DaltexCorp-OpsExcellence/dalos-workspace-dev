@@ -438,12 +438,37 @@ const PAL_VAR={Flame:'#DC6428',Prime:'#142850','Arra 30':'#3d6fa8','Star Light':
 let S={farm:'',mkt:'',src:'',week:'',sortCol:'nw',sortDir:-1};
 
 function filt(){
+  // FARMS_ALL is already rebuilt from rows matching market/source/week (see render()).
+  // Here we only apply the farm highlight and re-sort.
   let r=FARMS_ALL.map(x=>({...x}));
   if(S.farm) r=r.filter(x=>x.f===S.farm);
-  if(S.src)  r=r.filter(x=>x.src===S.src);
-  if(S.mkt){const m={};FM.filter(x=>x.m===S.mkt).forEach(x=>m[x.f]=x.nw);r=r.map(x=>({...x,nw:m[x.f]||0})).filter(x=>x.nw>0);}
-  if(S.week){const m={};FWK.filter(x=>String(x.wk)===S.week).forEach(x=>m[x.f]=x.nw);r=r.map(x=>({...x,nw:m[x.f]||0})).filter(x=>x.nw>0);}
-  return r.sort((a,b)=>b.nw-a.nw);
+  return r.filter(x=>x.nw>0).sort((a,b)=>b.nw-a.nw);
+}
+
+// Rebuild all farm cross-tabs from a set of raw rows (self-contained; used for full season or filtered subset).
+function buildFarmData(rows){
+  const num=v=>{const n=parseFloat(v);return isNaN(n)?0:n;};
+  const r2=x=>Math.round(x*100)/100;
+  const mode=o=>{let b=null,c=-1;for(const k in o){if(o[k]>c){c=o[k];b=k;}}return b;};
+  const sum2=(rows,ka,kb)=>{const m={};rows.forEach(r=>{const a=r[ka],b=r[kb];if(a==null||a===''||b==null||b==='')return;const key=a+'\u0001'+b;if(!m[key])m[key]={a,b,nw:0};m[key].nw+=num(r.net_weight);});return Object.values(m);};
+  const mk2=(rows,kt,kd,oa,ob)=>sum2(rows,kt,kd).map(o=>{const x={};x[oa]=o.a;x[ob]=o.b;x.nw=r2(o.nw);return x;});
+  const farmAgg=rows=>{const m={};rows.forEach(r=>{const f=r.farm_source;if(!f)return;if(!m[f])m[f]={f,nw:0,pallets:0,ctr:{},sc:new Set(),src:{}};const o=m[f];o.nw+=num(r.net_weight);o.pallets+=num(r.pallet_count);if(r.container_number)__ctAdd(o,r);o.sc.add((r.container_number||'')+'\u0001'+(r.carta||''));const s=r.source_type||'';if(s)o.src[s]=(o.src[s]||0)+1;});return Object.values(m).map(o=>({f:o.f,nw:r2(o.nw),pallets:r2(o.pallets),containers:__ctClusters(o.ctr),shipments:o.sc.size,src:mode(o.src)||''})).sort((a,b)=>b.nw-a.nw);};
+  return {
+    FARMS_ALL: farmAgg(rows),
+    FV: mk2(rows,'farm_source','variety','f','v'),
+    FM: mk2(rows,'farm_source','receiving_country','f','m'),
+    FWK: sum2(rows,'farm_source','shipping_week').map(o=>({f:o.a,wk:parseInt(o.b)||0,nw:r2(o.nw)}))
+  };
+}
+
+// Active row-level filters that should reshape ALL cross-tabs: market, source, week.
+// (Farm stays a highlight applied in filt(); week also re-applied there for the farm list.)
+function __farmFilteredRows(){
+  let rows=__ROWS;
+  if(S.mkt)  rows=rows.filter(r=>String(r.receiving_country||'')===S.mkt);
+  if(S.src)  rows=rows.filter(r=>String(r.source_type||'')===S.src);
+  if(S.week) rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===S.week);
+  return rows;
 }
 
 function yoyBadge(pct){
@@ -492,16 +517,19 @@ let __ROWS=[];
 
     const __maxLD=cur.reduce((m,r)=>(r.loading_date&&r.loading_date>m)?r.loading_date:m,'');const __ctc=(function(){var o={};cur.forEach(function(r){var cn=(r.container_number||'').replace(/\s+/g,' ').trim();if(!cn)return;(o[cn]=o[cn]||[]).push(r.loading_date);});var t=0;for(var k in o){var ds=o[k].filter(Boolean).map(function(d){return +new Date(d+'T00:00:00');}).sort(function(a,b){return a-b;});if(!ds.length){t++;continue;}var c=1,p=ds[0];for(var i=1;i<ds.length;i++){if((ds[i]-p)/86400000>7)c++;p=ds[i];}t+=c;}return t;})();const __fmtLD=__maxLD?new Date(__maxLD+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';
     document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='<div class="live-dot"></div> Live &middot; '+__ctc+' containers &middot; '+__fmtLD;b.style.opacity='';});
-    render();
   }catch(e){
     console.warn('Farms: Supabase unavailable, using cache:',e.message);
     document.querySelectorAll('.tbadge-live').forEach(b=>{b.innerHTML='&#9888; Offline &middot; Cache';b.style.opacity='.7';});
-    render();
   }
+  render();
 }
 
 
 function render(){
+  // Rebuild farm cross-tabs from rows matching market/source/week so every chart
+  // (variety table, market/variety heatmaps, weekly) reflects the active filters. Guarded.
+  try{ if(__ROWS&&__ROWS.length){ const d=buildFarmData(__farmFilteredRows()); FARMS_ALL=d.FARMS_ALL; FV=d.FV; FM=d.FM; FWK=d.FWK; } }
+  catch(err){ console.warn('Farms: filter rebuild failed, showing unfiltered:',err); }
   const r=filt(), tot=r.reduce((s,x)=>s+x.nw,0);
   renderKPIs(r,tot); renderCards(r,tot); renderTable(r,tot);
   renderBar(r,tot); renderDonut(r,tot); renderWeekly(r);
