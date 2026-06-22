@@ -845,10 +845,12 @@ function renderBarVariety(vars){
       plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}T`}}},
       scales:{x:{grid:{display:false},ticks:{font:{family:"'IBM Plex Mono'",size:10},color:'#8a95b0'}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:10},color:'#8a95b0',callback:v=>v+'T'}}},
       animation:{onComplete:function(){
-        const chart=this;const ctx=chart.ctx;ctx.save();ctx.textAlign='center';ctx.font="600 10px 'IBM Plex Mono'";ctx.fillStyle='#142850';
-        chart.getDatasetMeta(0).data.forEach((bar,i)=>{if(curr[i]>0) ctx.fillText(curr[i]+'T',bar.x,bar.y-4);});
-        ctx.font="400 9px 'IBM Plex Mono'";ctx.fillStyle='#8a95b0';
-        chart.getDatasetMeta(1).data.forEach((bar,i)=>{if(prior[i]>0) ctx.fillText(prior[i]+'T',bar.x,bar.y+11);});
+        const chart=this;const ctx=chart.ctx;ctx.save();ctx.textAlign='center';
+        const fmtT=v=>v>=1000?(v/1000).toFixed(1)+'k':(v>=100?Math.round(v):v.toFixed(1));
+        ctx.font="600 9px 'IBM Plex Mono'";ctx.fillStyle='#142850';
+        chart.getDatasetMeta(0).data.forEach((bar,i)=>{if(curr[i]>0) ctx.fillText(fmtT(curr[i]),bar.x,bar.y-4);});
+        ctx.font="400 8px 'IBM Plex Mono'";ctx.fillStyle='#8a95b0';
+        chart.getDatasetMeta(1).data.forEach((bar,i)=>{if(prior[i]>0) ctx.fillText(fmtT(prior[i]),bar.x,bar.y+10);});
         ctx.restore();
       }}
     }
