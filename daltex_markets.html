@@ -625,6 +625,14 @@ const CLR_COL={Red:'#DC6428',White:'#8a95b0',Black:'#142850'};
 let S={market:'',variety:'',color:'',fromDate:'2026-05-12',toDate:'2026-06-01',week:'',sortCol:'nw',sortDir:-1,mainMetric:'nw',weekView:'stacked',heatMetric:'nw'};
 let __ALLROWS=[];   // raw shipment rows kept so cross-tabs can be rebuilt against active filters
 let __LIVE_OK=false;
+// Sorted list of weeks present in the data (falls back to 19-22 before data loads).
+function __weekList(){
+  if(__ALLROWS&&__ALLROWS.length){
+    const ws=[...new Set(__ALLROWS.map(r=>parseInt(r.shipping_week)).filter(w=>w>0))].sort((a,b)=>a-b);
+    if(ws.length) return ws;
+  }
+  return [19,20,21,22];
+}
 
 // Build all market cross-tabs from a set of raw rows (same logic for full season or a filtered subset).
 function buildRAW(rows){
@@ -870,7 +878,8 @@ function renderDonut(mkts,total){
 }
 
 function renderWeekly(){
-  const weeks=[19,20,21,22];
+  const weeks=__weekList();
+  if(weeks.length){const sub=document.querySelector('#bar-weekly')?.closest('.cc')?.querySelector('.cc-sub');if(sub)sub.textContent='Loading weeks '+weeks[0]+'\u2013'+weeks[weeks.length-1];}
   const all=[...new Set(RAW.by_mkt_week.map(r=>r.c))];
   const shown=S.market?[S.market]:all;
   const currentDatasets=shown.map((m,i)=>({
@@ -1145,7 +1154,7 @@ function renderClassBreakdown(){
 }
 
 function renderHeatmap(){
-  const weeks=[19,20,21,22];
+  const weeks=__weekList();
   const metric=S.heatMetric;
   const all=[...new Set(RAW.by_mkt_week.map(r=>r.c))].sort((a,b)=>{
     const at=RAW.by_mkt_week.filter(r=>r.c===a).reduce((s,r)=>s+r.nw,0);
@@ -1252,7 +1261,7 @@ function drillMarket(country){
   const palMkt={UK:'#142850',Holland:'#DC6428',Switzerland:'#1a3668',Slovenia:'#d46024',Norway:'#3d6fa8',Lativia:'#f4a55a','South Africa':'#16a34a',Russia:'#6b7280',UAE:'#5c8fc9',Spain:'#d97706'};
   const mktColor=palMkt[country]||'#142850';
 
-  const weeks=[19,20,21,22];
+  const weeks=__weekList();
   const mktWeekly=RAW.by_mkt_week.filter(r=>r.c===country);
   const priorWeekly=PRIOR_MKT_WEEKLY[country]||{};
   const weekRows=weeks.map(w=>{

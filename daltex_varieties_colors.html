@@ -611,6 +611,13 @@ let TOTAL_NW = 1285.85;
 
 let S={variety:'',color:'',market:'',farm:'',week:'',fromDate:'2026-05-12',toDate:'2026-06-01',varSortCol:'nw',varSortDir:-1,colSortCol:'nw',colSortDir:-1,varWeekView:'stacked',colWeekView:'stacked'};
 let __ROWS=[];   // raw shipment rows kept so cross-tabs can be rebuilt against active filters
+function __weekList(){
+  if(__ROWS&&__ROWS.length){
+    const ws=[...new Set(__ROWS.map(r=>parseInt(r.shipping_week)).filter(w=>w>0))].sort((a,b)=>a-b);
+    if(ws.length) return ws;
+  }
+  return [19,20,21,22];
+}
 
 // Rebuild all variety/colour cross-tabs from a set of rows (self-contained).
 function buildVarColData(rows){
@@ -933,7 +940,7 @@ function renderDonutColor(cols,total){
 }
 
 function renderWeeklyVariety(vars){
-  const weeks=[19,20,21,22];const shown=vars.map(r=>r.v);
+  const weeks=__weekList();const shown=vars.map(r=>r.v);
   const curDs=shown.map(v=>({
     label:v,data:weeks.map(w=>{const r=VAR_WEEK.find(x=>x.v===v&&x.wk===w);return r?+r.nw.toFixed(2):0;}),
     backgroundColor:VCOL[v]||'#8a95b0',borderRadius:S.varWeekView==='grouped'?3:0,
@@ -967,7 +974,7 @@ function renderWeeklyVariety(vars){
 }
 
 function renderWeeklyColor(cols){
-  const weeks=[19,20,21,22];const shown=cols.map(r=>r.c);
+  const weeks=__weekList();const shown=cols.map(r=>r.c);
   const curDs=shown.map(c=>({
     label:c,data:weeks.map(w=>{const r=COL_WEEK.find(x=>x.c===c&&x.wk===w);return r?+r.nw.toFixed(2):0;}),
     backgroundColor:CCOL[c]||'#8a95b0',borderRadius:S.colWeekView==='grouped'?3:0,
@@ -1173,7 +1180,7 @@ function drillVariety(variety){
   const palMkt={UK:'#142850',Holland:'#DC6428',Switzerland:'#1a3668',Slovenia:'#d46024',Norway:'#3d6fa8',Lativia:'#f4a55a','South Africa':'#16a34a',Russia:'#6b7280',UAE:'#5c8fc9',Spain:'#d97706'};
   const palFarm={Menia:'#142850',Hana:'#DC6428',Salma:'#1a3668','El khier':'#d46024','Akram Shawky':'#3d6fa8','Dina Farms':'#f4a55a',Elmasa:'#6b7280'};
 
-  const weeks=[19,20,21,22];
+  const weeks=__weekList();
   const weekRows=weeks.map(w=>{
     const cur=wkData.find(r=>r.wk===w)?.nw||0;
     const pri=priorWeekly[w]||0;
@@ -1308,7 +1315,7 @@ function drillColor(color){
   const varInColor=VARIETIES.filter(v=>v.color===color).sort((a,b)=>b.nw-a.nw);
   const varTotal=varInColor.reduce((s,v)=>s+v.nw,0)||1;
 
-  const weeks=[19,20,21,22];
+  const weeks=__weekList();
   const weekRows=weeks.map(w=>{
     const cur=wkData.find(r=>r.wk===w)?.nw||0;
     const pri=priorWeekly[w]||0;

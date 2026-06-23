@@ -647,6 +647,7 @@ function renderDonut(r,tot){
 }
 
 function renderWeekly(r){
+  if(WEEKS&&WEEKS.length){const sub=document.querySelector('#bar-wk')?.closest('.cc')?.querySelector('.cc-sub');if(sub)sub.innerHTML='W'+WEEKS[0]+'&#8211;'+WEEKS[WEEKS.length-1]+' stacked by farm &#183; vs Season 24/25';}
   const shown=r.map(x=>x.f).slice(0,6);
   const priorTotals=WEEKS.map(w=>Object.values(PFWK).reduce((s,fw)=>s+(fw[w]||fw[String(w)]||0),0));
   const wkDs=[...shown.map((f,i)=>{
