@@ -344,6 +344,10 @@ input,select,button{font-family:var(--font)}
     <div class="cc-header">
       <div><div class="cc-title" id="main-chart-title">Net Weight by Client (T)</div><div class="cc-sub">2025/26 vs 2024/25 prior &middot; data labels shown</div></div>
       <div class="cc-actions">
+        <button class="cc-btn on" id="mblbl-cur" onclick="setBarLbl('cur',this)">2025/26</button>
+        <button class="cc-btn" id="mblbl-prior" onclick="setBarLbl('prior',this)">2024/25</button>
+        <button class="cc-btn" id="mblbl-both" onclick="setBarLbl('both',this)">Combined</button>
+        <span style="width:8px"></span>
         <button class="cc-btn on" onclick="setMainMetric('nw',this)">Net Wt</button>
         <button class="cc-btn" onclick="setMainMetric('containers',this)">Containers</button>
         <button class="cc-btn" onclick="setMainMetric('pallets',this)">Pallets</button>
@@ -505,6 +509,8 @@ const VAR_COL={Flame:'#DC6428',Prime:'#142850','Arra 30':'#3d6fa8','Star Light':
 let S={client:'',market:'',variety:'',week:'',fromDate:'2026-05-12',toDate:'2026-06-01',sortCol:'nw',sortDir:-1,mainMetric:'nw',weekView:'stacked',dim:'client'};
 function setDim(d,btn){S.dim=d;S.client='';if(btn&&btn.parentElement)btn.parentElement.querySelectorAll('.cc-btn').forEach(b=>b.classList.toggle('on',b===btn));render();}
 let WLBL='cur';
+let BLBL='cur';
+function setBarLbl(m,btn){BLBL=m;['cur','prior','both'].forEach(k=>{const el=document.getElementById('mblbl-'+k);if(el)el.classList.toggle('on',k===m);});render();}
 function setWeeklyLbl(m,btn){WLBL=m;if(btn&&btn.parentElement)btn.parentElement.querySelectorAll('.cc-btn').forEach(b=>{if(b.id&&b.id.indexOf('wlbl-')===0)b.classList.toggle('on',b===btn);});render();}
 let __ROWS=[];   // raw shipment rows kept so cross-tabs can be rebuilt against active filters
 function __weekList(){
@@ -746,10 +752,14 @@ function renderMainBar(clients,total){
       },
       animation:{onComplete:function(){
         const chart=this;const ctx=chart.ctx;ctx.save();
-        ctx.font="500 10px 'IBM Plex Mono'";ctx.fillStyle='#142850';
-        chart.getDatasetMeta(0).data.forEach(function(bar,i){const v=vals[i];if(v>0) ctx.fillText(metric==='nw'?v+' T':String(v),bar.x+4,bar.y+4);});
-        ctx.font="400 9px 'IBM Plex Mono'";ctx.fillStyle='#8a95b0';
-        chart.getDatasetMeta(1).data.forEach(function(bar,i){const v=priorVals[i];if(v>0) ctx.fillText(v+' T',bar.x+4,bar.y+4);});
+        if(BLBL==='cur'||BLBL==='both'){
+          ctx.font="500 10px 'IBM Plex Mono'";ctx.fillStyle='#142850';
+          chart.getDatasetMeta(0).data.forEach(function(bar,i){const v=vals[i];if(v>0) ctx.fillText(metric==='nw'?v+' T':String(v),bar.x+4,bar.y+4);});
+        }
+        if(BLBL==='prior'||BLBL==='both'){
+          ctx.font="400 9px 'IBM Plex Mono'";ctx.fillStyle='#8a95b0';
+          chart.getDatasetMeta(1).data.forEach(function(bar,i){const v=priorVals[i];if(v>0) ctx.fillText(v+' T',bar.x+4,bar.y+4);});
+        }
         ctx.restore();
       }}
     }

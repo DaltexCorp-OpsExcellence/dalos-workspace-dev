@@ -352,6 +352,7 @@ input,select,button,textarea{font-family:var(--font)}
   <div class="cc">
     <div class="cc-header">
       <div><div class="cc-title">Net Weight by Farm (T)</div><div class="cc-sub">2025/26 vs Season 24/25 &#183; click bar to drill down</div></div>
+      <div class="cc-actions"><button class="cc-btn on" id="fblbl-cur" onclick="setBarLbl('cur',this)">2025/26</button><button class="cc-btn" id="fblbl-prior" onclick="setBarLbl('prior',this)">2024/25</button><button class="cc-btn" id="fblbl-both" onclick="setBarLbl('both',this)">Combined</button></div>
     </div>
     <div id="bar-leg" class="chart-legend" style="margin-bottom:6px"></div>
     <div style="position:relative;height:280px"><canvas id="bar-farm"></canvas></div>
@@ -430,6 +431,8 @@ let PFARM = {"Menia":266.6,"Hana":261.0,"Salma":236.2,"El khier":196.2,"Akram Sh
 let PFWK  = {"Menia":{"19":0,"20":168.4,"21":68.6,"22":29.6},"Hana":{"19":22.4,"20":165.0,"21":58.3,"22":15.3},"Salma":{"19":12.5,"20":128.6,"21":73.4,"22":21.7},"El khier":{"19":8.0,"20":82.1,"21":82.1,"22":24.0},"Akram Shawky":{"20":25.0,"21":26.0,"22":11.5},"Dina Farms":{"20":21.4,"21":25.4,"22":14.2}};
 let WEEKS = [19,20,21,22];
 let WLBL='cur';
+let BLBL='cur';
+function setBarLbl(m,btn){BLBL=m;['cur','prior','both'].forEach(k=>{const el=document.getElementById('fblbl-'+k);if(el)el.classList.toggle('on',k===m);});render();}
 function setWeeklyLbl(m,btn){WLBL=m;if(btn&&btn.parentElement)btn.parentElement.querySelectorAll('.cc-btn').forEach(b=>{if(b.id&&b.id.indexOf('wlbl-')===0)b.classList.toggle('on',b===btn);});render();}
 let TOTAL_NW = 1285.85;
 
@@ -617,7 +620,7 @@ function renderBar(r,tot){
       plugins:{
         legend:{display:false},
         tooltip:{mode:'index',intersect:false},
-        datalabels:{display:true,anchor:'end',align:'end',formatter:(v,ctx)=>ctx.datasetIndex===0&&v>0?v.toFixed(1)+'T':null,font:{family:"'IBM Plex Mono'",size:9,weight:'600'},color:'#142850',clip:false}
+        datalabels:{display:true,anchor:'end',align:'end',formatter:(v,ctx)=>{if(v<=0)return null;const cur=ctx.datasetIndex===0,pri=ctx.datasetIndex===1;if(cur&&(BLBL==='cur'||BLBL==='both'))return v.toFixed(1)+'T';if(pri&&(BLBL==='prior'||BLBL==='both'))return v.toFixed(0)+'T';return null;},font:{family:"'IBM Plex Mono'",size:9,weight:'600'},color:(ctx)=>ctx.datasetIndex===0?'#142850':'#8a95b0',clip:false}
       },
       scales:{
         x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:10},color:'#8a95b0'}},
