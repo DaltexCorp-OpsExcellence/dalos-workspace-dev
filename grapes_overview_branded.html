@@ -661,8 +661,17 @@ input, select, button { font-family: var(--font); }
 <!-- CHARTS ROW -->
 <div class="grid2" style="margin-top:14px">
   <div class="chart-card">
-    <div class="cc-title">Weekly net weight (tonnes)</div>
-    <div class="cc-sub" id="chart-period">Loading date · Season 2025/26 vs 2024/25</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+      <div>
+        <div class="cc-title">Weekly net weight (tonnes)</div>
+        <div class="cc-sub" id="chart-period">Loading date · Season 2025/26 vs 2024/25</div>
+      </div>
+      <div class="season-toggle" style="flex-shrink:0">
+        <button class="s-btn on" id="wlbl-cur" onclick="setWeeklyLbl('cur',this)">2025/26</button>
+        <button class="s-btn" id="wlbl-prior" onclick="setWeeklyLbl('prior',this)">2024/25</button>
+        <button class="s-btn" id="wlbl-both" onclick="setWeeklyLbl('both',this)">Combined</button>
+      </div>
+    </div>
     <div id="weekly-chart"></div>
     <div class="chart-legend">
       <div class="cl-item"><div class="cl-rect" style="background:var(--navy)"></div>2025/26</div>
@@ -1076,6 +1085,12 @@ function renderWideStats(data, s) {
 }
 
 // ── WEEKLY CHART ──
+let WLBL='cur';  // weekly-chart label mode: 'cur' | 'prior' | 'both'
+function setWeeklyLbl(m,btn){
+  WLBL=m;
+  if(btn&&btn.parentElement) btn.parentElement.querySelectorAll('.s-btn').forEach(b=>b.classList.toggle('on',b===btn));
+  renderAll();
+}
 function renderWeeklyChart(data, s) {
   const byWeek = {};
   data.forEach(d=>{byWeek[d.week]=(byWeek[d.week]||0)+d.nw;});
@@ -1108,12 +1123,20 @@ function renderWeeklyChart(data, s) {
     const py  = H - pbH;
     const col = v > 500 ? 'var(--navy)' : v > 200 ? 'var(--navy2)' : '#5a7cc2';
 
-    // prior ghost (bar only — value shown via the grey reference bar, label removed to avoid overlap)
+    // prior ghost bar (always drawn as visual reference)
     svg += `<rect x="${x}" y="${py}" width="${bW}" height="${pbH}" rx="3" fill="var(--bg2)" stroke="var(--border)" stroke-width="1"/>`;
+    // prior-season number label (shown in 'prior' and 'both' modes)
+    if (pv > 0 && (WLBL==='prior' || WLBL==='both')) {
+      const py2 = WLBL==='both' ? py-4 : py-4;
+      svg += `<text x="${x+bW/2}" y="${py2}" font-size="${WLBL==='both'?8:9}" fill="var(--text3)" text-anchor="middle" font-weight="${WLBL==='both'?'400':'600'}" font-family="'IBM Plex Mono',monospace">${pv.toFixed(WLBL==='both'?0:1)}</text>`;
+    }
 
     // current bar
     svg += `<rect x="${x}" y="${y}" width="${bW}" height="${bH}" rx="3" fill="${col}"/>`;
-    svg += `<text x="${x+bW/2}" y="${y > 14 ? y-5 : y+12}" font-size="9" fill="${y > 14 ? col : 'white'}" text-anchor="middle" font-weight="600" font-family="'IBM Plex Mono',monospace">${v.toFixed(1)}</text>`;
+    // current-season number label (shown in 'cur' and 'both' modes)
+    if (v > 0 && (WLBL==='cur' || WLBL==='both')) {
+      svg += `<text x="${x+bW/2}" y="${y > 14 ? y-5 : y+12}" font-size="9" fill="${y > 14 ? col : 'white'}" text-anchor="middle" font-weight="600" font-family="'IBM Plex Mono',monospace">${v.toFixed(1)}</text>`;
+    }
     svg += `<text x="${x+bW/2}" y="${H+14}" font-size="9" fill="var(--text3)" text-anchor="middle">Wk ${w}</text>`;
   });
 
