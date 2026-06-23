@@ -540,6 +540,7 @@ input, select, button { font-family: var(--font); }
   </div>
 
   <div style="display:flex;align-items:center;gap:8px">
+    <button onclick="openKpiDefs()" class="tbadge" style="cursor:pointer;background:rgba(255,255,255,.1);color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.18);font-family:inherit" title="What each KPI means"><i class="ti ti-info-circle" style="font-size:11px"></i> KPI Definitions</button>
     <div class="tbadge tbadge-warn"><i class="ti ti-clock" style="font-size:11px"></i> Season 2025/26</div>
     <div class="tbadge tbadge-live"><i class="ti ti-table" style="font-size:11px"></i> Excel Data</div>
   </div>
@@ -1390,6 +1391,45 @@ loadLiveData();
     if(av){ av.textContent=getInitials(); }
   });
 })();
+</script>
+<div id="kpi-modal" onclick="if(event.target===this)closeKpiDefs()" style="display:none;position:fixed;inset:0;background:rgba(14,31,61,.55);backdrop-filter:blur(2px);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:16px;max-width:680px;width:100%;max-height:85vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid #e8ecf3;position:sticky;top:0;background:#fff;border-radius:16px 16px 0 0">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#142850">KPI Definitions — Shipments</div>
+        <div style="font-size:11px;color:#8a95b0;margin-top:2px">How each metric on this dashboard is calculated</div>
+      </div>
+      <button onclick="closeKpiDefs()" style="background:#f1f4f9;border:none;width:30px;height:30px;border-radius:8px;cursor:pointer;color:#475569;font-size:16px">&times;</button>
+    </div>
+    <div style="padding:8px 22px 22px">
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+        <thead><tr style="text-align:left;color:#8a95b0;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em">
+          <th style="padding:10px 8px 8px 0;border-bottom:1px solid #e8ecf3;width:34%">KPI</th>
+          <th style="padding:10px 0 8px;border-bottom:1px solid #e8ecf3">Definition &amp; calculation</th>
+        </tr></thead>
+        <tbody id="kpi-defs-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script>
+const KPI_DEFS_SHIPMENTS=[
+  ['Total Net Weight','Sum of net weight across all shipments in the current season and active filters, shown in tonnes (T). The headline volume figure.'],
+  ['YoY vs 2024/25','Current season-to-date net weight compared with the prior season measured through the same point in the season (same calendar cut-off), as a % change. It is season-to-date vs season-to-date — not full-season vs full-season.'],
+  ['Containers','Count of distinct shipping containers, derived by clustering container numbers (shipments of the same container within a 7-day window count once).'],
+  ['Pallets','Sum of pallet quantity across shipments in scope (falls back to pallet count where quantity is not recorded).'],
+  ['Class 1 Share','Net weight classed as Daltex Class 1 divided by total classified net weight, as a %. The quality-of-grade indicator.'],
+  ['Market / Farm / Variety / Client Share','That segment\u2019s net weight as a percentage of the total net weight in the current filter scope.'],
+  ['Active Weeks / Loading Days','Count of distinct shipping weeks (or loading dates) that have at least one shipment — a measure of how much of the season is active so far.'],
+  ['Avg per Day / per Week','Total net weight divided by the number of active loading days (or weeks) — the running shipment pace.']
+];
+function openKpiDefs(){
+  const body=document.getElementById('kpi-defs-body');
+  body.innerHTML=KPI_DEFS_SHIPMENTS.map(d=>`<tr><td style="padding:10px 8px 10px 0;border-bottom:1px solid #f1f4f9;font-weight:600;color:#142850;vertical-align:top">${d[0]}</td><td style="padding:10px 0;border-bottom:1px solid #f1f4f9;color:#334155;line-height:1.5">${d[1]}</td></tr>`).join('');
+  document.getElementById('kpi-modal').style.display='flex';
+}
+function closeKpiDefs(){document.getElementById('kpi-modal').style.display='none';}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeKpiDefs();});
 </script>
 </body>
 </html>

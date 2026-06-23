@@ -420,6 +420,7 @@ input,select,button{font-family:var(--font)}
     <span style="font-size:12px;font-weight:600;color:rgba(255,255,255,.9)">Grapes QC</span>
   </div>
   <div class="topbar-right">
+    <button onclick="openKpiDefs()" class="tbadge" style="cursor:pointer;background:rgba(255,255,255,.1);color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.18);font-family:inherit" title="What each KPI means"><i class="ti ti-info-circle" style="font-size:11px"></i> KPI Definitions</button>
     <div class="tbadge tbadge-warn"><i class="ti ti-clock" style="font-size:11px"></i> Season 2025/26</div>
     <div class="tbadge tbadge-live"><div class="live-dot"></div> Loading…</div>
   </div>
@@ -1424,6 +1425,51 @@ let LDF='',LDT='';
     if(av){ av.textContent=getInitials(); }
   });
 })();
+</script>
+<div id="kpi-modal" onclick="if(event.target===this)closeKpiDefs()" style="display:none;position:fixed;inset:0;background:rgba(14,31,61,.55);backdrop-filter:blur(2px);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:16px;max-width:700px;width:100%;max-height:85vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid #e8ecf3;position:sticky;top:0;background:#fff;border-radius:16px 16px 0 0">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#142850">KPI Definitions — Quality Control</div>
+        <div style="font-size:11px;color:#8a95b0;margin-top:2px">How each metric on this dashboard is calculated</div>
+      </div>
+      <button onclick="closeKpiDefs()" style="background:#f1f4f9;border:none;width:30px;height:30px;border-radius:8px;cursor:pointer;color:#475569;font-size:16px">&times;</button>
+    </div>
+    <div style="padding:14px 22px 8px">
+      <div style="background:#fef6f0;border:1px solid #f3d8c5;border-radius:10px;padding:12px 14px;font-size:12px;color:#7a4a2a;line-height:1.5;margin-bottom:6px">
+        <strong style="color:#dc6428">Container-level basis.</strong> All defect rates are averaged at container level: samples are averaged within each container first, then those container figures are averaged together. This keeps containers with many samples from dominating the numbers.
+      </div>
+    </div>
+    <div style="padding:0 22px 22px">
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+        <thead><tr style="text-align:left;color:#8a95b0;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em">
+          <th style="padding:10px 8px 8px 0;border-bottom:1px solid #e8ecf3;width:34%">KPI</th>
+          <th style="padding:10px 0 8px;border-bottom:1px solid #e8ecf3">Definition &amp; calculation</th>
+        </tr></thead>
+        <tbody id="kpi-defs-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script>
+const KPI_DEFS_QC=[
+  ['Avg Major %','Container-level average of the major-defect total across samples in scope. Represents the average severity of major defects per container.'],
+  ['Avg Minor %','Container-level average of the minor-defect total — the average severity of minor defects per container.'],
+  ['Avg Total Defect %','Container-level average of the combined (major + minor) defect total per container.'],
+  ['Class 1 Rate','Share of inspections passing as Class 1, benchmarked against the 95% target. The headline QC pass metric.'],
+  ['Defect Reason %','For each individual reason (Cracks, Wet/Glassy, Sulphur, Blemish, Sunburn, etc.), its container-level average. Drives the breakdown bars, Pareto, and heatmaps.'],
+  ['Pareto Cumulative %','Running cumulative share of total defect contribution, ordering reasons from largest to smallest — highlights the vital few defects driving most of the problem.'],
+  ['Samples','Count of individual QC samples in scope. A measure of inspection volume, not a quality score.'],
+  ['Inspections / Reports','Count of distinct QC reports in scope — how many separate inspections the figures are based on.'],
+  ['Heatmap cell','Container-level average of the selected defect metric for that row \u00d7 column combination (e.g. Farm \u00d7 Variety).']
+];
+function openKpiDefs(){
+  const body=document.getElementById('kpi-defs-body');
+  body.innerHTML=KPI_DEFS_QC.map(d=>`<tr><td style="padding:10px 8px 10px 0;border-bottom:1px solid #f1f4f9;font-weight:600;color:#142850;vertical-align:top">${d[0]}</td><td style="padding:10px 0;border-bottom:1px solid #f1f4f9;color:#334155;line-height:1.5">${d[1]}</td></tr>`).join('');
+  document.getElementById('kpi-modal').style.display='flex';
+}
+function closeKpiDefs(){document.getElementById('kpi-modal').style.display='none';}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeKpiDefs();});
 </script>
 </body>
 </html>
