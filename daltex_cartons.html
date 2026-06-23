@@ -355,7 +355,7 @@ input,select,button,textarea{font-family:var(--font)}
   </div>
   <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px">
     <div class="cc">
-      <div class="cc-header"><div><div class="cc-title">Net Weight by Carton Type (T)</div><div class="cc-sub">2025/26 vs Season 24/25</div></div></div>
+      <div class="cc-header"><div><div class="cc-title">Net Weight by Carton Type (T)</div><div class="cc-sub">2025/26 vs Season 24/25</div></div><div class="cc-actions"><button class="cc-btn on" id="ctblbl-cur" onclick="setBarLbl('cur',this)">2025/26</button><button class="cc-btn" id="ctblbl-prior" onclick="setBarLbl('prior',this)">2024/25</button><button class="cc-btn" id="ctblbl-both" onclick="setBarLbl('both',this)">Combined</button></div></div>
       <div id="ct-bar-leg" class="chart-legend" style="margin-bottom:6px"></div>
       <div style="position:relative;height:280px"><canvas id="ct-bar"></canvas></div>
     </div>
@@ -389,7 +389,7 @@ input,select,button,textarea{font-family:var(--font)}
   </div>
   <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px">
     <div class="cc">
-      <div class="cc-header"><div><div class="cc-title">Net Weight by Punnet Type (T)</div><div class="cc-sub">2025/26 vs Season 24/25</div></div></div>
+      <div class="cc-header"><div><div class="cc-title">Net Weight by Punnet Type (T)</div><div class="cc-sub">2025/26 vs Season 24/25</div></div><div class="cc-actions"><button class="cc-btn on" id="ptblbl-cur" onclick="setBarLbl('cur',this)">2025/26</button><button class="cc-btn" id="ptblbl-prior" onclick="setBarLbl('prior',this)">2024/25</button><button class="cc-btn" id="ptblbl-both" onclick="setBarLbl('both',this)">Combined</button></div></div>
       <div id="pt-bar-leg" class="chart-legend" style="margin-bottom:6px"></div>
       <div style="position:relative;height:240px"><canvas id="pt-bar"></canvas></div>
     </div>
@@ -470,6 +470,8 @@ const CT_COL   = {'Green 5.5 KG':'#16a34a','Black 5 KG':'#142850','Green 5 KG':'
 const PT_COL   = {'PUNNET K37':'#142850','PUNNET CLAMSHELL':'#DC6428','LOOSE':'#3d6fa8','PUNNET B40':'#16a34a','PUNNET K37 No Ventilation':'#d46024','PUNNET K30':'#f4a55a'};
 
 let SF={week:'',var:'',mkt:''};
+let BLBL='cur';
+function setBarLbl(m,btn){BLBL=m;['ct','pt'].forEach(p=>{['cur','prior','both'].forEach(k=>{const el=document.getElementById(p+'blbl-'+k);if(el)el.classList.toggle('on',k===m);});});render();}
 let __ROWS=[];   // raw shipment rows kept so cross-tabs can be rebuilt against active filters
 
 // Rebuild the filterable carton/punnet cross-tabs from a set of rows (self-contained).
@@ -682,7 +684,7 @@ function renderCT(ct,tot){
     {label:'2025/26',data:cur,backgroundColor:colors,borderRadius:3,barThickness:14,order:1},
     {label:'Season 24/25',data:prior,backgroundColor:'rgba(180,190,210,0.35)',borderColor:'rgba(180,190,210,0.7)',borderWidth:1,borderRadius:3,barThickness:14,order:2}
   ]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,onClick:(e,el)=>{if(el.length)drillCT(labels[el[0].index]);},
-    plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false},datalabels:{display:true,anchor:'end',align:'end',formatter:(v,ctx)=>ctx.datasetIndex===0&&v>0?v.toFixed(1)+'T':null,font:{family:"'IBM Plex Mono'",size:9,weight:'600'},color:'#142850',clip:false}},
+    plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false},datalabels:{display:true,anchor:'end',align:'end',formatter:(v,ctx)=>{if(v<=0)return null;const cur=ctx.datasetIndex===0,pri=ctx.datasetIndex===1;if(cur&&(BLBL==='cur'||BLBL==='both'))return v.toFixed(1)+'T';if(pri&&(BLBL==='prior'||BLBL==='both'))return v.toFixed(0)+'T';return null;},font:{family:"'IBM Plex Mono'",size:9,weight:'600'},color:(ctx)=>ctx.datasetIndex===0?'#142850':'#8a95b0',clip:false}},
     scales:{x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:10},color:'#8a95b0'}},y:{grid:{display:false},ticks:{font:{family:"'Plus Jakarta Sans'",size:10,weight:'500'},color:'#0e1f3d'}}},layout:{padding:{right:55}}},plugins:[ChartDataLabels]});
   document.getElementById('ct-bar-leg').innerHTML='<div class="cl-item"><div class="cl-rect" style="background:#142850"></div>2025/26</div><div class="cl-item"><div class="cl-rect" style="background:rgba(180,190,210,0.5);border:1px solid rgba(180,190,210,.8)"></div>Season 24/25</div>';
 
@@ -723,7 +725,7 @@ function renderPT(pt,tot){
     {label:'2025/26',data:cur,backgroundColor:colors,borderRadius:3,barThickness:14,order:1},
     {label:'Season 24/25',data:prior,backgroundColor:'rgba(180,190,210,0.35)',borderColor:'rgba(180,190,210,0.7)',borderWidth:1,borderRadius:3,barThickness:14,order:2}
   ]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,onClick:(e,el)=>{if(el.length)drillPT(labels[el[0].index]);},
-    plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false},datalabels:{display:true,anchor:'end',align:'end',formatter:(v,ctx)=>ctx.datasetIndex===0&&v>0?v.toFixed(1)+'T':null,font:{family:"'IBM Plex Mono'",size:9,weight:'600'},color:'#142850',clip:false}},
+    plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false},datalabels:{display:true,anchor:'end',align:'end',formatter:(v,ctx)=>{if(v<=0)return null;const cur=ctx.datasetIndex===0,pri=ctx.datasetIndex===1;if(cur&&(BLBL==='cur'||BLBL==='both'))return v.toFixed(1)+'T';if(pri&&(BLBL==='prior'||BLBL==='both'))return v.toFixed(0)+'T';return null;},font:{family:"'IBM Plex Mono'",size:9,weight:'600'},color:(ctx)=>ctx.datasetIndex===0?'#142850':'#8a95b0',clip:false}},
     scales:{x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:10},color:'#8a95b0'}},y:{grid:{display:false},ticks:{font:{family:"'Plus Jakarta Sans'",size:10,weight:'500'},color:'#0e1f3d'}}},layout:{padding:{right:55}}},plugins:[ChartDataLabels]});
   document.getElementById('pt-bar-leg').innerHTML='<div class="cl-item"><div class="cl-rect" style="background:#142850"></div>2025/26</div><div class="cl-item"><div class="cl-rect" style="background:rgba(180,190,210,0.5);border:1px solid rgba(180,190,210,.8)"></div>Season 24/25</div>';
 
