@@ -1196,7 +1196,7 @@ function renderDim(rows,field,label){
       plugins:{
         legend:{position:'bottom',labels:{boxWidth:12,font:{size:11},padding:12}},
         datalabels:{},
-        tooltip:{mode:'index',intersect:false,callbacks:{label:function(c){return ' '+c.dataset.label+': '+c.raw.toFixed(2)+'%';}}}
+        tooltip:{mode:'index',axis:'y',intersect:false,callbacks:{title:function(items){return items&&items.length?items[0].label:'';},label:function(c){return ' '+c.dataset.label+': '+c.raw.toFixed(2)+'%';}}}
       },
       scales:{
         x:{stacked:isStacked,grid:{color:'rgba(0,0,0,.04)'},
