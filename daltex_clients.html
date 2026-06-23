@@ -313,6 +313,9 @@ input,select,button{font-family:var(--font)}
   <div class="fbar-top">
     <span class="fbar-label"><i class="ti ti-sliders-horizontal"></i> Filters</span>
     <div class="fbar-sep"></div>
+    <span style="font-size:11px;color:var(--text3);margin-right:2px">View by</span>
+    <span class="seg" style="display:inline-flex;gap:0;margin-right:4px"><button class="cc-btn on" onclick="setDim('client',this)">Client</button><button class="cc-btn" onclick="setDim('subclient',this)">Sub-Client</button></span>
+    <div class="fbar-sep"></div>
     <div class="date-grp"><span class="date-lbl">From</span><input type="date" class="finput" id="f-from" value="2026-05-12" min="2026-05-12" max="2026-06-01"></div>
     <div class="date-grp"><span class="date-lbl">To</span><input type="date" class="finput" id="f-to" value="2026-06-01" min="2026-05-12" max="2026-06-01"></div>
     <div class="fbar-sep"></div>
@@ -495,7 +498,8 @@ const PAL=['#142850','#DC6428','#1a3668','#d46024','#3d6fa8','#f4a55a','#16a34a'
 const CL_COL={'Daltex UK':'#142850','Capespan':'#DC6428','ISEPPI Frutta SA':'#1a3668','Bama Gruppen AS':'#d46024','Dankers':'#3d6fa8','Pantera EUR':'#f4a55a','RGS':'#16a34a','Majed Alfuttaim':'#6b7280','Asia Fresh':'#5c8fc9','Karsten Marketing':'#d97706','Parallel':'#9ca3af','SEED':'#4b5563'};
 const VAR_COL={Flame:'#DC6428',Prime:'#142850','Arra 30':'#3d6fa8','Star Light':'#16a34a','Early Flame':'#e8872e','Early Pearl':'#6b7280'};
 
-let S={client:'',market:'',variety:'',week:'',fromDate:'2026-05-12',toDate:'2026-06-01',sortCol:'nw',sortDir:-1,mainMetric:'nw',weekView:'stacked'};
+let S={client:'',market:'',variety:'',week:'',fromDate:'2026-05-12',toDate:'2026-06-01',sortCol:'nw',sortDir:-1,mainMetric:'nw',weekView:'stacked',dim:'client'};
+function setDim(d,btn){S.dim=d;S.client='';if(btn&&btn.parentElement)btn.parentElement.querySelectorAll('.cc-btn').forEach(b=>b.classList.toggle('on',b===btn));render();}
 let __ROWS=[];   // raw shipment rows kept so cross-tabs can be rebuilt against active filters
 function __weekList(){
   if(__ROWS&&__ROWS.length){
@@ -511,10 +515,12 @@ function buildClientData(rows){
   const r2=x=>Math.round(x*100)/100;
   const norm=s=>s==null?'':String(s).trim();
   const mode=o=>{let b=null,c=-1;for(const k in o){if(o[k]>c){c=o[k];b=k;}}return b;};
+  // Primary grouping field: client (default) or subclient, per the Client/Sub-Client toggle.
+  const GF=r=>norm(S.dim==='subclient'?r.subclient:r.client);
   const sum2N=(rows,fa,fb)=>{const m={};rows.forEach(r=>{const a=fa(r),b=fb(r);if(!a&&a!==0||b===''||b==null)return;const key=a+'\u0001'+b;if(!m[key])m[key]={a,b,nw:0};m[key].nw+=num(r.net_weight);});return Object.values(m);};
   const sumByN=(rows,kf)=>{const m={};rows.forEach(r=>{const k=kf(r);if(k===null||k===undefined||k==='')return;m[k]=(m[k]||0)+num(r.net_weight);});return m;};
   const cm={};
-  rows.forEach(r=>{const cl=norm(r.client);if(!cl)return;
+  rows.forEach(r=>{const cl=GF(r);if(!cl)return;
     if(!cm[cl])cm[cl]={cl,nw:0,pallets:0,ctr:{},sc:new Set(),mkt:{},port:{},agent:{},line:{}};
     const o=cm[cl];o.nw+=num(r.net_weight);o.pallets+=num(r.pallet_qty)||num(r.pallet_count);
     if(r.container_number)__ctAdd(o,r);
@@ -524,13 +530,13 @@ function buildClientData(rows){
   });
   const CLIENTS=Object.values(cm).map(o=>({cl:o.cl,nw:r2(o.nw),pallets:r2(o.pallets),containers:__ctClusters(o.ctr),shipments:o.sc.size,mkt:mode(o.mkt)||'',port:mode(o.port)||'',agent:mode(o.agent)||'',line:mode(o.line)||''})).sort((a,b)=>b.nw-a.nw);
   const ldM={};
-  rows.forEach(r=>{const cl=norm(r.client),ld=r.loading_date;if(!cl||!ld)return;const k=cl+'\u0001'+ld;if(!ldM[k])ldM[k]={cl,ld,nw:0,ctr:{}};ldM[k].nw+=num(r.net_weight);if(r.container_number)__ctAdd(ldM[k],r);});
+  rows.forEach(r=>{const cl=GF(r),ld=r.loading_date;if(!cl||!ld)return;const k=cl+'\u0001'+ld;if(!ldM[k])ldM[k]={cl,ld,nw:0,ctr:{}};ldM[k].nw+=num(r.net_weight);if(r.container_number)__ctAdd(ldM[k],r);});
   return {
     CLIENTS,
-    CL_VARIETY: sum2N(rows,r=>norm(r.client),r=>norm(r.variety)).map(o=>({cl:o.a,v:o.b,nw:r2(o.nw)})),
-    CL_FARM   : sum2N(rows,r=>norm(r.client),r=>norm(r.farm_source)).map(o=>({cl:o.a,f:o.b,nw:r2(o.nw)})),
-    CL_WEEK   : sum2N(rows,r=>norm(r.client),r=>parseInt(r.shipping_week)||0).map(o=>({cl:o.a,wk:o.b,nw:r2(o.nw)})),
-    CL_CLS    : sum2N(rows,r=>norm(r.client),r=>parseInt(r.daltex_class)).filter(o=>!isNaN(o.b)).map(o=>({cl:o.a,cls:o.b,nw:r2(o.nw)})),
+    CL_VARIETY: sum2N(rows,GF,r=>norm(r.variety)).map(o=>({cl:o.a,v:o.b,nw:r2(o.nw)})),
+    CL_FARM   : sum2N(rows,GF,r=>norm(r.farm_source)).map(o=>({cl:o.a,f:o.b,nw:r2(o.nw)})),
+    CL_WEEK   : sum2N(rows,GF,r=>parseInt(r.shipping_week)||0).map(o=>({cl:o.a,wk:o.b,nw:r2(o.nw)})),
+    CL_CLS    : sum2N(rows,GF,r=>parseInt(r.daltex_class)).filter(o=>!isNaN(o.b)).map(o=>({cl:o.a,cls:o.b,nw:r2(o.nw)})),
     CL_LD     : Object.values(ldM).map(o=>({cl:o.cl,ld:o.ld,nw:r2(o.nw),ctr:__ctClusters(o.ctr)})).sort((a,b)=>a.ld.localeCompare(b.ld)),
     CL_AGENTS : Object.entries(sumByN(rows,r=>norm(r.agent))).map(([agent,nw])=>({agent,nw:r2(nw)})).sort((a,b)=>b.nw-a.nw),
     CL_LINES  : Object.entries(sumByN(rows,r=>norm(r.shipping_line))).map(([line,nw])=>({line,nw:r2(nw)})).sort((a,b)=>b.nw-a.nw)
@@ -639,6 +645,12 @@ function render(){
   catch(err){ console.warn('Clients: filter rebuild failed, showing unfiltered:',err); }
   const clients=filteredClients();
   const total=clients.reduce((s,r)=>s+r.nw,0);
+  // Reflect the active dimension in titles, and hide the redundant Daltex-UK subclient panel in sub-client mode.
+  const __isSub=S.dim==='subclient';
+  const __word=__isSub?'Sub-Client':'Client';
+  const __setTxt=(sel,txt)=>{const el=document.querySelector(sel);if(el)el.textContent=txt;};
+  const __pt=document.querySelector('.page-title');if(__pt)__pt.innerHTML=(__isSub?'Sub-Clients':'Clients')+' <span>&mdash; Account Performance</span>';
+  const __sub=document.getElementById('subclient-section');if(__sub)__sub.style.display=__isSub?'none':'';
   renderKPIs(clients,total);
   renderClientCards(clients,total);
   renderSubclients();
