@@ -1108,9 +1108,8 @@ function renderWeeklyChart(data, s) {
     const py  = H - pbH;
     const col = v > 500 ? 'var(--navy)' : v > 200 ? 'var(--navy2)' : '#5a7cc2';
 
-    // prior ghost
+    // prior ghost (bar only — value shown via the grey reference bar, label removed to avoid overlap)
     svg += `<rect x="${x}" y="${py}" width="${bW}" height="${pbH}" rx="3" fill="var(--bg2)" stroke="var(--border)" stroke-width="1"/>`;
-    if (pv > 0) svg += `<text x="${x+bW/2}" y="${py-4}" font-size="8" fill="var(--text3)" text-anchor="middle" font-family="'IBM Plex Mono',monospace">${pv.toFixed(0)}</text>`;
 
     // current bar
     svg += `<rect x="${x}" y="${y}" width="${bW}" height="${bH}" rx="3" fill="${col}"/>`;
