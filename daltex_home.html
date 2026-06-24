@@ -990,7 +990,7 @@ async function requestAccess(prod, prodName, userId, btn){
 
     if(res.ok||res.status===201||res.status===204||res.status===200){
       // Call Edge Function to send email notification (fire and forget)
-      fetch(SB_URL+'/functions/v1/Send-access-request',{
+      fetch(SB_URL+'/functions/v1/send-access-request',{
         method:'POST',
         headers:{apikey:SB_ANON,'Content-Type':'application/json'},
         body:JSON.stringify({userName:userName,userEmail:userEmail,product:prod,prodName:prodName})
@@ -1006,7 +1006,7 @@ async function requestAccess(prod, prodName, userId, btn){
       var errBody=await res.json().catch(function(){return {};});
       // 409 = already requested — treat as success, just resend email
       if(res.status===409||(errBody&&errBody.code==='23505')){
-        fetch(SB_URL+'/functions/v1/Send-access-request',{
+        fetch(SB_URL+'/functions/v1/send-access-request',{
           method:'POST',
           headers:{apikey:SB_ANON,'Content-Type':'application/json'},
           body:JSON.stringify({userName:userName,userEmail:userEmail,product:prod,prodName:prodName})
@@ -1434,6 +1434,24 @@ async function smGrant(){
       if(successTitle) successTitle.textContent=isEdit?'Access updated':'Access granted';
       smShowP('smp-done');
       loadPanelUsers();
+      // Email the USER that their access was granted/updated (fire and forget)
+      (async function(){
+        try{
+          var uEmail=(smUser&&smUser.email)||'';
+          if(!uEmail&&smUser&&smUser.id){
+            var ur=await fetch(SB_URL+'/rest/v1/users?id=eq.'+smUser.id+'&select=email,full_name&limit=1',{headers:sbH()});
+            var ud=await ur.json();
+            if(Array.isArray(ud)&&ud.length){uEmail=ud[0].email||'';}
+          }
+          if(uEmail){
+            fetch(SB_URL+'/functions/v1/send-access-request',{
+              method:'POST',
+              headers:{apikey:SB_ANON,'Content-Type':'application/json'},
+              body:JSON.stringify({type:(isEdit&&!window._pendingReqId)?'update':'approval',userName:(smUser&&smUser.name)||'',userEmail:uEmail,role:smRole||'viewer',prodName:(activeProds&&activeProds.length?activeProds.join(', '):'DalOS Analytics')})
+            }).then(function(r){r.json().then(function(d){console.log('Approval email:',r.status,d);});}).catch(function(e){console.warn('Approval email failed:',e.message);});
+          }
+        }catch(e){console.warn('Approval email skipped:',e.message);}
+      })();
       // If this was an approval of a pending request, mark it as approved
       if(window._pendingReqId){
         fetch(SB_URL+'/rest/v1/dal_access_requests?id=eq.'+window._pendingReqId,{
