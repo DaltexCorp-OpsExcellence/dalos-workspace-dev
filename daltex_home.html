@@ -37,7 +37,7 @@
     if(!window.supabase){return;}
     try{
       var sb=window.supabase.createClient(SB_URL,SB_ANON);
-      sb.auth.getSession().then(function(r){var sx=r&&r.data&&r.data.session;if(!sx){bounce();return;}window.__DALOS_TOKEN=sx.access_token;});
+      sb.auth.getSession().then(function(r){var sx=r&&r.data&&r.data.session;if(!sx){bounce();return;}window.__DALOS_TOKEN=sx.access_token;sb.rpc('has_analytics_access').then(function(a){if(!(a&&!a.error&&a.data===true)){bounce();}});});
       sb.auth.onAuthStateChange(function(ev,s2){if(s2&&s2.access_token){window.__DALOS_TOKEN=s2.access_token;}if(ev==='SIGNED_OUT'){bounce();}});
     }catch(e){}
   }
