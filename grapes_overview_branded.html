@@ -540,7 +540,6 @@ input, select, button { font-family: var(--font); }
   </div>
 
   <div style="display:flex;align-items:center;gap:8px">
-    <button onclick="openKpiDefs()" class="tbadge" style="cursor:pointer;background:rgba(255,255,255,.1);color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.18);font-family:inherit" title="What each KPI means"><i class="ti ti-info-circle" style="font-size:11px"></i> KPI Definitions</button>
     <div class="tbadge tbadge-warn"><i class="ti ti-clock" style="font-size:11px"></i> Season 2025/26</div>
     <div class="tbadge tbadge-live"><i class="ti ti-table" style="font-size:11px"></i> Excel Data</div>
   </div>
@@ -567,6 +566,7 @@ input, select, button { font-family: var(--font); }
   <div>
     <div class="page-title">Grapes Shipments <span>— Overview</span></div>
     <div class="page-subtitle" id="page-sub">Loading season data…</div>
+    <button onclick="openKpiDefs()" style="margin-top:8px;display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#fff;background:var(--navy);border:none;padding:5px 12px;border-radius:7px;cursor:pointer;font-family:inherit" title="What each KPI means"><i class="ti ti-info-circle" style="font-size:12px"></i> KPI Definitions</button>
   </div>
   <div class="season-toggle">
     <button class="s-btn on">2025/26</button>
