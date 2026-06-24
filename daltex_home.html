@@ -348,7 +348,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
   <div class="topbar-right">
     <span class="staging-badge"><span class="staging-dot"></span>Staging</span>
-    <div class="topbar-date" id="topbar-date"></div>
     <div class="topbar-badge"><i class="ti ti-circle-dot" style="font-size:10px"></i> Season 2025/26</div>
     <button id="manage-access-btn" class="manage-access-btn" onclick="openPanel('all')" style="display:none"><i class="ti ti-shield-lock" style="font-size:13px"></i>Manage access</button>
     <div style="display:flex;align-items:center;gap:8px">
@@ -1477,9 +1476,11 @@ smUpdateBar();
 <script>
 // Live date/time in topbar
 function updateDate(){
+  const el = document.getElementById('topbar-date');
+  if(!el) return;
   const now = new Date();
   const opts = {weekday:'short',year:'numeric',month:'short',day:'numeric'};
-  document.getElementById('topbar-date').textContent = now.toLocaleDateString('en-GB', opts);
+  el.textContent = now.toLocaleDateString('en-GB', opts);
 }
 updateDate();
 </script>
