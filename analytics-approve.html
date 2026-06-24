@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DalOS Analytics · Access approval</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#edefea;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#aebcb2}
+  .wrap{max-width:480px;margin:8vh auto;padding:0 16px}
+  .card{background:#0b1510;border:1px solid #243a2e;border-radius:16px;overflow:hidden;box-shadow:0 18px 60px rgba(11,21,16,.28)}
+  .bar{height:4px;background:linear-gradient(90deg,#caa24f,#e9cf8c)}
+  .body{padding:34px 34px 30px}
+  .eyebrow{font-size:11px;letter-spacing:2px;color:#c79a3f;margin-bottom:18px;text-transform:uppercase}
+  h1{color:#f4f1e8;font-size:20px;margin:0 0 10px;font-weight:600}
+  p{font-size:14px;line-height:1.7;margin:0 0 6px}
+  .who{margin:18px 0 22px;padding:14px 16px;background:#0f1d15;border:1px solid #243a2e;border-radius:10px}
+  .who .nm{color:#f4f1e8;font-size:15px;font-weight:600}
+  .who .em{color:#8fa093;font-size:12px;font-family:ui-monospace,Menlo,Consolas,monospace;margin-top:2px;word-break:break-all}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;width:100%;border:none;border-radius:10px;padding:13px 18px;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none}
+  .btn-go{background:linear-gradient(135deg,#d9b86a,#f0d68a);color:#3a2c0a;box-shadow:0 6px 22px rgba(217,184,106,.30)}
+  .btn-go:disabled{opacity:.6;cursor:default;box-shadow:none}
+  .btn-ghost{background:transparent;color:#9fb0a4;border:1px solid #2c4435;margin-top:10px}
+  .ok{color:#a9e8c4}
+  .err{color:#e8b0a0}
+  .spin{width:15px;height:15px;border:2px solid rgba(58,44,10,.35);border-top-color:#3a2c0a;border-radius:50%;display:inline-block;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .muted{color:#74857a;font-size:12px;margin-top:18px}
+  .hide{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="bar"></div>
+    <div class="body">
+      <div class="eyebrow">DalOS Analytics</div>
+      <div id="content">
+        <h1>Checking this link…</h1>
+        <p>One moment.</p>
+      </div>
+    </div>
+  </div>
+  <div class="muted" style="text-align:center">DaltexCorp · Operations Excellence</div>
+</div>
+
+<script>
+(function(){
+  var FN = 'https://sfyjvgjwvtwkrnqrvqyc.supabase.co/functions/v1/analytics-access-approve';
+  var isDev = location.pathname.indexOf('-dev/') !== -1;
+  var ADMIN_URL = isDev
+    ? 'https://daltexcorp-opsexcellence.github.io/dalos-vision-dev/#admin'
+    : 'https://daltexcorp-opsexcellence.github.io/dalos-vision/#admin';
+  var qs = new URLSearchParams(location.search);
+  var rid = qs.get('rid'), t = qs.get('t');
+  var C = document.getElementById('content');
+
+  function esc(s){ return (s||'').replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function adminBtn(label){ return '<a class="btn btn-ghost" href="'+ADMIN_URL+'">'+(label||'Open admin panel')+'</a>'; }
+
+  function showInvalid(){
+    C.innerHTML = '<h1 class="err">Link not valid</h1>'
+      + '<p>This approval link is invalid or has expired. You can review the request directly in the admin panel.</p>'
+      + adminBtn('Open admin panel');
+  }
+  function showAlready(status, name){
+    var s = status === 'approved' ? 'approved' : (status === 'denied' ? 'denied' : status);
+    C.innerHTML = '<h1>Already handled</h1>'
+      + '<p>This request from <strong style="color:#f4f1e8">'+esc(name)+'</strong> was already <strong style="color:#f4f1e8">'+esc(s)+'</strong>. No further action is needed.</p>'
+      + adminBtn('Open admin panel');
+  }
+  function showDone(name){
+    C.innerHTML = '<h1 class="ok">Access approved</h1>'
+      + '<p><strong style="color:#f4f1e8">'+esc(name)+'</strong> can now open DalOS Analytics. They have been notified by email.</p>'
+      + adminBtn('Open admin panel');
+  }
+  function showError(){
+    C.innerHTML = '<h1 class="err">Something went wrong</h1>'
+      + '<p>The request could not be completed. Please try again, or use the admin panel.</p>'
+      + adminBtn('Open admin panel');
+  }
+  function showReady(name, email){
+    C.innerHTML = '<h1>Approve analytics access?</h1>'
+      + '<p>The following person has requested access to <strong style="color:#f4f1e8">DalOS Analytics</strong>:</p>'
+      + '<div class="who"><div class="nm">'+esc(name)+'</div><div class="em">'+esc(email)+'</div></div>'
+      + '<button class="btn btn-go" id="goBtn">Approve access</button>'
+      + adminBtn('Open admin panel');
+    document.getElementById('goBtn').addEventListener('click', doApprove);
+  }
+  function doApprove(){
+    var b = document.getElementById('goBtn');
+    b.disabled = true; b.innerHTML = '<span class="spin"></span> Approving…';
+    fetch(FN, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ rid:rid, t:t }) })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (!d || !d.ok) { showError(); return; }
+        if (d.already) { showAlready(d.status, d.name); return; }
+        showDone(d.name);
+      })
+      .catch(showError);
+  }
+
+  if (!rid || !t) { showInvalid(); return; }
+  fetch(FN + '?rid=' + encodeURIComponent(rid) + '&t=' + encodeURIComponent(t))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d || !d.ok) { showInvalid(); return; }
+      if (d.status !== 'pending') { showAlready(d.status, d.name); return; }
+      showReady(d.name, d.email);
+    })
+    .catch(showError);
+})();
+</script>
+</body>
+</html>
