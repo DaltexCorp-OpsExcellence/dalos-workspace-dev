@@ -528,10 +528,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       var userJwt=(sess&&sess.access_token)||SB_ANON;
       var authH={apikey:SB_ANON,Authorization:'Bearer '+userJwt,'Content-Type':'application/json'};
 
-      // Save request — use 'grapes-'+db as product to distinguish from product-level requests
+      // Save request — use 'grapes-'+db as product. Delete any prior row for this
+      // user+product first so a re-request after a decline becomes a fresh PENDING row.
+      await fetch(SB_URL+'/rest/v1/dal_access_requests?user_id=eq.'+userId+'&product=eq.'+encodeURIComponent('grapes-'+db),{
+        method:'DELETE',headers:authH
+      }).catch(function(){});
       var res=await fetch(SB_URL+'/rest/v1/dal_access_requests',{
         method:'POST',
-        headers:Object.assign({},authH,{'Prefer':'resolution=merge-duplicates,return=minimal'}),
+        headers:Object.assign({},authH,{'Prefer':'return=minimal'}),
         body:JSON.stringify({user_id:userId,full_name:userName,email:userEmail,product:'grapes-'+db,status:'pending'})
       });
 

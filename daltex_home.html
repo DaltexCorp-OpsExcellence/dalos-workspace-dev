@@ -986,10 +986,15 @@ async function requestAccess(prod, prodName, userId, btn){
     var userEmail=(sess&&sess.user&&sess.user.email)||'';
     var userName=(sess&&sess.user&&sess.user.user_metadata&&sess.user.user_metadata.full_name)||userEmail;
 
-    // Save request to Supabase
+    // Save request to Supabase. Delete any prior row for this user+product first so a
+    // re-request after a decline becomes a fresh PENDING row (upsert/merge left the old
+    // 'declined' status in place, so the admin panel never showed it again).
+    await fetch(SB_URL+'/rest/v1/dal_access_requests?user_id=eq.'+userId+'&product=eq.'+encodeURIComponent(prod),{
+      method:'DELETE',headers:sbH()
+    }).catch(function(){});
     var res=await fetch(SB_URL+'/rest/v1/dal_access_requests',{
       method:'POST',
-      headers:Object.assign({},sbH(),{'Prefer':'resolution=merge-duplicates,return=minimal'}),
+      headers:Object.assign({},sbH(),{'Prefer':'return=minimal'}),
       body:JSON.stringify({
         user_id:userId,
         full_name:userName,
