@@ -965,6 +965,21 @@ async function revokeUser(permId,name,userId){
       if(userId){
         fetch(SB_URL+'/rest/v1/dal_access_requests?user_id=eq.'+userId,{method:'DELETE',headers:sbH()})
           .catch(function(){});
+        // Email the user that their access was removed (look up their email first)
+        (async function(){
+          try{
+            var ur=await fetch(SB_URL+'/rest/v1/users?id=eq.'+userId+'&select=email,full_name&limit=1',{headers:sbH()});
+            var ud=await ur.json();
+            var uEmail=(Array.isArray(ud)&&ud.length&&ud[0].email)||'';
+            if(uEmail){
+              fetch(SB_URL+'/functions/v1/Send-access-request',{
+                method:'POST',
+                headers:{apikey:SB_ANON,'Content-Type':'application/json'},
+                body:JSON.stringify({type:'revoke',userName:name,userEmail:uEmail,prodName:'DalOS Analytics'})
+              }).catch(function(){});
+            }
+          }catch(e){console.warn('Revoke email skipped:',e.message);}
+        })();
       }
       setTimeout(loadPanelUsers,400);
     }
@@ -1092,7 +1107,7 @@ async function loadPendingRequests(){
           +'</div>'
           +'<div style="display:flex;gap:6px;margin-top:7px">'
             +'<button class="ap-approve-btn" onclick="approveRequest(\''+r.id+'\',\''+r.user_id+'\',\''+escH(name)+'\',\''+prod+'\')"><i class="ti ti-check" style="font-size:11px"></i>Approve</button>'
-            +'<button class="ap-decline-btn" onclick="declineRequest(\''+r.id+'\',\''+escH(name)+'\')"><i class="ti ti-x" style="font-size:11px"></i>Decline</button>'
+            +'<button class="ap-decline-btn" onclick="declineRequest(\''+r.id+'\',\''+escH(name)+'\',\''+escH(r.email||'')+'\',\''+escH(r.product||'')+'\')"><i class="ti ti-x" style="font-size:11px"></i>Decline</button>'
           +'</div>'
         +'</div>'
         +'</div>';
@@ -1150,7 +1165,7 @@ async function approveRequest(reqId, userId, name, prod){
   }
 }
 
-async function declineRequest(reqId, name){
+async function declineRequest(reqId, name, email, product){
   if(!confirm('Decline access request from '+name+'?')) return;
   // Remove row immediately from DOM for instant feedback
   var row=document.getElementById('preq-'+reqId);
@@ -1165,6 +1180,14 @@ async function declineRequest(reqId, name){
       headers:Object.assign({},sbH(),{'Prefer':'return=minimal'}),
       body:JSON.stringify({status:'declined',reviewed_at:new Date().toISOString()})
     });
+    // Email the user that their request was declined (fire and forget)
+    if(email){
+      fetch(SB_URL+'/functions/v1/Send-access-request',{
+        method:'POST',
+        headers:{apikey:SB_ANON,'Content-Type':'application/json'},
+        body:JSON.stringify({type:'decline',userName:name,userEmail:email,prodName:(product||'DalOS Analytics')})
+      }).catch(function(){});
+    }
   }catch(e){console.warn('Decline update failed:',e.message);}
 }
 
