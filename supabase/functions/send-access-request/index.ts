@@ -2,9 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const ADMIN_EMAIL = "ramy.ahmed@daltexcorp.com";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
-// IMPORTANT: FROM must be a domain verified in Resend. Until daltexcorp.com is
-// verified, Resend's shared sender works for testing: onboarding@resend.dev
-const FROM = Deno.env.get("RESEND_FROM") || "DALos Analytics <onboarding@resend.dev>";
+// FROM uses the verified daltexcorp.com domain so Resend delivers to any recipient
+// (admin + users), not just the account owner. Can be overridden via RESEND_FROM secret.
+const FROM = Deno.env.get("RESEND_FROM") || "DALos Analytics <noreply@daltexcorp.com>";
 const APP_URL = "https://daltexcorp-opsexcellence.github.io/dalos-workspace-dev/daltex_home.html";
 const REVIEW_URL = APP_URL + "?panel=access";
 
