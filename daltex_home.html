@@ -1219,6 +1219,7 @@ function editUser(permId, name, role, config, expiresAt, email){
   // update modal title to Edit mode
   document.querySelector('.sm-title').innerHTML='<i class="ti ti-edit" style="font-size:13px;margin-right:5px"></i>Edit access — '+escH(name);
   document.getElementById('sm-nx').textContent='Next';
+  document.getElementById('sm-nx').disabled=false;
   // Skip step 1 (user already chosen) — go straight to step 2
   smStep=2;
   smShowP('smp2');
@@ -1491,6 +1492,7 @@ async function smGrant(){
       var successTitle=document.querySelector('#smp-done [style*="font-size:15px"]');
       if(successTitle) successTitle.textContent=isEdit?'Access updated':'Access granted';
       smShowP('smp-done');
+      nx.disabled=false; nx.textContent='Next';
       loadPanelUsers();
       // Email the USER that their access was granted/updated (fire and forget)
       (async function(){
@@ -1536,6 +1538,7 @@ async function smGrant(){
 function smReset(){
   _editPermId=null;
   window._pendingReqId=null;
+  var _nx=document.getElementById('sm-nx');if(_nx){_nx.disabled=false;_nx.textContent='Next';}
   smStep=1;smUser=null;smRole=null;smAllTabs=true;
   smTabs.forEach(t=>{smTabSt[t]=true;smSyncTab(t);});
   smDbs.forEach(d=>{smDbSt[d]=true;});
