@@ -464,11 +464,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         if(c){c.classList.add('locked');}
       });
 
-      // Fetch existing requests to know if already requested
-      var reqRes=await fetch(SB_URL+'/rest/v1/dal_access_requests?user_id=eq.'+userId+'&select=product,status',{headers:authH});
+      // Fetch existing PENDING requests only — a declined/cleared request must not
+      // keep the button stuck on "Already requested".
+      var reqRes=await fetch(SB_URL+'/rest/v1/dal_access_requests?user_id=eq.'+userId+'&status=eq.pending&select=product,status',{headers:authH});
       var existingReqs=await reqRes.json().catch(function(){return [];});
+      // Normalise stored product values so both 'shipments' and 'grapes-shipments' match the db key.
       var alreadyRequested=new Set(
-        Array.isArray(existingReqs)?existingReqs.map(function(r){return r.product;}):[]
+        (Array.isArray(existingReqs)?existingReqs:[]).map(function(r){
+          return String(r.product||'').replace(/^grapes-/,'');
+        })
       );
 
       // Unlock permitted dashboards, add request button to locked ones
