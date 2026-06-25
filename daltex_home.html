@@ -938,7 +938,7 @@ async function loadPanelUsers(){
         +'</div>'
         +'<div class="abtns">'
           +'<button class="abtn-sm" title="Edit access" onclick="editUserById(\''+p.id+'\')" ><i class="ti ti-edit"></i></button>'
-          +'<button class="abtn-sm del" title="Revoke Analytics access" onclick="revokeUser(\''+p.id+'\',\''+escH(name)+'\',\''+(p.user_id||'')+'\')" ><i class="ti ti-trash"></i></button>'
+          +'<button class="abtn-sm del" title="Revoke Analytics access" onclick="revokeUser(\''+p.id+'\',\''+escH(name)+'\',\''+(p.user_id||'')+'\',\''+escH(u.email||'')+'\')" ><i class="ti ti-trash"></i></button>'
         +'</div>'
         +'</div>';
     }).join('');
@@ -951,7 +951,7 @@ async function loadPanelUsers(){
 }
 
 // ── PANEL: revoke — deletes from dal_analytics_permissions only ──
-async function revokeUser(permId,name,userId){
+async function revokeUser(permId,name,userId,email){
   if(!confirm('Revoke DALos Analytics access for '+name+'?\nThis will NOT affect their DALos Workspace account.')) return;
   try{
     var row=document.getElementById('arow-'+permId);
@@ -965,21 +965,14 @@ async function revokeUser(permId,name,userId){
       if(userId){
         fetch(SB_URL+'/rest/v1/dal_access_requests?user_id=eq.'+userId,{method:'DELETE',headers:sbH()})
           .catch(function(){});
-        // Email the user that their access was removed (look up their email first)
-        (async function(){
-          try{
-            var ur=await fetch(SB_URL+'/rest/v1/users?id=eq.'+userId+'&select=email,full_name&limit=1',{headers:sbH()});
-            var ud=await ur.json();
-            var uEmail=(Array.isArray(ud)&&ud.length&&ud[0].email)||'';
-            if(uEmail){
-              fetch(SB_URL+'/functions/v1/Send-access-request',{
-                method:'POST',
-                headers:{apikey:SB_ANON,'Content-Type':'application/json'},
-                body:JSON.stringify({type:'revoke',userName:name,userEmail:uEmail,prodName:'DalOS Analytics'})
-              }).catch(function(){});
-            }
-          }catch(e){console.warn('Revoke email skipped:',e.message);}
-        })();
+      }
+      // Email the user that their access was removed (email comes straight from panel data)
+      if(email){
+        fetch(SB_URL+'/functions/v1/Send-access-request',{
+          method:'POST',
+          headers:{apikey:SB_ANON,'Content-Type':'application/json'},
+          body:JSON.stringify({type:'revoke',userName:name,userEmail:email,prodName:'DalOS Analytics'})
+        }).catch(function(){});
       }
       setTimeout(loadPanelUsers,400);
     }
