@@ -147,6 +147,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .pc-dashboards{display:flex;gap:6px;flex-wrap:wrap;flex:1}
 .pc-dash-chip{padding:3px 9px;border-radius:6px;font-size:10px;font-weight:500;background:var(--bg);color:var(--text2);border:1px solid var(--border)}
 .pc-dash-chip.live{background:#f0fdf4;color:#16a34a;border-color:#bbf7d0}
+.pc-dash-chip.has-access{background:#dcfce7;color:#15803d;border-color:#86efac;font-weight:600}
 .pc-arrow{width:28px;height:28px;border-radius:6px;background:var(--navy);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
 .product-card:hover .pc-arrow{background:var(--orange)}
 .pc-arrow i{font-size:13px;color:#fff}
@@ -400,11 +401,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
       <div class="pc-divider"></div>
       <div class="pc-footer">
-        <div class="pc-dashboards">
-          <span class="pc-dash-chip live">Shipments</span>
-          <span class="pc-dash-chip">QC</span>
-          <span class="pc-dash-chip">Harvest</span>
-          <span class="pc-dash-chip">Budgeting</span>
+        <div class="pc-dashboards" id="grapes-dash-chips">
+          <span class="pc-dash-chip" data-db="shipments">Shipments</span>
+          <span class="pc-dash-chip" data-db="qc">QC</span>
+          <span class="pc-dash-chip" data-db="harvest">Harvest</span>
+          <span class="pc-dash-chip" data-db="budget">Budgeting</span>
         </div>
         <button id="grapes-share-btn" class="pc-share-btn" onclick="event.stopPropagation();openPanel('grapes')" style="display:none"><i class="ti ti-share" style="font-size:11px"></i>Share</button>
         <div class="pc-arrow"><i class="ti ti-arrow-right"></i></div>
@@ -1685,6 +1686,17 @@ updateDate();
     checkAnalyticsAccess();
   });
 
+  // Color the Grapes product-card dashboard chips green based on which dashboards
+  // the user can access. Pass true for admin (all green), or an array of allowed dbs.
+  function colorGrapesChips(allowed){
+    var chips=document.querySelectorAll('#grapes-dash-chips .pc-dash-chip');
+    chips.forEach(function(c){
+      var db=c.dataset.db;
+      var has=(allowed===true)||(Array.isArray(allowed)&&allowed.indexOf(db)>-1);
+      if(has){c.classList.add('has-access');}else{c.classList.remove('has-access');}
+    });
+  }
+
   async function checkAnalyticsAccess(){
     // Hide all product cards immediately — show only what's permitted
     var allCards=document.querySelectorAll('.product-card');
@@ -1732,6 +1744,7 @@ updateDate();
       if(isAdmin){
         // Admin — show everything + admin buttons
         allCards.forEach(function(c){c.style.display='';});
+        colorGrapesChips(true);
         var mab=document.getElementById('manage-access-btn');
         if(mab) mab.style.display='';
         var gsb=document.getElementById('grapes-share-btn');
@@ -1753,6 +1766,7 @@ updateDate();
 
       if(!perm||expired){
         // No permission at all — show all cards dimmed with request buttons
+        colorGrapesChips([]);
         var cardMap2={
           grapes:{id:'pc-grapes',name:'Grapes'},
           citrus:{id:'pc-citrus',name:'Citrus'},
@@ -1786,6 +1800,8 @@ updateDate();
       // Has permission — show permitted cards, dim locked ones
       var cfg=perm.config||{};
       var allowedProds=cfg.products||[];
+      // Color the Grapes dashboard chips green by the user's accessible dashboards
+      colorGrapesChips(allowedProds.indexOf('grapes')>-1?(cfg.dashboards||[]):[]);
 
       // Map product name to card id and display name
       var cardMap={
