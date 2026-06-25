@@ -110,6 +110,7 @@ serve(async (req) => {
         <div style="font-size:16px;font-weight:700;margin-bottom:4px">Access Request Update</div>
         <div style="font-size:12px;color:#64748b;margin-bottom:16px">Hi ${userName}, your request for access to ${productLabel} was not approved at this time. If you believe you need access, please contact the administrator.</div>`;
     } else {
+      return new Response(JSON.stringify({ error: "unknown type: " + type }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
