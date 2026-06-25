@@ -6,6 +6,7 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
 // verified, Resend's shared sender works for testing: onboarding@resend.dev
 const FROM = Deno.env.get("RESEND_FROM") || "DALos Analytics <onboarding@resend.dev>";
 const APP_URL = "https://daltexcorp-opsexcellence.github.io/dalos-workspace-dev/daltex_home.html";
+const REVIEW_URL = APP_URL + "?panel=access";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -69,7 +70,7 @@ serve(async (req) => {
           ${row("Product", `<span style="background:#fff7ed;color:#c2410c;padding:3px 10px;border-radius:20px;font-weight:600;font-size:12px">${productLabel}</span>`)}
           ${row("Requested", when)}
         </table></div>
-        <a href="${APP_URL}" style="display:inline-block;background:#142850;color:#fff;text-decoration:none;padding:11px 22px;border-radius:8px;font-weight:600;font-size:13px">Review in DalOS Analytics →</a>`;
+        <a href="${REVIEW_URL}" style="display:inline-block;background:#142850;color:#fff;text-decoration:none;padding:11px 22px;border-radius:8px;font-weight:600;font-size:13px">Review in DalOS Analytics →</a>`;
     } else if (type === "approval" || type === "update") {
       if (!userEmail) {
         return new Response(JSON.stringify({ error: "userEmail required for approval email" }), {

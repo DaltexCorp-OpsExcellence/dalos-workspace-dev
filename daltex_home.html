@@ -1715,6 +1715,11 @@ updateDate();
         // Show pending-request notification badge and keep it fresh
         checkPendingCount();
         if(!window.__pendingPoll){ window.__pendingPoll=setInterval(checkPendingCount,60000); }
+        // If arriving from an email "Review" link (?panel=access), open the panel automatically.
+        try{
+          var qp=new URLSearchParams(location.search);
+          if(qp.get('panel')==='access'){ setTimeout(function(){ openPanel('all'); },300); }
+        }catch(e){}
         return;
       }
 
