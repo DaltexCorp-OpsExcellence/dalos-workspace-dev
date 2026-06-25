@@ -1376,7 +1376,8 @@ function smUpdateBar(){
 }
 function smShowP(id){document.querySelectorAll('.sm-panel').forEach(p=>p.className='sm-panel');document.getElementById(id).className='sm-panel active';}
 function smNext(){
-  if(smStep===1&&!smUser){return;}
+  console.log('smNext called — step:',smStep,'role:',smRole,'editPermId:',_editPermId,'user:',smUser);
+  if(smStep===1&&!smUser){console.warn('smNext blocked: step 1 with no user');return;}
   // Step 2 = role. Never dead-end: if no role chosen yet, default to viewer so Next always advances.
   if(smStep===2&&!smRole&&!_editPermId){ smRole='viewer'; }
   if(smStep===5){smGrant();return;}
