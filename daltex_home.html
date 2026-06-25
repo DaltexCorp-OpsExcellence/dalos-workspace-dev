@@ -1680,13 +1680,14 @@ updateDate();
       var [permRes,userRes,reqRes]=await Promise.all([
         fetch(SB_URL+'/rest/v1/dal_analytics_permissions?user_id=eq.'+userId+'&select=role,config,expires_at&limit=1',{headers:authH}),
         fetch(SB_URL+'/rest/v1/users?id=eq.'+userId+'&select=role&limit=1',{headers:authH}),
-        fetch(SB_URL+'/rest/v1/dal_access_requests?user_id=eq.'+userId+'&select=product,status',{headers:authH})
+        fetch(SB_URL+'/rest/v1/dal_access_requests?user_id=eq.'+userId+'&status=eq.pending&select=product,status',{headers:authH})
       ]);
       var perms=await permRes.json();
       var uData=await userRes.json();
       var existingReqs=await reqRes.json().catch(function(){return [];});
 
-      // Build set of already-requested products
+      // Build set of already-requested products — PENDING only, so declined/approved
+      // (or revoked) requests don't keep the button stuck on "Already requested".
       var alreadyRequested=new Set(
         Array.isArray(existingReqs)?existingReqs.map(function(r){return r.product;}):[]
       );
