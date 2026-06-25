@@ -1358,7 +1358,11 @@ function smNext(){
   // Step 2 = role. Never dead-end: if no role chosen yet, default to viewer so Next always advances.
   if(smStep===2&&!smRole&&!_editPermId){ smRole='viewer'; }
   if(smStep===5){smGrant();return;}
-  smStep++;smShowP('smp'+smStep);smUpdateBar();
+  smStep++;
+  try{ smShowP('smp'+smStep); }
+  catch(e){ console.warn('smShowP failed for step',smStep,e); }
+  try{ smUpdateBar(); }
+  catch(e){ console.warn('smUpdateBar failed at step',smStep,e); }
 }
 function smBack(){if(smStep<=1)return;smStep--;smShowP('smp'+smStep);smUpdateBar();}
 
