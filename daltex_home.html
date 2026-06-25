@@ -1204,13 +1204,13 @@ function editUserById(permId){
   if(!p){console.warn('Perm not found:',permId);return;}
   var u=p.users||{};
   var name=u.full_name||u.email||'Unknown';
-  editUser(p.id, name, p.role, p.config, p.expires_at);
+  editUser(p.id, name, p.role, p.config, p.expires_at, (u.email||''));
 }
 
-function editUser(permId, name, role, config, expiresAt){
+function editUser(permId, name, role, config, expiresAt, email){
   _editPermId = permId;
-  // pre-fill user display
-  smUser = {name: name, id: null}; // id not needed for PATCH by permId
+  // pre-fill user display (keep email so the update notification can reach the user)
+  smUser = {name: name, id: null, email: (email||'')}; // id not needed for PATCH by permId
   // Ensure steps and footer are visible
   var steps=document.getElementById('sm-steps');if(steps)steps.style.display='';
   var foot=document.getElementById('sm-foot');if(foot)foot.style.display='';
@@ -1502,10 +1502,14 @@ async function smGrant(){
             if(Array.isArray(ud)&&ud.length){uEmail=ud[0].email||'';}
           }
           if(uEmail){
+            var _scope=[];
+            if(activeProds&&activeProds.length){_scope.push(activeProds.join(', '));}
+            if(activeDbs&&activeDbs.length){_scope.push('('+activeDbs.join(', ')+')');}
+            var _prodName=_scope.length?_scope.join(' '):'DalOS Analytics';
             fetch(SB_URL+'/functions/v1/Send-access-request',{
               method:'POST',
               headers:{apikey:SB_ANON,'Content-Type':'application/json'},
-              body:JSON.stringify({type:(isEdit&&!window._pendingReqId)?'update':'approval',userName:(smUser&&smUser.name)||'',userEmail:uEmail,role:smRole||'viewer',prodName:(activeProds&&activeProds.length?activeProds.join(', '):'DalOS Analytics')})
+              body:JSON.stringify({type:(isEdit&&!window._pendingReqId)?'update':'approval',userName:(smUser&&smUser.name)||'',userEmail:uEmail,role:smRole||'viewer',prodName:_prodName})
             }).then(function(r){r.json().then(function(d){console.log('Approval email:',r.status,d);});}).catch(function(e){console.warn('Approval email failed:',e.message);});
           }
         }catch(e){console.warn('Approval email skipped:',e.message);}
