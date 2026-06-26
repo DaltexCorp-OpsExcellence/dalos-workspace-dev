@@ -569,7 +569,9 @@ function filterMS(input, field){
   var dd=input.closest('.ms-dd');
   dd.querySelectorAll('.ms-opt:not(.ms-all)').forEach(function(opt){
     var val=opt.dataset.val||'';
-    opt.style.display=(!q||val.includes(q))?'':'none';
+    var matches=(!q||val.includes(q));
+    var unavail=opt.classList.contains('ms-unavail');
+    opt.style.display=(matches&&!unavail)?'':'none';
   });
 }
 function toggleDD(e,btn){e.stopPropagation();const dd=btn.parentElement.querySelector('.ms-dd');const was=dd.classList.contains('open');document.querySelectorAll('.ms-dd').forEach(d=>d.classList.remove('open'));if(!was)dd.classList.add('open');}
@@ -590,6 +592,36 @@ function syncMS(el,f){
   else if(n===1){lbl.textContent=f==='wk'?('Week '+S[f][0]):S[f][0];cnt.style.display='none';}
   else{lbl.textContent='Multiple';cnt.style.display='';cnt.textContent=n;}
 }
+// Dynamic (cascading) filters: for each filter, show only the options that still
+// exist given the OTHER active filters. Same UI — just disables options with no data.
+function rowsExcept(skip){
+  return ROWS.filter(function(r){
+    for(const f of MSF){
+      if(f===skip) continue;
+      if(S[f].length&&!S[f].includes(f==='wk'?String(r.wk):norm(r[f]))) return false;
+    }
+    if(S.from&&r.created_date<S.from) return false;
+    if(S.to&&r.created_date>S.to) return false;
+    return true;
+  });
+}
+function refreshFilterOptions(){
+  document.querySelectorAll('.ms[data-f]').forEach(function(el){
+    const f=el.dataset.f;
+    // available values for this filter given all OTHER active filters
+    const subset=rowsExcept(f);
+    const avail=new Set(subset.map(function(r){return f==='wk'?String(r.wk):norm(r[f]);}).filter(Boolean));
+    el.querySelectorAll('.ms-opt:not(.ms-all)').forEach(function(opt){
+      const inp=opt.querySelector('input[data-v]');
+      if(!inp) return;
+      const v=inp.dataset.v;
+      const ok=avail.has(v)||inp.checked; // keep currently-checked items visible/selectable
+      if(ok){opt.classList.remove('ms-unavail');}else{opt.classList.add('ms-unavail');}
+      opt.style.display=ok?'':'none';
+    });
+  });
+}
+
 function setDate(){S.from=document.getElementById('f-from').value;S.to=document.getElementById('f-to').value;apply();}
 function setGran(g,btn){S.gran=g;apply();}
 function resetF(){
@@ -802,7 +834,7 @@ function flagImg(country){
   if(!iso)return '';
   return '<img src="https://flagcdn.com/20x15/'+iso+'.png" width="20" height="15" style="border-radius:2px;vertical-align:middle;margin-right:4px;flex-shrink:0" alt="">';
 }
-function apply(){renderChips();killCharts();const rows=F();
+function apply(){renderChips();refreshFilterOptions();killCharts();const rows=F();
   const fn={ov:renderOverview,data:renderData}[S.tab];
   if(fn)fn(rows);else renderDim(rows,DIMS[S.tab][0],DIMS[S.tab][1]);
   updateSub(rows);
