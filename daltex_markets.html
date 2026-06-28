@@ -545,19 +545,13 @@ input,select,button{font-family:var(--font)}
   <div id="heat-container" style="overflow-x:auto"></div>
 </div>
 
-<!-- Color dist + Top clients -->
+<!-- Color dist -->
 <div class="grid3" style="margin-bottom:12px">
   <div class="cc">
     <div class="cc-header">
       <div><div class="cc-title">Color Split by Market</div><div class="cc-sub">Red · White · Black — net weight %</div></div>
     </div>
     <div id="color-dist"></div>
-  </div>
-  <div class="cc">
-    <div class="cc-header">
-      <div><div class="cc-title">Top Clients</div><div class="cc-sub">By net weight (tonnes)</div></div>
-    </div>
-    <div id="top-clients"></div>
   </div>
 </div>
 
@@ -1282,6 +1276,8 @@ function renderColorDist(){
 }
 
 function renderTopClients(){
+  const __el=document.getElementById('top-clients');
+  if(!__el) return;
   const src=S.market?RAW.by_mkt_client.filter(r=>r.c===S.market):RAW.by_mkt_client;
   const totals={};
   src.forEach(r=>{totals[r.cl]=(totals[r.cl]||0)+r.nw;});
