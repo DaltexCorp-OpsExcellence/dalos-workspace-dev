@@ -325,7 +325,7 @@ input,select,button{font-family:var(--font)}
     <select class="fsel" id="f-farm" onchange="applyFilters()"><option value="">All Farms</option></select>
     <select class="fsel" id="f-src" onchange="applyFilters()"><option value="">All Sources</option><option>Daltex Farms</option><option>Out Source</option></select>
     <select class="fsel" id="f-status" onchange="applyFilters()"><option value="">All Statuses</option><option>Shipped</option><option>Delivered</option></select>
-    <select class="fsel" id="f-mix" onchange="applyFilters()"><option value="">All Pack Types</option></select>
+    <select class="fsel" id="f-mix" onchange="applyFilters()"><option value="">All Mix/Single</option></select>
     <div class="factions">
       <button class="fbtn fbtn-reset" onclick="resetFilters()"><i class="ti ti-refresh" style="font-size:11px"></i> Reset</button>
     </div>
@@ -1227,7 +1227,7 @@ function renderChips(){
   const chips=[];
   if(S.client) chips.push({label:'Client: '+S.client,key:'client'});
   if(S.subclient) chips.push({label:'Sub-Client: '+S.subclient,key:'subclient'});
-  if(S.mix) chips.push({label:'Pack: '+S.mix,key:'mix'});
+  if(S.mix) chips.push({label:'Mix/Single: '+S.mix,key:'mix'});
   if(S.market) chips.push({label:'Market: '+S.market,key:'market'});
   if(S.variety) chips.push({label:'Variety: '+S.variety,key:'variety'});
   if(S.week) chips.push({label:'Week: '+S.week,key:'week'});

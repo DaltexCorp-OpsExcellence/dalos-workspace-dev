@@ -338,7 +338,7 @@ input,select,button,textarea{font-family:var(--font)}
   <select class="fsel" id="f-farm" onchange="applyF()"><option value="">All Farms</option></select>
   <select class="fsel" id="f-src" onchange="applyF()"><option value="">All Sources</option><option>Daltex Farms</option><option>Out Source</option></select>
   <select class="fsel" id="f-status" onchange="applyF()"><option value="">All Statuses</option><option>Shipped</option><option>Delivered</option></select>
-  <select class="fsel" id="f-mix" onchange="applyF()"><option value="">All Pack Types</option></select>
+  <select class="fsel" id="f-mix" onchange="applyF()"><option value="">All Mix/Single</option></select>
   <div class="factions">
     <button class="fbtn fbtn-reset" onclick="resetF()"><i class="ti ti-refresh" style="font-size:11px"></i> Reset</button>
   </div>
@@ -559,7 +559,7 @@ function refreshFilterOptions(){
   const ff=document.getElementById('f-farm');if(ff) fill('f-farm','farm','All Farms',[...new Set(__rowsExcept('farm').map(r=>norm(r.farm_source)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
   const fs=document.getElementById('f-src');if(fs) fill('f-src','src','All Sources',[...new Set(__rowsExcept('src').map(r=>norm(r.source_type)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
   const fst=document.getElementById('f-status');if(fst) fill('f-status','status','All Statuses',[...new Set(__rowsExcept('status').map(r=>norm(r.shipping_status)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
-  const fmx=document.getElementById('f-mix');if(fmx) fill('f-mix','mix','All Pack Types',[...new Set(__rowsExcept('mix').map(r=>norm(r.mix_single)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  const fmx=document.getElementById('f-mix');if(fmx) fill('f-mix','mix','All Mix/Single',[...new Set(__rowsExcept('mix').map(r=>norm(r.mix_single)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
 }
 
 function filtCT(){
