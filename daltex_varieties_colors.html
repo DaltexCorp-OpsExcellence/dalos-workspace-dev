@@ -141,6 +141,17 @@ input,select,button{font-family:var(--font)}
 .fctx{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
 .fctx-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;background:var(--navy);color:var(--white)}
 .fctx-chip button{background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;padding:0;display:flex;align-items:center}
+.ms{position:relative;display:inline-block}
+.ms-btn{min-width:120px;max-width:180px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:#fff;font-size:12px;font-weight:500;color:var(--navy);cursor:pointer;display:flex;align-items:center;gap:5px;justify-content:space-between;white-space:nowrap;overflow:hidden;font-family:inherit}
+.ms-btn .cnt{font-family:var(--mono);font-size:9px;background:var(--navy);color:#fff;border-radius:8px;padding:1px 6px}
+.ms-dd{position:absolute;top:calc(100% + 4px);left:0;z-index:60;background:#fff;border:1px solid var(--border);border-radius:9px;box-shadow:0 8px 24px rgba(14,31,61,.16);min-width:200px;max-height:260px;overflow-y:auto;padding:6px;display:none}
+.ms-dd.open{display:block}
+.ms-opt{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:6px;font-size:12px;cursor:pointer}
+.ms-opt:hover{background:var(--bg,#f4f6fb)}
+.ms-opt input{accent-color:var(--navy)}
+.ms-all{border-bottom:1px solid var(--border);margin-bottom:4px;padding-bottom:6px;font-weight:600}
+.ms-unavail{opacity:.4}
+
 
 /* KPI GRID */
 .kgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
@@ -376,14 +387,14 @@ input,select,button{font-family:var(--font)}
       <input type="date" class="finput" id="f-to" value="2026-06-01" min="2026-05-12" max="2026-06-01" onchange="applyFilters()">
     </div>
     <div class="fbar-sep"></div>
-    <select class="fsel" id="f-week" onchange="applyFilters()"><option value="">All Weeks</option><option value="19">W19</option><option value="20">W20</option><option value="21">W21</option><option value="22">W22</option></select>
-    <select class="fsel" id="f-variety" onchange="applyFilters()"><option value="">All Varieties</option><option>Flame</option><option>Prime</option><option>Arra 30</option><option>Star Light</option><option>Early Flame</option><option>Early Pearl</option></select>
-    <select class="fsel" id="f-color" onchange="applyFilters()"><option value="">All Colors</option><option>Red</option><option>White</option><option>Black</option></select>
-    <select class="fsel" id="f-market" onchange="applyFilters()"><option value="">All Markets</option><option>UK</option><option>Holland</option><option>Switzerland</option><option>Slovenia</option><option>Norway</option><option>Lativia</option><option>South Africa</option><option>Russia</option><option>UAE</option><option>Spain</option></select>
-    <select class="fsel" id="f-farm" onchange="applyFilters()"><option value="">All Farms</option><option>Hana</option><option>Salma</option><option>El khier</option><option>Menia</option><option>Dina Farms</option><option>Akram Shawky</option><option>Elmasa</option><option>Abu Dhabi</option></select>
-    <select class="fsel" id="f-src" onchange="applyFilters()"><option value="">All Sources</option><option>Daltex Farms</option><option>Out Source</option></select>
-    <select class="fsel" id="f-status" onchange="applyFilters()"><option value="">All Statuses</option><option>Shipped</option><option>Delivered</option></select>
-    <select class="fsel" id="f-mix" onchange="applyFilters()"><option value="">All Mix/Single</option></select>
+    <div class="ms" data-f="week" data-col="shipping_week" data-label="Week" data-special="wk"></div>
+    <div class="ms" data-f="variety" data-col="variety" data-label="Variety"></div>
+    <div class="ms" data-f="color" data-col="color" data-label="Color"></div>
+    <div class="ms" data-f="market" data-col="receiving_country" data-label="Market"></div>
+    <div class="ms" data-f="farm" data-col="farm_source" data-label="Farm"></div>
+    <div class="ms" data-f="src" data-col="source_type" data-label="Source"></div>
+    <div class="ms" data-f="status" data-col="shipping_status" data-label="Status"></div>
+    <div class="ms" data-f="mix" data-col="mix_single" data-label="Mix/Single"></div>
     <div class="factions">
       <button class="fbtn fbtn-reset" onclick="resetFilters()"><i class="ti ti-refresh" style="font-size:11px"></i> Reset</button>
     </div>
@@ -620,7 +631,8 @@ const VCOL = {Flame:'#DC6428',Prime:'#142850','Arra 30':'#3d6fa8','Star Light':'
 const CCOL = {Red:'#DC6428',White:'#8a95b0',Black:'#142850'};
 let TOTAL_NW = 1285.85;
 
-let S={variety:'',color:'',market:'',farm:'',week:'',fromDate:'2026-05-12',toDate:'2026-06-01',varSortCol:'nw',varSortDir:-1,colSortCol:'nw',colSortDir:-1,varWeekView:'stacked',colWeekView:'stacked'};
+let S={variety:[],color:[],market:[],farm:[],src:[],status:[],mix:[],week:[],fromDate:'2026-05-12',toDate:'2026-06-01',varSortCol:'nw',varSortDir:-1,colSortCol:'nw',colSortDir:-1,varWeekView:'stacked',colWeekView:'stacked'};
+function inSel(arr,val){return !arr||arr.length===0||arr.includes(val);}
 let __ROWS=[];   // raw shipment rows kept so cross-tabs can be rebuilt against active filters
 let __LDF='2026-05-12',__LDT='2026-06-01';  // actual data date range (set on load)
 let WLBL='cur';
@@ -665,12 +677,14 @@ function buildVarColData(rows){
 function __vcFilteredRows(){
   const norm=s=>s==null?'':String(s).trim();
   let rows=__ROWS;
-  if(S.market) rows=rows.filter(r=>norm(r.receiving_country)===S.market);
-  if(S.farm)   rows=rows.filter(r=>norm(r.farm_source)===S.farm);
-  if(S.src)    rows=rows.filter(r=>norm(r.source_type)===S.src);
-  if(S.status) rows=rows.filter(r=>norm(r.shipping_status)===S.status);
-  if(S.mix)    rows=rows.filter(r=>norm(r.mix_single)===S.mix);
-  if(S.week)   rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===S.week);
+  if(S.market.length) rows=rows.filter(r=>inSel(S.market,norm(r.receiving_country)));
+  if(S.farm.length)   rows=rows.filter(r=>inSel(S.farm,norm(r.farm_source)));
+  if(S.src.length)    rows=rows.filter(r=>inSel(S.src,norm(r.source_type)));
+  if(S.status.length) rows=rows.filter(r=>inSel(S.status,norm(r.shipping_status)));
+  if(S.mix.length)    rows=rows.filter(r=>inSel(S.mix,norm(r.mix_single)));
+  if(S.variety.length)rows=rows.filter(r=>inSel(S.variety,norm(r.variety)));
+  if(S.color.length)  rows=rows.filter(r=>inSel(S.color,norm(r.color)));
+  if(S.week.length)   rows=rows.filter(r=>inSel(S.week,String(parseInt(r.shipping_week)||0)));
   if(S.fromDate&&S.toDate&&(S.fromDate!==__LDF||S.toDate!==__LDT)) rows=rows.filter(r=>r.loading_date&&r.loading_date>=S.fromDate&&r.loading_date<=S.toDate);
   return rows;
 }
@@ -678,37 +692,84 @@ function __vcFilteredRows(){
 function __rowsExcept(skip){
   const norm=s=>s==null?'':String(s).trim();
   let rows=__ROWS;
-  if(skip!=='variety'&&S.variety) rows=rows.filter(r=>norm(r.variety)===S.variety);
-  if(skip!=='color'&&S.color) rows=rows.filter(r=>norm(r.color)===S.color);
-  if(skip!=='market'&&S.market) rows=rows.filter(r=>norm(r.receiving_country)===S.market);
-  if(skip!=='week'&&S.week) rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===S.week);
-  if(skip!=='farm'&&S.farm) rows=rows.filter(r=>norm(r.farm_source)===S.farm);
-  if(skip!=='src'&&S.src) rows=rows.filter(r=>norm(r.source_type)===S.src);
-  if(skip!=='status'&&S.status) rows=rows.filter(r=>norm(r.shipping_status)===S.status);
-  if(skip!=='mix'&&S.mix) rows=rows.filter(r=>norm(r.mix_single)===S.mix);
+  if(skip!=='variety'&&S.variety.length) rows=rows.filter(r=>inSel(S.variety,norm(r.variety)));
+  if(skip!=='color'&&S.color.length) rows=rows.filter(r=>inSel(S.color,norm(r.color)));
+  if(skip!=='market'&&S.market.length) rows=rows.filter(r=>inSel(S.market,norm(r.receiving_country)));
+  if(skip!=='week'&&S.week.length) rows=rows.filter(r=>inSel(S.week,String(parseInt(r.shipping_week)||0)));
+  if(skip!=='farm'&&S.farm.length) rows=rows.filter(r=>inSel(S.farm,norm(r.farm_source)));
+  if(skip!=='src'&&S.src.length) rows=rows.filter(r=>inSel(S.src,norm(r.source_type)));
+  if(skip!=='status'&&S.status.length) rows=rows.filter(r=>inSel(S.status,norm(r.shipping_status)));
+  if(skip!=='mix'&&S.mix.length) rows=rows.filter(r=>inSel(S.mix,norm(r.mix_single)));
   return rows;
 }
-function refreshFilterOptions(){
+// Column lookup per filter key (for reading the right row field)
+const MS_COL={week:'shipping_week',variety:'variety',color:'color',market:'receiving_country',farm:'farm_source',src:'source_type',status:'shipping_status',mix:'mix_single'};
+function __msVal(r,f){const norm=s=>s==null?'':String(s).trim();return f==='week'?String(parseInt(r.shipping_week)||0):norm(r[MS_COL[f]]);}
+// Build the checkbox dropdowns from data
+function buildMS(){
   const norm=s=>s==null?'':String(s).trim();
-  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-  const fill=(id,key,vals)=>{
-    const el=document.getElementById(id);if(!el)return;
-    const cur=S[key]||'';
-    const first=el.querySelector('option');
-    const allHTML=first?first.outerHTML:'<option value="">All</option>';
-    let list=vals.slice();
-    if(cur&&!list.some(o=>String(o.v)===String(cur))) list.push({v:cur,t:cur});
-    el.innerHTML=allHTML+list.map(o=>`<option value="${esc(o.v)}">${esc(o.t)}</option>`).join('');
-    el.value=cur;
-  };
-  fill('f-week','week',[...new Set(__rowsExcept('week').map(r=>parseInt(r.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b).map(w=>({v:w,t:'W'+w})));
-  fill('f-variety','variety',[...new Set(__rowsExcept('variety').map(r=>norm(r.variety)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
-  fill('f-color','color',[...new Set(__rowsExcept('color').map(r=>norm(r.color)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
-  fill('f-market','market',[...new Set(__rowsExcept('market').map(r=>norm(r.receiving_country)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
-  const ff=document.getElementById('f-farm');if(ff) fill('f-farm','farm',[...new Set(__rowsExcept('farm').map(r=>norm(r.farm_source)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
-  const fs=document.getElementById('f-src');if(fs) fill('f-src','src',[...new Set(__rowsExcept('src').map(r=>norm(r.source_type)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
-  const fst=document.getElementById('f-status');if(fst) fill('f-status','status',[...new Set(__rowsExcept('status').map(r=>norm(r.shipping_status)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
-  const fmx=document.getElementById('f-mix');if(fmx) fill('f-mix','mix',[...new Set(__rowsExcept('mix').map(r=>norm(r.mix_single)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  document.querySelectorAll('.ms[data-f]').forEach(el=>{
+    const f=el.dataset.f, label=el.dataset.label||'';
+    let vals=f==='week'
+      ? [...new Set(__ROWS.map(r=>parseInt(r.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b).map(String)
+      : [...new Set(__ROWS.map(r=>norm(r[MS_COL[f]])).filter(Boolean))].sort();
+    el.innerHTML=
+      '<button class="ms-btn" type="button" onclick="toggleDD(event,this)">'
+      +'<span class="ms-lbl">All '+esc(label)+'</span>'
+      +'<span class="cnt" style="display:none"></span>'
+      +'<i class="ti ti-chevron-down" style="font-size:10px"></i>'
+      +'</button>'
+      +'<div class="ms-dd">'
+      +'<div style="padding:4px 6px;border-bottom:1px solid var(--border);position:sticky;top:0;background:#fff;z-index:2">'
+      +'<input type="text" placeholder="Search…" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;outline:none;font-family:inherit;box-sizing:border-box" oninput="filterMS(this,\''+f+'\')" onclick="event.stopPropagation()">'
+      +'</div>'
+      +'<label class="ms-opt ms-all"><input type="checkbox" checked onchange="msAll(\''+f+'\',this)"> All '+esc(label)+'</label>'
+      +vals.map(v=>'<label class="ms-opt" data-val="'+esc(v).toLowerCase()+'"><input type="checkbox" data-v="'+esc(v)+'" onchange="msPick(\''+f+'\')"> '+esc(f==='week'?('Week '+v):v)+'</label>').join('')
+      +'</div>';
+  });
+  if(!window.__msDocClose){window.__msDocClose=true;document.addEventListener('click',e=>{if(!e.target.closest('.ms'))document.querySelectorAll('.ms-dd').forEach(d=>d.classList.remove('open'));});}
+}
+function toggleDD(e,btn){e.stopPropagation();const dd=btn.parentElement.querySelector('.ms-dd');const was=dd.classList.contains('open');document.querySelectorAll('.ms-dd').forEach(d=>d.classList.remove('open'));if(!was)dd.classList.add('open');}
+function filterMS(input,f){
+  const q=input.value.toLowerCase().trim();
+  const dd=input.closest('.ms-dd');
+  dd.querySelectorAll('.ms-opt:not(.ms-all)').forEach(opt=>{
+    const val=opt.dataset.val||'';
+    const matches=(!q||val.includes(q));
+    const unavail=opt.classList.contains('ms-unavail');
+    opt.style.display=(matches&&!unavail)?'':'none';
+  });
+}
+function msPick(f){
+  const el=document.querySelector('.ms[data-f="'+f+'"]');
+  S[f]=[...el.querySelectorAll('input[data-v]:checked')].map(i=>i.dataset.v);
+  el.querySelector('.ms-all input').checked=S[f].length===0;
+  syncMS(el,f);applyFilters();
+}
+function msAll(f,cb){
+  const el=document.querySelector('.ms[data-f="'+f+'"]');
+  el.querySelectorAll('input[data-v]').forEach(i=>i.checked=false);
+  cb.checked=true;S[f]=[];syncMS(el,f);applyFilters();
+}
+function syncMS(el,f){
+  const n=S[f].length,lbl=el.querySelector('.ms-lbl'),cnt=el.querySelector('.cnt'),label=el.dataset.label||'';
+  if(n===0){lbl.textContent='All '+label;cnt.style.display='none';}
+  else if(n===1){lbl.textContent=f==='week'?('Week '+S[f][0]):S[f][0];cnt.style.display='none';}
+  else{lbl.textContent=label||'Multiple';cnt.style.display='';cnt.textContent=n;}
+}
+function refreshFilterOptions(){
+  document.querySelectorAll('.ms[data-f]').forEach(el=>{
+    const f=el.dataset.f;
+    const subset=__rowsExcept(f);
+    const avail=new Set(subset.map(r=>__msVal(r,f)).filter(Boolean));
+    el.querySelectorAll('.ms-opt:not(.ms-all)').forEach(opt=>{
+      const inp=opt.querySelector('input[data-v]');if(!inp)return;
+      const ok=avail.has(inp.dataset.v)||inp.checked;
+      if(ok){opt.classList.remove('ms-unavail');opt.style.display='';}
+      else{opt.classList.add('ms-unavail');opt.style.display='none';}
+    });
+  });
 }
 let barVarChart,barColChart,donutVarChart,donutColChart,varWkChart,colWkChart;
 
@@ -758,7 +819,6 @@ async function loadLiveData(){
     PRIOR_COL_WEEKLY=nestWkN(prior,r=>norm(r.color));
     TOTAL_NW=r2(cur.reduce((s,r)=>s+num(r.net_weight),0));
 
-    fillSel('f-week',[...new Set(cur.map(r=>parseInt(r.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b).map(w=>({v:w,t:'W'+w})));
     // Set the date filter range from the actual loaded data (don't hardcode the max)
     (function(){
       const lds=cur.map(r=>r.loading_date).filter(Boolean).sort();
@@ -770,10 +830,7 @@ async function loadLiveData(){
         if(ft){ft.value=__LDT;ft.min=__LDF;ft.max=__LDT;}
       }
     })();
-    fillSel('f-variety',VARIETIES.map(x=>x.v).sort().map(x=>({v:x,t:x})));
-    fillSel('f-color',COLORS.map(x=>x.c).sort().map(x=>({v:x,t:x})));
-    fillSel('f-market',[...new Set(cur.map(r=>norm(r.receiving_country)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
-    fillSel('f-farm',[...new Set(cur.map(r=>norm(r.farm_source)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+    buildMS();
     refreshFilterOptions();
 
     const __maxLD=cur.reduce((m,r)=>(r.loading_date&&r.loading_date>m)?r.loading_date:m,'');const __ctc=(function(){var o={};cur.forEach(function(r){var cn=(r.container_number||'').replace(/\s+/g,' ').trim();if(!cn)return;(o[cn]=o[cn]||[]).push(r.loading_date);});var t=0;for(var k in o){var ds=o[k].filter(Boolean).map(function(d){return +new Date(d+'T00:00:00');}).sort(function(a,b){return a-b;});if(!ds.length){t++;continue;}var c=1,p=ds[0];for(var i=1;i<ds.length;i++){if((ds[i]-p)/86400000>7)c++;p=ds[i];}t+=c;}return t;})();const __fmtLD=__maxLD?new Date(__maxLD+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';
@@ -789,17 +846,17 @@ async function loadLiveData(){
 function filteredVarieties(){
   // VARIETIES already rebuilt from rows matching market/farm/week/date. Apply variety/color highlight only.
   let base=VARIETIES.map(r=>({...r}));
-  if(S.variety) base=base.filter(r=>r.v===S.variety);
-  if(S.color) base=base.filter(r=>r.color===S.color);
+  if(S.variety.length) base=base.filter(r=>inSel(S.variety,r.v));
+  if(S.color.length) base=base.filter(r=>inSel(S.color,r.color));
   return base.filter(r=>r.nw>0).sort((a,b)=>b.nw-a.nw);
 }
 function filteredColors(){
   // COLORS already rebuilt from rows matching market/farm/week/date. Apply color/variety highlight only.
   let base=COLORS.map(r=>({...r}));
-  if(S.color) base=base.filter(r=>r.c===S.color);
-  if(S.variety){
-    const match=VARIETIES.find(v=>v.v===S.variety);
-    if(match) base=base.filter(r=>r.c===match.color);
+  if(S.color.length) base=base.filter(r=>inSel(S.color,r.c));
+  if(S.variety.length){
+    const cols=new Set(VARIETIES.filter(v=>S.variety.includes(v.v)).map(v=>v.color));
+    if(cols.size) base=base.filter(r=>cols.has(r.c));
   }
   return base.filter(r=>r.nw>0).sort((a,b)=>b.nw-a.nw);
 }
@@ -851,7 +908,7 @@ function renderKPIs(vars,cols,vTotal,cTotal){
   const totalNw=vTotal;
   const topV=vars[0];const topC=cols[0];
   const c1nw=VAR_CLS.filter(r=>r.cls===1&&vars.find(v=>v.v===r.v)).reduce((s,r)=>s+r.nw,0);
-  const priorTotal=Object.entries(PRIOR_VAR).filter(([v])=>!S.variety||v===S.variety).reduce((s,e)=>s+e[1],0);
+  const priorTotal=Object.entries(PRIOR_VAR).filter(([v])=>inSel(S.variety,v)).reduce((s,e)=>s+e[1],0);
   const yoy=priorTotal>0?((totalNw-priorTotal)/priorTotal*100):null;
   const cards=[
     {label:'Total Net Weight',icon:'ti-weight',val:totalNw.toFixed(1)+' T',sub:`Prior: ${priorTotal.toFixed(0)} T`,yoy:yoyBadge(yoy),bar:Math.min(totalNw/13,100)},
@@ -1562,7 +1619,7 @@ function renderInsights(vars,cols,vTotal,cTotal){
   const icons={flag:'ti-flag',info:'ti-info-circle',ok:'ti-check',warn:'ti-alert-triangle',up:'ti-trending-up'};
   const ins=[];
   // 1. YoY
-  const priorTotal=Object.entries(PRIOR_VAR).filter(([v])=>!S.variety||v===S.variety).reduce((s,e)=>s+e[1],0);
+  const priorTotal=Object.entries(PRIOR_VAR).filter(([v])=>inSel(S.variety,v)).reduce((s,e)=>s+e[1],0);
   const yoy=priorTotal>0?((vTotal-priorTotal)/priorTotal*100):null;
   if(yoy!==null) ins.push({type:yoy>=0?'up':'warn',text:`<strong>Season ${yoy>=0?'+':''}${yoy.toFixed(1)}% YoY</strong> — ${vTotal.toFixed(1)} T this season vs ${priorTotal.toFixed(0)} T in 2024/25.`});
   // 2. Variety concentration
@@ -1612,36 +1669,43 @@ document.getElementById('ai-q').addEventListener('keydown',e=>{if(e.key==='Enter
 
 /* ── FILTERS ── */
 function applyFilters(){
-  S.variety=document.getElementById('f-variety').value;S.color=document.getElementById('f-color').value;
-  S.market=document.getElementById('f-market').value;S.farm=document.getElementById('f-farm').value;S.src=document.getElementById('f-src').value;S.status=document.getElementById('f-status').value;S.mix=document.getElementById('f-mix').value;
-  S.week=document.getElementById('f-week').value;S.fromDate=document.getElementById('f-from').value;S.toDate=document.getElementById('f-to').value;
-  refreshFilterOptions();
-  renderChips();render();
+  S.fromDate=document.getElementById('f-from').value;S.toDate=document.getElementById('f-to').value;
+  refreshFilterOptions();renderChips();render();
 }
 function resetFilters(){
-  ['f-variety','f-color','f-market','f-farm','f-src','f-status','f-mix','f-week'].forEach(id=>document.getElementById(id).value='');
+  ['variety','color','market','farm','src','status','mix','week'].forEach(f=>{S[f]=[];});
   document.getElementById('f-from').value=__LDF;document.getElementById('f-to').value=__LDT;
-  S={...S,variety:'',color:'',market:'',farm:'',src:'',status:'',mix:'',week:'',fromDate:__LDF,toDate:__LDT};
-  renderChips();render();
+  S.fromDate=__LDF;S.toDate=__LDT;
+  document.querySelectorAll('.ms[data-f]').forEach(el=>{
+    el.querySelectorAll('input[data-v]').forEach(i=>i.checked=false);
+    const all=el.querySelector('.ms-all input');if(all)all.checked=true;
+    syncMS(el,el.dataset.f);
+  });
+  refreshFilterOptions();renderChips();render();
 }
 function renderChips(){
   const chips=[];
-  if(S.variety) chips.push({label:'Variety: '+S.variety,key:'variety'});
-  if(S.color) chips.push({label:'Color: '+S.color,key:'color'});
-  if(S.market) chips.push({label:'Market: '+S.market,key:'market'});
-  if(S.farm) chips.push({label:'Farm: '+S.farm,key:'farm'});
-  if(S.week) chips.push({label:'Week: '+S.week,key:'week'});
-  if(S.fromDate!==__LDF||S.toDate!==__LDT) chips.push({label:`${S.fromDate} → ${S.toDate}`,key:'date'});
-  document.getElementById('fctx').innerHTML=chips.map(c=>`<div class="fctx-chip">${c.label}<button onclick="removeChip('${c.key}')"><i class="ti ti-x" style="font-size:9px"></i></button></div>`).join('');
+  const defs=[['week','Week'],['variety','Variety'],['color','Color'],['market','Market'],['farm','Farm'],['src','Source'],['status','Status'],['mix','Mix/Single']];
+  defs.forEach(([f,lbl])=>{
+    (S[f]||[]).forEach(v=>chips.push({label:lbl+': '+(f==='week'?('W'+v):v),key:f,val:v}));
+  });
+  if(S.fromDate!==__LDF||S.toDate!==__LDT) chips.push({label:`${S.fromDate} → ${S.toDate}`,key:'date',val:''});
+  document.getElementById('fctx').innerHTML=chips.map(c=>`<div class="fctx-chip">${c.label}<button onclick="removeChip('${c.key}','${String(c.val).replace(/'/g,"\\'")}')"><i class="ti ti-x" style="font-size:9px"></i></button></div>`).join('');
 }
-function removeChip(key){
-  if(key==='variety'){S.variety='';document.getElementById('f-variety').value='';}
-  if(key==='color'){S.color='';document.getElementById('f-color').value='';}
-  if(key==='market'){S.market='';document.getElementById('f-market').value='';}
-  if(key==='farm'){S.farm='';document.getElementById('f-farm').value='';}
-  if(key==='week'){S.week='';document.getElementById('f-week').value='';}
-  if(key==='date'){S.fromDate='2026-05-12';S.toDate='2026-06-01';document.getElementById('f-from').value=__LDF;document.getElementById('f-to').value=__LDT;}
-  renderChips();render();
+function removeChip(key,val){
+  if(key==='date'){
+    S.fromDate=__LDF;S.toDate=__LDT;
+    document.getElementById('f-from').value=__LDF;document.getElementById('f-to').value=__LDT;
+    refreshFilterOptions();renderChips();render();return;
+  }
+  S[key]=(S[key]||[]).filter(v=>v!==val);
+  const el=document.querySelector('.ms[data-f="'+key+'"]');
+  if(el){
+    el.querySelectorAll('input[data-v]').forEach(i=>{if(i.dataset.v===val)i.checked=false;});
+    const all=el.querySelector('.ms-all input');if(all)all.checked=S[key].length===0;
+    syncMS(el,key);
+  }
+  refreshFilterOptions();renderChips();render();
 }
 function setVarWeekView(v,btn){S.varWeekView=v;document.getElementById('vwk-stack').classList.toggle('on',v==='stacked');document.getElementById('vwk-group').classList.toggle('on',v==='grouped');renderWeeklyVariety(filteredVarieties());}
 function setColWeekView(v,btn){S.colWeekView=v;document.getElementById('cwk-stack').classList.toggle('on',v==='stacked');document.getElementById('cwk-group').classList.toggle('on',v==='grouped');renderWeeklyColor(filteredColors());}
