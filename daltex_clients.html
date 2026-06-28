@@ -386,7 +386,7 @@ input,select,button{font-family:var(--font)}
 </div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
   <div class="cc">
-    <div class="cc-header"><div><div class="cc-title">Client x Variety (T)</div><div class="cc-sub">Net weight per cell</div></div></div>
+    <div class="cc-header"><div><div class="cc-title">Client × Variety</div><div class="cc-sub">Net weight per cell · <strong id="clv-mode-lbl">Tonnes (T)</strong></div></div><div style="display:flex;gap:5px"><button id="btn-clv-t" onclick="setHeatMode('clv','t')" style="padding:4px 12px;border-radius:6px;border:1px solid #e2e6f0;background:#142850;color:#fff;font-size:11px;font-weight:600;cursor:pointer">T</button><button id="btn-clv-pct" onclick="setHeatMode('clv','pct')" style="padding:4px 12px;border-radius:6px;border:1px solid #e2e6f0;background:#fff;color:#4a5778;font-size:11px;font-weight:600;cursor:pointer">%</button></div></div>
     <div class="heat-wrap" id="heat-cl-var"></div>
   </div>
   <div class="cc">
@@ -435,7 +435,7 @@ input,select,button{font-family:var(--font)}
 </div>
 <div class="sdiv"><div class="sdiv-line"></div><div class="sdiv-txt">Client x Farm Supply Matrix</div><div class="sdiv-line"></div></div>
 <div class="cc" style="margin-bottom:12px">
-  <div class="cc-header"><div><div class="cc-title">Which farm supplies which client (T)</div><div class="cc-sub">Net weight per cell &middot; darker = more volume</div></div></div>
+  <div class="cc-header"><div><div class="cc-title">Which farm supplies which client</div><div class="cc-sub">Net weight per cell &middot; darker = more · <strong id="clf-mode-lbl">Tonnes (T)</strong></div></div><div style="display:flex;gap:5px"><button id="btn-clf-t" onclick="setHeatMode('clf','t')" style="padding:4px 12px;border-radius:6px;border:1px solid #e2e6f0;background:#142850;color:#fff;font-size:11px;font-weight:600;cursor:pointer">T</button><button id="btn-clf-pct" onclick="setHeatMode('clf','pct')" style="padding:4px 12px;border-radius:6px;border:1px solid #e2e6f0;background:#fff;color:#4a5778;font-size:11px;font-weight:600;cursor:pointer">%</button></div></div>
   <div class="heat-wrap" id="heat-cl-farm"></div>
 </div>
 <div class="insights" style="margin-bottom:12px">
@@ -879,17 +879,36 @@ function renderVarietyBars(clients){
   }).join('')+'<div style="font-size:10px;color:var(--text3);margin-top:8px">'+grand.toFixed(1)+' T total</div>';
 }
 
-function renderHeat(id,data,rows,cols,rowKey,colKey,lw){
+var heatMode={clv:'t',clf:'t'};
+function setHeatMode(which,mode){
+  heatMode[which]=mode;
+  var tBtn=document.getElementById('btn-'+which+'-t'),pBtn=document.getElementById('btn-'+which+'-pct');
+  if(tBtn&&pBtn){
+    tBtn.style.background=mode==='t'?'#142850':'#fff';tBtn.style.color=mode==='t'?'#fff':'#4a5778';
+    pBtn.style.background=mode==='pct'?'#142850':'#fff';pBtn.style.color=mode==='pct'?'#fff':'#4a5778';
+  }
+  var lbl=document.getElementById(which+'-mode-lbl');if(lbl)lbl.textContent=mode==='pct'?'% of row':'Tonnes (T)';
+  var cl=filteredClients();
+  if(which==='clv') renderHeatClVar(cl); else renderHeatClFarm(cl);
+}
+function renderHeat(id,data,rows,cols,rowKey,colKey,lw,mode){
+  mode=mode||'t';
   const maxVal=Math.max.apply(null,data.map(r=>r.nw).concat([1]));
+  var rowTotals={};
+  rows.forEach(function(r){rowTotals[r]=cols.reduce(function(s,c){var it=data.find(d=>d[rowKey]===r&&d[colKey]===c);return s+(it?it.nw:0);},0);});
   var html='<div class="heat-hdr-row" style="gap:2px"><div class="heat-hdr-lbl" style="width:'+lw+'px"></div>'+cols.map(c=>'<div class="heat-hdr-cell">'+c+'</div>').join('')+'</div>';
   rows.forEach(function(r){
+    var rowTotal=rowTotals[r]||0;
     html+='<div class="heat-row" style="gap:2px"><div class="heat-lbl" style="width:'+lw+'px">'+(r.length>13?r.slice(0,12)+'...':r)+'</div>'+cols.map(function(c){
       var item=data.find(d=>d[rowKey]===r&&d[colKey]===c);
       var v=item?item.nw:0;
-      var alpha=v>0?0.1+(v/maxVal)*0.85:0;
-      var bg=v>0?'rgba(20,40,80,'+alpha.toFixed(2)+')':'var(--border)';
+      var displayVal,heatVal;
+      if(mode==='pct'){var pct=rowTotal>0?v/rowTotal*100:0;displayVal=pct>0?pct.toFixed(1)+'%':'--';heatVal=pct/100;}
+      else{displayVal=v>0?v.toFixed(1)+'T':'--';heatVal=v>0?(v/maxVal):0;}
+      var alpha=heatVal>0?0.1+heatVal*0.85:0;
+      var bg=heatVal>0?'rgba(20,40,80,'+alpha.toFixed(2)+')':'var(--border)';
       var txtCol=alpha>0.45?'#fff':'#142850';
-      return '<div class="heat-cell" style="background:'+bg+';color:'+txtCol+'">'+(v>0?v.toFixed(1)+'T':'--')+'</div>';
+      return '<div class="heat-cell" style="background:'+bg+';color:'+txtCol+'">'+displayVal+'</div>';
     }).join('')+'</div>';
   });
   document.getElementById(id).innerHTML=html;
@@ -898,7 +917,7 @@ function renderHeat(id,data,rows,cols,rowKey,colKey,lw){
 function renderHeatClVar(clients){
   const clShown=clients.map(r=>r.cl);
   const varieties=['Flame','Prime','Arra 30','Star Light','Early Flame','Early Pearl'];
-  renderHeat('heat-cl-var',CL_VARIETY.filter(r=>clShown.includes(r.cl)),clShown,varieties,'cl','v',110);
+  renderHeat('heat-cl-var',CL_VARIETY.filter(r=>clShown.includes(r.cl)),clShown,varieties,'cl','v',110,heatMode.clv);
 }
 
 function renderClientMarket(clients){
@@ -955,7 +974,7 @@ function renderAgentBars(){
 function renderHeatClFarm(clients){
   const clShown=clients.map(r=>r.cl);
   const farmOrder=['Hana','Salma','El khier','Menia','Akram Shawky','Dina Farms','Elmasa'];
-  renderHeat('heat-cl-farm',CL_FARM.filter(r=>clShown.includes(r.cl)),clShown,farmOrder,'cl','f',110);
+  renderHeat('heat-cl-farm',CL_FARM.filter(r=>clShown.includes(r.cl)),clShown,farmOrder,'cl','f',110,heatMode.clf);
 }
 
 function drillClient(client){

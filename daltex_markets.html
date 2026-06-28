@@ -537,6 +537,9 @@ input,select,button{font-family:var(--font)}
     <div class="cc-actions">
       <button class="cc-btn on" id="btn-heat-nw" onclick="setHeatMetric('nw',this)">Net Wt</button>
       <button class="cc-btn" id="btn-heat-ctr" onclick="setHeatMetric('containers',this)">Containers</button>
+      <span style="width:1px;height:18px;background:#e2e6f0;margin:0 4px"></span>
+      <button class="cc-btn on" id="btn-heat-t" onclick="setHeatScale('t',this)">T/#</button>
+      <button class="cc-btn" id="btn-heat-pct" onclick="setHeatScale('pct',this)">%</button>
     </div>
   </div>
   <div id="heat-container" style="overflow-x:auto"></div>
@@ -635,7 +638,7 @@ const PAL=['#142850','#DC6428','#1a3668','#d46024','#3d6fa8','#f4a55a','#0e1f3d'
 const VAR_COL={Prime:'#142850',Flame:'#DC6428',"Early Flame":'#e8872e',"Star Light":'#3d6fa8',"Early Pearl":'#5c8fc9',"Arra 30":'#8a95b0'};
 const CLR_COL={Red:'#DC6428',White:'#8a95b0',Black:'#142850'};
 
-let S={market:'',variety:'',color:'',fromDate:'2026-05-12',toDate:'2026-06-01',week:'',sortCol:'nw',sortDir:-1,mainMetric:'nw',weekView:'stacked',heatMetric:'nw'};
+let S={market:'',variety:'',color:'',fromDate:'2026-05-12',toDate:'2026-06-01',week:'',sortCol:'nw',sortDir:-1,mainMetric:'nw',weekView:'stacked',heatMetric:'nw',heatScale:'t'};
 let __ALLROWS=[];   // raw shipment rows kept so cross-tabs can be rebuilt against active filters
 let __LIVE_OK=false;
 let WLBL='cur';  // weekly-chart label mode: 'cur' | 'prior' | 'both'
@@ -1220,6 +1223,10 @@ function renderHeatmap(){
   const shown=S.market?all.filter(c=>c===S.market):all;
   const allVals=RAW.by_mkt_week.map(r=>metric==='nw'?r.nw:r.ctr);
   const maxVal=Math.max(...allVals);
+  const pctMode=S.heatScale==='pct';
+  // row (market) totals in the current metric, for % mode
+  const rowTot={};
+  shown.forEach(m=>{rowTot[m]=weeks.reduce((s,w)=>{const row=RAW.by_mkt_week.find(r=>r.c===m&&r.wk===w);return s+(row?(metric==='nw'?row.nw:row.ctr):0);},0);});
 
   let html=`<div class="heat-hdr-row">
     <div class="heat-hdr-lbl"></div>
@@ -1231,10 +1238,12 @@ function renderHeatmap(){
       ${weeks.map(w=>{
         const row=RAW.by_mkt_week.find(r=>r.c===m&&r.wk===w);
         const v=row?(metric==='nw'?row.nw:row.ctr):0;
-        const alpha=v>0?0.12+(v/maxVal)*0.82:0;
-        const bg=v>0?`rgba(20,40,80,${alpha.toFixed(2)})`:'var(--border)';
+        let disp,heatVal;
+        if(pctMode){const pct=rowTot[m]>0?v/rowTot[m]*100:0;disp=pct>0?pct.toFixed(1)+'%':'-';heatVal=pct/100;}
+        else{disp=v>0?(metric==='nw'?v.toFixed(1)+'T':v):'-';heatVal=v>0?(v/maxVal):0;}
+        const alpha=heatVal>0?0.12+heatVal*0.82:0;
+        const bg=heatVal>0?`rgba(20,40,80,${alpha.toFixed(2)})`:'var(--border)';
         const txtCol=alpha>0.45?'#ffffff':'#142850';
-        const disp=v>0?(metric==='nw'?v.toFixed(1)+'T':v):'-';
         return `<div class="heat-cell" style="background:${bg};color:${txtCol}">${disp}</div>`;
       }).join('')}
     </div>`;
@@ -1560,6 +1569,12 @@ function setHeatMetric(m,btn){
   S.heatMetric=m;
   document.getElementById('btn-heat-nw').classList.toggle('on',m==='nw');
   document.getElementById('btn-heat-ctr').classList.toggle('on',m==='containers');
+  renderHeatmap();
+}
+function setHeatScale(s,btn){
+  S.heatScale=s;
+  document.getElementById('btn-heat-t').classList.toggle('on',s==='t');
+  document.getElementById('btn-heat-pct').classList.toggle('on',s==='pct');
   renderHeatmap();
 }
 function exportCSV(){
