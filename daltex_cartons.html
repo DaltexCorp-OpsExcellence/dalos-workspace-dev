@@ -320,7 +320,7 @@ input,select,button,textarea{font-family:var(--font)}
 <div class="page-header">
   <div>
     <div class="page-title">Cartons &amp; Punnets <span>&#8212; Packaging Analysis</span></div>
-    <div class="page-subtitle">Season 2025/26 &#183; 9 carton types &#183; 6 punnet types &#183; 420,018 cartons &#183; 2,314.14 T net weight</div>
+    <div class="page-subtitle" id="hdr-sub">Season 2025/26 &#183; 9 carton types &#183; 6 punnet types &#183; 420,018 cartons &#183; 2,314.14 T net weight</div>
   </div>
 </div>
 
@@ -679,6 +679,17 @@ function render(){
   catch(err){ console.warn('Cartons: filter rebuild failed, showing unfiltered:',err); }
   const ct=filtCT(), pt=filtPT();
   const ctTot=ct.reduce((s,x)=>s+x.nw,0), ptTot=pt.reduce((s,x)=>s+x.nw,0);
+  // Dynamic subtitle: season + carton/punnet type counts + total cartons + net weight
+  (function(){
+    const sub=document.getElementById('hdr-sub');
+    if(!sub) return;
+    const seasonYr=(typeof __LDT==='string'&&__LDT.length>=4)?(function(){var y=parseInt(__LDT.slice(0,4));return y+'/'+String((y+1)%100).padStart(2,'0');})():'2025/26';
+    const nCT=ct.filter(x=>x.n).length, nPT=pt.filter(x=>x.n).length;
+    const cartonCount=ct.reduce((s,x)=>s+(x.cartons||0),0);
+    const cartonsTxt=Math.round(cartonCount).toLocaleString('en-US');
+    const nwTxt=ctTot.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    sub.innerHTML='Season '+seasonYr+' \u00b7 '+nCT+' carton '+(nCT===1?'type':'types')+' \u00b7 '+nPT+' punnet '+(nPT===1?'type':'types')+' \u00b7 '+cartonsTxt+' cartons \u00b7 '+nwTxt+' T net weight';
+  })();
   renderKPIs(ct,pt,ctTot,ptTot);
   renderCT(ct,ctTot); renderPT(pt,ptTot);
   renderBrand(); renderSize(); renderMix();

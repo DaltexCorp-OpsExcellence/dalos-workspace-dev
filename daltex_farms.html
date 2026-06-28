@@ -579,6 +579,14 @@ function render(){
   try{ if(__ROWS&&__ROWS.length){ const d=buildFarmData(__farmFilteredRows()); FARMS_ALL=d.FARMS_ALL; FV=d.FV; FM=d.FM; FWK=d.FWK; } }
   catch(err){ console.warn('Farms: filter rebuild failed, showing unfiltered:',err); }
   const r=filt(), tot=r.reduce((s,x)=>s+x.nw,0);
+  (function(){
+    const sub=document.getElementById('hdr-sub');
+    if(!sub) return;
+    const seasonYr=(typeof __LDT==='string'&&__LDT.length>=4)?(function(){var y=parseInt(__LDT.slice(0,4));return y+'/'+String((y+1)%100).padStart(2,'0');})():'2025/26';
+    const nf=r.filter(x=>x.f).length;
+    const nwTxt=tot.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    sub.innerHTML='Season '+seasonYr+' \u00b7 '+nf+' '+(nf===1?'farm':'farms')+' \u00b7 '+nwTxt+' T net weight';
+  })();
   renderKPIs(r,tot); renderCards(r,tot); renderTable(r,tot);
   renderBar(r,tot); renderDonut(r,tot); renderWeekly(r);
   renderVarTable(r); renderHeatmaps(r);

@@ -353,7 +353,7 @@ input,select,button{font-family:var(--font)}
 <div class="page-header">
   <div>
     <div class="page-title">Varieties & Colors <span>— Product Mix Analysis</span></div>
-    <div class="page-subtitle">Season 2025/26 · 6 varieties · 3 colors · 1,285.85 T net weight</div>
+    <div class="page-subtitle" id="page-sub">Season 2025/26 · 6 varieties · 3 colors · 1,285.85 T net weight</div>
   </div>
   <div class="season-toggle">
     <button class="s-btn on">2025/26</button>
@@ -808,6 +808,15 @@ function render(){
   const vars=filteredVarieties();const cols=filteredColors();
   const vTotal=vars.reduce((s,r)=>s+r.nw,0);
   const cTotal=cols.reduce((s,r)=>s+r.nw,0);
+  // Dynamic subtitle: season + live counts/total from current (filtered) data
+  (function(){
+    const sub=document.getElementById('page-sub');
+    if(!sub) return;
+    const seasonYr=(__LDT&&__LDT.length>=4)?(function(){var y=parseInt(__LDT.slice(0,4));return y+'/'+String((y+1)%100).padStart(2,'0');})():'2025/26';
+    const nv=vars.filter(r=>r.v).length, nc=cols.filter(r=>r.c).length;
+    const nwTxt=vTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    sub.textContent='Season '+seasonYr+' · '+nv+' '+(nv===1?'variety':'varieties')+' · '+nc+' '+(nc===1?'color':'colors')+' · '+nwTxt+' T net weight';
+  })();
   renderKPIs(vars,cols,vTotal,cTotal);
   renderVarietyCards(vars,vTotal);
   renderColorCards(cols,cTotal);

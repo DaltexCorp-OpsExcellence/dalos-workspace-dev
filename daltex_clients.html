@@ -298,9 +298,7 @@ input,select,button{font-family:var(--font)}
 <div class="page-header">
   <div>
     <div class="page-title">Clients <span>&mdash; Account Performance</span></div>
-    <div class="page-subtitle">Season 2025/26 &middot; 12 clients &middot; 18 subclients &middot; 1,285.85 T net weight
-      <span class="season-badge"><i class="ti ti-trending-up" style="font-size:10px"></i> +18.5% vs 2024/25</span>
-    </div>
+    <div class="page-subtitle" id="hdr-sub">Season 2025/26 &middot; 12 clients &middot; 18 subclients &middot; 1,285.85 T net weight</div>
   </div>
   <div class="season-toggle">
     <button class="s-btn on">2025/26</button>
@@ -706,6 +704,18 @@ function render(){
   catch(err){ console.warn('Clients: filter rebuild failed, showing unfiltered:',err); }
   const clients=filteredClients();
   const total=clients.reduce((s,r)=>s+r.nw,0);
+  // Dynamic subtitle: season + distinct client/subclient counts + total from filtered data
+  (function(){
+    const sub=document.getElementById('hdr-sub');
+    if(!sub) return;
+    const norm=s=>s==null?'':String(s).trim();
+    const seasonYr=(typeof __LDT==='string'&&__LDT.length>=4)?(function(){var y=parseInt(__LDT.slice(0,4));return y+'/'+String((y+1)%100).padStart(2,'0');})():'2025/26';
+    const fr=(__ROWS&&__ROWS.length)?__clFilteredRows():[];
+    const nClients=new Set(fr.map(r=>norm(r.client)).filter(Boolean)).size;
+    const nSub=new Set(fr.map(r=>norm(r.subclient)).filter(Boolean)).size;
+    const nwTxt=total.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    sub.textContent='Season '+seasonYr+' \u00b7 '+nClients+' '+(nClients===1?'client':'clients')+' \u00b7 '+nSub+' '+(nSub===1?'subclient':'subclients')+' \u00b7 '+nwTxt+' T net weight';
+  })();
   // Reflect the active dimension in titles, and hide the redundant Daltex-UK subclient panel in sub-client mode.
   const __isSub=S.dim==='subclient';
   const __word=__isSub?'Sub-Client':'Client';
