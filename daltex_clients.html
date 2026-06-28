@@ -215,6 +215,7 @@ input,select,button{font-family:var(--font)}
 .sub-card-nw{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--navy)}
 .sub-card-meta{font-size:10px;color:var(--text3);margin-top:2px}
 .sub-card-bar{position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--border)}.sub-card-fill{height:100%;background:var(--navy)}
+.sub-card{border-left:3px solid var(--navy)}
 .cc{background:var(--white);border:1px solid var(--border);border-radius:var(--r2);padding:16px;box-shadow:var(--shadow)}
 .cc-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
 .cc-title{font-size:13px;font-weight:600;color:var(--navy);letter-spacing:-.2px}
@@ -902,7 +903,7 @@ function renderSubclients(){
   const SUBPAL=['#142850','#DC6428','#1a3668','#d46024','#3d6fa8','#f4a55a','#5c8fc9','#d97706','#2f5596','#e07b3a','#4b6cb7','#c96a2e'];
   document.getElementById('subclient-cards').innerHTML=SUBCLIENTS.map((s,i)=>{
     const col=SUBPAL[i%SUBPAL.length];
-    return '<div class="sub-card fade-in" style="animation-delay:'+i*.04+'s"><div class="sub-card-name">'+s.sub+'</div><div class="sub-card-nw">'+s.nw.toFixed(1)+' T</div><div class="sub-card-meta">'+s.containers+' containers · '+s.shipments+' shipments</div><div class="sub-card-bar"><div class="sub-card-fill" style="width:'+Math.round(s.nw/max*100)+'%;background:'+col+'"></div></div></div>';
+    return '<div class="sub-card fade-in" style="animation-delay:'+i*.04+'s;border-left:3px solid '+col+'"><div class="sub-card-name">'+s.sub+'</div><div class="sub-card-nw">'+s.nw.toFixed(1)+' T</div><div class="sub-card-meta">'+s.containers+' containers · '+s.shipments+' shipments</div><div class="sub-card-bar"><div class="sub-card-fill" style="width:'+Math.round(s.nw/max*100)+'%;background:'+col+'"></div></div></div>';
   }).join('');
 }
 
@@ -924,15 +925,15 @@ function renderMainBar(clients,total){
     options:{
       indexAxis:'y',responsive:true,maintainAspectRatio:false,
       onClick:function(evt,elements,chart){
-        const hit=chart.getElementsAtEventForMode(evt,'nearest',{intersect:true},false);
+        const hit=chart.getElementsAtEventForMode(evt,'index',{axis:'y',intersect:false},false);
         if(hit&&hit.length){const cl=labels[hit[0].index];if(cl) drillClient(cl);}
       },
       onHover:function(evt,elements,chart){
-        const hit=chart.getElementsAtEventForMode(evt,'nearest',{intersect:true},false);
+        const hit=chart.getElementsAtEventForMode(evt,'index',{axis:'y',intersect:false},false);
         const tgt=evt&&evt.native?evt.native.target:chart.canvas;
         if(tgt) tgt.style.cursor=(hit&&hit.length)?'pointer':'default';
       },
-      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){return ' '+ctx.dataset.label+': '+ctx.raw+(metric==='nw'?' T':'');}}}},
+      plugins:{legend:{display:false},tooltip:{mode:'index',axis:'y',intersect:false,callbacks:{label:function(ctx){return ' '+ctx.dataset.label+': '+ctx.raw+(metric==='nw'?' T':'');}}}},
       scales:{
         x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:10},color:'#8a95b0'}},
         y:{grid:{display:false},ticks:{autoSkip:false,font:{family:"'Plus Jakarta Sans'",size:10,weight:'500'},color:'#0e1f3d'}}
