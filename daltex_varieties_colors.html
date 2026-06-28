@@ -369,20 +369,19 @@ input,select,button{font-family:var(--font)}
     <div class="fbar-sep"></div>
     <div class="date-grp">
       <span class="date-lbl">From</span>
-      <input type="date" class="finput" id="f-from" value="2026-05-12" min="2026-05-12" max="2026-06-01">
+      <input type="date" class="finput" id="f-from" value="2026-05-12" min="2026-05-12" max="2026-06-01" onchange="applyFilters()">
     </div>
     <div class="date-grp">
       <span class="date-lbl">To</span>
-      <input type="date" class="finput" id="f-to" value="2026-06-01" min="2026-05-12" max="2026-06-01">
+      <input type="date" class="finput" id="f-to" value="2026-06-01" min="2026-05-12" max="2026-06-01" onchange="applyFilters()">
     </div>
     <div class="fbar-sep"></div>
-    <select class="fsel" id="f-week"><option value="">All Weeks</option><option value="19">W19</option><option value="20">W20</option><option value="21">W21</option><option value="22">W22</option></select>
-    <select class="fsel" id="f-variety"><option value="">All Varieties</option><option>Flame</option><option>Prime</option><option>Arra 30</option><option>Star Light</option><option>Early Flame</option><option>Early Pearl</option></select>
-    <select class="fsel" id="f-color"><option value="">All Colors</option><option>Red</option><option>White</option><option>Black</option></select>
-    <select class="fsel" id="f-market"><option value="">All Markets</option><option>UK</option><option>Holland</option><option>Switzerland</option><option>Slovenia</option><option>Norway</option><option>Lativia</option><option>South Africa</option><option>Russia</option><option>UAE</option><option>Spain</option></select>
-    <select class="fsel" id="f-farm"><option value="">All Farms</option><option>Hana</option><option>Salma</option><option>El khier</option><option>Menia</option><option>Dina Farms</option><option>Akram Shawky</option><option>Elmasa</option><option>Abu Dhabi</option></select>
+    <select class="fsel" id="f-week" onchange="applyFilters()"><option value="">All Weeks</option><option value="19">W19</option><option value="20">W20</option><option value="21">W21</option><option value="22">W22</option></select>
+    <select class="fsel" id="f-variety" onchange="applyFilters()"><option value="">All Varieties</option><option>Flame</option><option>Prime</option><option>Arra 30</option><option>Star Light</option><option>Early Flame</option><option>Early Pearl</option></select>
+    <select class="fsel" id="f-color" onchange="applyFilters()"><option value="">All Colors</option><option>Red</option><option>White</option><option>Black</option></select>
+    <select class="fsel" id="f-market" onchange="applyFilters()"><option value="">All Markets</option><option>UK</option><option>Holland</option><option>Switzerland</option><option>Slovenia</option><option>Norway</option><option>Lativia</option><option>South Africa</option><option>Russia</option><option>UAE</option><option>Spain</option></select>
+    <select class="fsel" id="f-farm" onchange="applyFilters()"><option value="">All Farms</option><option>Hana</option><option>Salma</option><option>El khier</option><option>Menia</option><option>Dina Farms</option><option>Akram Shawky</option><option>Elmasa</option><option>Abu Dhabi</option></select>
     <div class="factions">
-      <button class="fbtn fbtn-apply" onclick="applyFilters()"><i class="ti ti-check" style="font-size:11px"></i> Apply</button>
       <button class="fbtn fbtn-reset" onclick="resetFilters()"><i class="ti ti-refresh" style="font-size:11px"></i> Reset</button>
     </div>
   </div>

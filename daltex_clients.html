@@ -315,15 +315,14 @@ input,select,button{font-family:var(--font)}
     <span style="font-size:11px;color:var(--text3);margin-right:2px">View by</span>
     <span class="seg" style="display:inline-flex;gap:0;margin-right:4px"><button class="cc-btn on" onclick="setDim('client',this)">Client</button><button class="cc-btn" onclick="setDim('subclient',this)">Sub-Client</button></span>
     <div class="fbar-sep"></div>
-    <div class="date-grp"><span class="date-lbl">From</span><input type="date" class="finput" id="f-from" value="2026-05-12" min="2026-05-12" max="2026-06-01"></div>
-    <div class="date-grp"><span class="date-lbl">To</span><input type="date" class="finput" id="f-to" value="2026-06-01" min="2026-05-12" max="2026-06-01"></div>
+    <div class="date-grp"><span class="date-lbl">From</span><input type="date" class="finput" id="f-from" value="2026-05-12" min="2026-05-12" max="2026-06-01" onchange="applyFilters()"></div>
+    <div class="date-grp"><span class="date-lbl">To</span><input type="date" class="finput" id="f-to" value="2026-06-01" min="2026-05-12" max="2026-06-01" onchange="applyFilters()"></div>
     <div class="fbar-sep"></div>
-    <select class="fsel" id="f-week"><option value="">All Weeks</option><option value="19">W19</option><option value="20">W20</option><option value="21">W21</option><option value="22">W22</option></select>
-    <select class="fsel" id="f-client"><option value="">All Clients</option><option>Daltex UK</option><option>Capespan</option><option>ISEPPI Frutta SA</option><option>Bama Gruppen AS</option><option>Dankers</option><option>Pantera EUR</option><option>RGS</option><option>Majed Alfuttaim</option><option>Asia Fresh</option><option>Karsten Marketing</option><option>Parallel</option><option>SEED</option></select>
-    <select class="fsel" id="f-market"><option value="">All Markets</option><option>UK</option><option>Holland</option><option>Switzerland</option><option>Slovenia</option><option>Norway</option><option>Lativia</option><option>South Africa</option><option>Russia</option><option>UAE</option><option>Spain</option></select>
-    <select class="fsel" id="f-variety"><option value="">All Varieties</option><option>Flame</option><option>Prime</option><option>Arra 30</option><option>Star Light</option><option>Early Flame</option><option>Early Pearl</option></select>
+    <select class="fsel" id="f-week" onchange="applyFilters()"><option value="">All Weeks</option><option value="19">W19</option><option value="20">W20</option><option value="21">W21</option><option value="22">W22</option></select>
+    <select class="fsel" id="f-client" onchange="applyFilters()"><option value="">All Clients</option><option>Daltex UK</option><option>Capespan</option><option>ISEPPI Frutta SA</option><option>Bama Gruppen AS</option><option>Dankers</option><option>Pantera EUR</option><option>RGS</option><option>Majed Alfuttaim</option><option>Asia Fresh</option><option>Karsten Marketing</option><option>Parallel</option><option>SEED</option></select>
+    <select class="fsel" id="f-market" onchange="applyFilters()"><option value="">All Markets</option><option>UK</option><option>Holland</option><option>Switzerland</option><option>Slovenia</option><option>Norway</option><option>Lativia</option><option>South Africa</option><option>Russia</option><option>UAE</option><option>Spain</option></select>
+    <select class="fsel" id="f-variety" onchange="applyFilters()"><option value="">All Varieties</option><option>Flame</option><option>Prime</option><option>Arra 30</option><option>Star Light</option><option>Early Flame</option><option>Early Pearl</option></select>
     <div class="factions">
-      <button class="fbtn fbtn-apply" onclick="applyFilters()"><i class="ti ti-check" style="font-size:11px"></i> Apply</button>
       <button class="fbtn fbtn-reset" onclick="resetFilters()"><i class="ti ti-refresh" style="font-size:11px"></i> Reset</button>
     </div>
   </div>

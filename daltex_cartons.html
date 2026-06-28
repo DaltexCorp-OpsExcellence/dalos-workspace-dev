@@ -327,12 +327,11 @@ input,select,button,textarea{font-family:var(--font)}
 <div class="fbar"><div class="fbar-top">
   <span class="fbar-label"><i class="ti ti-sliders-horizontal"></i> Filters</span>
   <div class="fbar-sep"></div>
-  <select class="fsel" id="f-week"><option value="">All Weeks</option><option value="19">W19</option><option value="20">W20</option><option value="21">W21</option><option value="22">W22</option></select>
-  <select class="fsel" id="f-var"><option value="">All Varieties</option><option>Flame</option><option>Prime</option><option>Arra 30</option><option>Star Light</option><option>Early Flame</option><option>Early Pearl</option></select>
-  <select class="fsel" id="f-mkt"><option value="">All Markets</option><option>UK</option><option>Holland</option><option>Switzerland</option><option>Slovenia</option><option>Norway</option><option>South Africa</option></select>
+  <select class="fsel" id="f-week" onchange="applyF()"><option value="">All Weeks</option><option value="19">W19</option><option value="20">W20</option><option value="21">W21</option><option value="22">W22</option></select>
+  <select class="fsel" id="f-var" onchange="applyF()"><option value="">All Varieties</option><option>Flame</option><option>Prime</option><option>Arra 30</option><option>Star Light</option><option>Early Flame</option><option>Early Pearl</option></select>
+  <select class="fsel" id="f-mkt" onchange="applyF()"><option value="">All Markets</option><option>UK</option><option>Holland</option><option>Switzerland</option><option>Slovenia</option><option>Norway</option><option>South Africa</option></select>
   <div class="factions">
     <button class="fbtn fbtn-reset" onclick="resetF()"><i class="ti ti-refresh" style="font-size:11px"></i> Reset</button>
-    <button class="fbtn fbtn-apply" onclick="applyF()"><i class="ti ti-check" style="font-size:11px"></i> Apply</button>
   </div>
 </div><div class="fctx" id="fctx"></div></div>
 

@@ -326,13 +326,12 @@ input,select,button,textarea{font-family:var(--font)}
 <div class="fbar"><div class="fbar-top">
   <span class="fbar-label"><i class="ti ti-sliders-horizontal"></i> Filters</span>
   <div class="fbar-sep"></div>
-  <select class="fsel" id="f-week"><option value="">All Weeks</option><option value="19">W19</option><option value="20">W20</option><option value="21">W21</option><option value="22">W22</option></select>
-  <select class="fsel" id="f-farm"><option value="">All Farms</option><option>Hana</option><option>Salma</option><option>El khier</option><option>Menia</option><option>Dina Farms</option><option>Akram Shawky</option><option>Elmasa</option><option>Abu Dhabi</option></select>
-  <select class="fsel" id="f-mkt"><option value="">All Markets</option><option>UK</option><option>Holland</option><option>South Africa</option><option>Switzerland</option><option>Slovenia</option><option>Lativia</option><option>Norway</option><option>Russia</option><option>Spain</option><option>UAE</option><option>Belarus</option><option>Poland</option></select>
-  <select class="fsel" id="f-src"><option value="">All Sources</option><option>Daltex Farms</option><option>Out Source</option></select>
+  <select class="fsel" id="f-week" onchange="apply()"><option value="">All Weeks</option><option value="19">W19</option><option value="20">W20</option><option value="21">W21</option><option value="22">W22</option></select>
+  <select class="fsel" id="f-farm" onchange="apply()"><option value="">All Farms</option><option>Hana</option><option>Salma</option><option>El khier</option><option>Menia</option><option>Dina Farms</option><option>Akram Shawky</option><option>Elmasa</option><option>Abu Dhabi</option></select>
+  <select class="fsel" id="f-mkt" onchange="apply()"><option value="">All Markets</option><option>UK</option><option>Holland</option><option>South Africa</option><option>Switzerland</option><option>Slovenia</option><option>Lativia</option><option>Norway</option><option>Russia</option><option>Spain</option><option>UAE</option><option>Belarus</option><option>Poland</option></select>
+  <select class="fsel" id="f-src" onchange="apply()"><option value="">All Sources</option><option>Daltex Farms</option><option>Out Source</option></select>
   <div class="factions">
     <button class="fbtn fbtn-reset" onclick="reset()"><i class="ti ti-refresh" style="font-size:11px"></i> Reset</button>
-    <button class="fbtn fbtn-apply" onclick="apply()"><i class="ti ti-check" style="font-size:11px"></i> Apply</button>
   </div>
 </div><div class="fctx" id="fctx"></div></div>
 
