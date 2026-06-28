@@ -123,6 +123,21 @@ input,select,button,textarea{font-family:var(--font)}
 .fbtn-apply{background:var(--navy);color:#fff;border-color:var(--navy)}
 .fbtn-reset{background:var(--white);color:var(--text2);border-color:var(--border2)}
 .fctx{margin-top:8px;display:flex;flex-wrap:wrap;gap:5px}
+.ms{position:relative;display:inline-block}
+.ms-btn{min-width:118px;max-width:180px;padding:5px 10px;border:1px solid #e2e6f0;border-radius:7px;background:#fff;font-size:11px;font-weight:500;color:#142850;cursor:pointer;display:flex;align-items:center;gap:5px;justify-content:space-between;white-space:nowrap;overflow:hidden;font-family:inherit}
+.ms-btn:hover{border-color:#142850}
+.ms-btn .cnt{font-family:var(--mono,monospace);font-size:9px;background:#142850;color:#fff;border-radius:8px;padding:1px 6px}
+.ms-dd{position:absolute;top:calc(100% + 4px);left:0;z-index:60;background:#fff;border:1px solid #e2e6f0;border-radius:9px;box-shadow:0 8px 24px rgba(14,31,61,.16);min-width:200px;max-height:260px;overflow-y:auto;padding:6px;display:none}
+.ms-dd.open{display:block}
+.ms-opt{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:6px;font-size:12px;cursor:pointer;color:#142850}
+.ms-opt:hover{background:#f4f6fb}
+.ms-opt input{accent-color:#142850}
+.ms-all{border-bottom:1px solid #e2e6f0;margin-bottom:4px;padding-bottom:6px;font-weight:600}
+.ms-unavail{opacity:.4}
+.fctx-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;background:#142850;color:#fff}
+.fctx-chip button{background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;padding:0;display:flex;align-items:center;font-size:11px}
+.fctx-chip button:hover{color:#fff}
+
 .chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;background:var(--navy);color:#fff}
 .chip button{background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;padding:0;display:flex;align-items:center;font-size:10px}
 /* KPI */
@@ -329,14 +344,14 @@ input,select,button,textarea{font-family:var(--font)}
   <div class="date-grp"><span class="date-lbl">From</span><input type="date" class="finput" id="f-from" value="2026-05-12" min="2026-05-12" max="2026-06-01" onchange="apply()"></div>
   <div class="date-grp"><span class="date-lbl">To</span><input type="date" class="finput" id="f-to" value="2026-06-01" min="2026-05-12" max="2026-06-01" onchange="apply()"></div>
   <div class="fbar-sep"></div>
-  <select class="fsel" id="f-week" onchange="apply()"><option value="">All Weeks</option><option value="19">W19</option><option value="20">W20</option><option value="21">W21</option><option value="22">W22</option></select>
-  <select class="fsel" id="f-farm" onchange="apply()"><option value="">All Farms</option><option>Hana</option><option>Salma</option><option>El khier</option><option>Menia</option><option>Dina Farms</option><option>Akram Shawky</option><option>Elmasa</option><option>Abu Dhabi</option></select>
-  <select class="fsel" id="f-mkt" onchange="apply()"><option value="">All Markets</option><option>UK</option><option>Holland</option><option>South Africa</option><option>Switzerland</option><option>Slovenia</option><option>Lativia</option><option>Norway</option><option>Russia</option><option>Spain</option><option>UAE</option><option>Belarus</option><option>Poland</option></select>
-  <select class="fsel" id="f-src" onchange="apply()"><option value="">All Sources</option><option>Daltex Farms</option><option>Out Source</option></select>
-  <select class="fsel" id="f-variety" onchange="apply()"><option value="">All Varieties</option><option>Flame</option><option>Prime</option><option>Arra 30</option><option>Star Light</option><option>Early Flame</option><option>Early Pearl</option></select>
-  <select class="fsel" id="f-color" onchange="apply()"><option value="">All Colors</option><option>Red</option><option>White</option><option>Black</option></select>
-  <select class="fsel" id="f-status" onchange="apply()"><option value="">All Statuses</option><option>Shipped</option><option>Delivered</option></select>
-  <select class="fsel" id="f-mix" onchange="apply()"><option value="">All Mix/Single</option></select>
+  <div class="ms" data-f="week" data-col="shipping_week" data-label="Week" data-special="wk"></div>
+  <div class="ms" data-f="farm" data-col="farm_source" data-label="Farm"></div>
+  <div class="ms" data-f="mkt" data-col="receiving_country" data-label="Market"></div>
+  <div class="ms" data-f="src" data-col="source_type" data-label="Source"></div>
+  <div class="ms" data-f="variety" data-col="variety" data-label="Variety"></div>
+  <div class="ms" data-f="color" data-col="color" data-label="Color"></div>
+  <div class="ms" data-f="status" data-col="shipping_status" data-label="Status"></div>
+  <div class="ms" data-f="mix" data-col="mix_single" data-label="Mix/Single"></div>
   <div class="factions">
     <button class="fbtn fbtn-reset" onclick="reset()"><i class="ti ti-refresh" style="font-size:11px"></i> Reset</button>
   </div>
@@ -445,13 +460,16 @@ const PAL_FARM={Menia:'#142850',Hana:'#DC6428',Salma:'#1a3668','El khier':'#d460
 const PAL_MKT={UK:'#142850',Holland:'#DC6428',Switzerland:'#1a3668',Slovenia:'#d46024',Norway:'#3d6fa8',Lativia:'#f4a55a','South Africa':'#16a34a',Russia:'#6b7280',UAE:'#5c8fc9',Spain:'#d97706'};
 const PAL_VAR={Flame:'#DC6428',Prime:'#142850','Arra 30':'#3d6fa8','Star Light':'#16a34a','Early Flame':'#e8872e','Early Pearl':'#6b7280'};
 
-let S={farm:'',mkt:'',src:'',week:'',fromDate:'2026-05-12',toDate:'2026-06-01',sortCol:'nw',sortDir:-1};
+let S={farm:[],mkt:[],src:[],week:[],variety:[],color:[],status:[],mix:[],fromDate:'2026-05-12',toDate:'2026-06-01',sortCol:'nw',sortDir:-1};
+const MSF=['week','farm','mkt','src','variety','color','status','mix'];
+function inSel(arr,val){return !arr||arr.length===0||arr.includes(val);}
+function __msVal(r,fld){const norm=s=>s==null?'':String(s).trim();const map={farm:'farm_source',mkt:'receiving_country',src:'source_type',variety:'variety',color:'color',status:'shipping_status',mix:'mix_single'};if(fld==='week')return String(parseInt(r.shipping_week)||0);return norm(r[map[fld]]);}
 
 function filt(){
   // FARMS_ALL is already rebuilt from rows matching market/source/week (see render()).
   // Here we only apply the farm highlight and re-sort.
   let r=FARMS_ALL.map(x=>({...x}));
-  if(S.farm) r=r.filter(x=>x.f===S.farm);
+  if(S.farm.length) r=r.filter(x=>inSel(S.farm,x.f));
   return r.filter(x=>x.nw>0).sort((a,b)=>b.nw-a.nw);
 }
 
@@ -475,50 +493,95 @@ function buildFarmData(rows){
 // (Farm stays a highlight applied in filt(); week also re-applied there for the farm list.)
 function __farmFilteredRows(){
   let rows=__ROWS;
-  if(S.mkt)  rows=rows.filter(r=>String(r.receiving_country||'')===S.mkt);
-  if(S.src)  rows=rows.filter(r=>String(r.source_type||'')===S.src);
-  if(S.week) rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===S.week);
-  if(S.variety) rows=rows.filter(r=>String(r.variety||'')===S.variety);
-  if(S.color) rows=rows.filter(r=>String(r.color||'')===S.color);
-  if(S.status) rows=rows.filter(r=>String(r.shipping_status||'')===S.status);
-  if(S.mix) rows=rows.filter(r=>String(r.mix_single||'')===S.mix);
+  if(S.mkt.length)  rows=rows.filter(r=>inSel(S.mkt,String(r.receiving_country||'').trim()));
+  if(S.src.length)  rows=rows.filter(r=>inSel(S.src,String(r.source_type||'').trim()));
+  if(S.week.length) rows=rows.filter(r=>inSel(S.week,String(parseInt(r.shipping_week)||0)));
+  if(S.variety.length) rows=rows.filter(r=>inSel(S.variety,String(r.variety||'').trim()));
+  if(S.color.length) rows=rows.filter(r=>inSel(S.color,String(r.color||'').trim()));
+  if(S.status.length) rows=rows.filter(r=>inSel(S.status,String(r.shipping_status||'').trim()));
+  if(S.mix.length) rows=rows.filter(r=>inSel(S.mix,String(r.mix_single||'').trim()));
   if(S.fromDate&&S.toDate&&(S.fromDate!==__LDF||S.toDate!==__LDT)) rows=rows.filter(r=>r.loading_date&&r.loading_date>=S.fromDate&&r.loading_date<=S.toDate);
   return rows;
 }
 // Dynamic cascading filters: rows filtered by all filters EXCEPT the named one.
 function __rowsExcept(skip){
   let rows=__ROWS;
-  if(skip!=='farm'&&S.farm) rows=rows.filter(r=>String(r.farm_source||'')===S.farm);
-  if(skip!=='mkt'&&S.mkt) rows=rows.filter(r=>String(r.receiving_country||'')===S.mkt);
-  if(skip!=='src'&&S.src) rows=rows.filter(r=>String(r.source_type||'')===S.src);
-  if(skip!=='week'&&S.week) rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===S.week);
-  if(skip!=='variety'&&S.variety) rows=rows.filter(r=>String(r.variety||'')===S.variety);
-  if(skip!=='color'&&S.color) rows=rows.filter(r=>String(r.color||'')===S.color);
-  if(skip!=='status'&&S.status) rows=rows.filter(r=>String(r.shipping_status||'')===S.status);
-  if(skip!=='mix'&&S.mix) rows=rows.filter(r=>String(r.mix_single||'')===S.mix);
+  if(skip!=='farm'&&S.farm.length) rows=rows.filter(r=>inSel(S.farm,String(r.farm_source||'').trim()));
+  if(skip!=='mkt'&&S.mkt.length) rows=rows.filter(r=>inSel(S.mkt,String(r.receiving_country||'').trim()));
+  if(skip!=='src'&&S.src.length) rows=rows.filter(r=>inSel(S.src,String(r.source_type||'').trim()));
+  if(skip!=='week'&&S.week.length) rows=rows.filter(r=>inSel(S.week,String(parseInt(r.shipping_week)||0)));
+  if(skip!=='variety'&&S.variety.length) rows=rows.filter(r=>inSel(S.variety,String(r.variety||'').trim()));
+  if(skip!=='color'&&S.color.length) rows=rows.filter(r=>inSel(S.color,String(r.color||'').trim()));
+  if(skip!=='status'&&S.status.length) rows=rows.filter(r=>inSel(S.status,String(r.shipping_status||'').trim()));
+  if(skip!=='mix'&&S.mix.length) rows=rows.filter(r=>inSel(S.mix,String(r.mix_single||'').trim()));
   if(S.fromDate&&S.toDate&&(S.fromDate!==__LDF||S.toDate!==__LDT)) rows=rows.filter(r=>r.loading_date&&r.loading_date>=S.fromDate&&r.loading_date<=S.toDate);
   return rows;
 }
+const __esc=v=>String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function buildMS(){
+  document.querySelectorAll('.ms[data-f]').forEach(el=>{
+    const fld=el.dataset.f, col=el.dataset.col, special=el.dataset.special;
+    const norm=s=>s==null?'':String(s).trim();
+    const vals=special==='wk'
+      ? [...new Set(__ROWS.map(r=>String(parseInt(r.shipping_week)||0)).filter(v=>v!=='0'))].sort((a,b)=>+a-+b)
+      : [...new Set(__ROWS.map(r=>norm(r[col])).filter(Boolean))].sort();
+    el.innerHTML=
+      '<button class="ms-btn" onclick="toggleDD(event,this)">'
+      +'<span class="ms-lbl">'+(el.dataset.label||'All')+'</span>'
+      +'<span class="cnt" style="display:none"></span>'
+      +'<i class="ti ti-chevron-down" style="font-size:10px"></i>'
+      +'</button>'
+      +'<div class="ms-dd">'
+      +'<div style="padding:4px 6px;border-bottom:1px solid #e2e6f0;position:sticky;top:0;background:#fff;z-index:2">'
+      +'<input type="text" placeholder="Search\u2026" style="width:100%;padding:5px 8px;border:1px solid #e2e6f0;border-radius:6px;font-size:11px;outline:none;font-family:inherit;box-sizing:border-box" oninput="filterMS(this,\''+fld+'\')" onclick="event.stopPropagation()">'
+      +'</div>'
+      +'<label class="ms-opt ms-all"><input type="checkbox" checked onchange="msAll(\''+fld+'\',this)"> All</label>'
+      +vals.map(v=>'<label class="ms-opt" data-val="'+__esc(v).toLowerCase()+'"><input type="checkbox" data-v="'+__esc(v)+'" onchange="msPick(\''+fld+'\')"> '+__esc(special==='wk'?('Week '+v):v)+'</label>').join('')
+      +'</div>';
+  });
+  document.addEventListener('click',e=>{if(!e.target.closest('.ms'))document.querySelectorAll('.ms-dd').forEach(d=>d.classList.remove('open'));});
+}
+function toggleDD(e,btn){e.stopPropagation();const dd=btn.parentElement.querySelector('.ms-dd');const was=dd.classList.contains('open');document.querySelectorAll('.ms-dd').forEach(d=>d.classList.remove('open'));if(!was)dd.classList.add('open');}
+function filterMS(input,fld){
+  const q=input.value.toLowerCase().trim();
+  const dd=input.closest('.ms-dd');
+  dd.querySelectorAll('.ms-opt:not(.ms-all)').forEach(opt=>{
+    const val=opt.dataset.val||'';
+    const matches=(!q||val.includes(q));
+    const unavail=opt.classList.contains('ms-unavail');
+    opt.style.display=(matches&&!unavail)?'':'none';
+  });
+}
+function msPick(fld){
+  const el=document.querySelector('.ms[data-f="'+fld+'"]');
+  S[fld]=[...el.querySelectorAll('input[data-v]:checked')].map(i=>i.dataset.v);
+  el.querySelector('.ms-all input').checked=S[fld].length===0;
+  syncMS(el,fld);apply();
+}
+function msAll(fld,cb){
+  const el=document.querySelector('.ms[data-f="'+fld+'"]');
+  el.querySelectorAll('input[data-v]').forEach(i=>i.checked=false);
+  cb.checked=true;S[fld]=[];syncMS(el,fld);apply();
+}
+function syncMS(el,fld){
+  const n=S[fld].length,lbl=el.querySelector('.ms-lbl'),cnt=el.querySelector('.cnt');
+  const special=el.dataset.special,label=el.dataset.label||'All';
+  if(n===0){lbl.textContent=label;cnt.style.display='none';}
+  else if(n===1){lbl.textContent=special==='wk'?('Week '+S[fld][0]):S[fld][0];cnt.style.display='none';}
+  else{lbl.textContent=label;cnt.style.display='';cnt.textContent=n;}
+}
 function refreshFilterOptions(){
-  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-  const fill=(id,key,vals)=>{
-    const el=document.getElementById(id);if(!el)return;
-    const cur=S[key]||'';
-    const first=el.querySelector('option');
-    const allHTML=first?first.outerHTML:'<option value="">All</option>';
-    let list=vals.slice();
-    if(cur&&!list.some(o=>String(o.v)===String(cur))) list.push({v:cur,t:cur});
-    el.innerHTML=allHTML+list.map(o=>`<option value="${esc(o.v)}">${esc(o.t)}</option>`).join('');
-    el.value=cur;
-  };
-  fill('f-week','week',[...new Set(__rowsExcept('week').map(r=>parseInt(r.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b).map(w=>({v:w,t:'W'+w})));
-  fill('f-farm','farm',[...new Set(__rowsExcept('farm').map(r=>String(r.farm_source||'').trim()).filter(Boolean))].sort().map(x=>({v:x,t:x})));
-  fill('f-mkt','mkt',[...new Set(__rowsExcept('mkt').map(r=>String(r.receiving_country||'').trim()).filter(Boolean))].sort().map(x=>({v:x,t:x})));
-  fill('f-src','src',[...new Set(__rowsExcept('src').map(r=>String(r.source_type||'').trim()).filter(Boolean))].sort().map(x=>({v:x,t:x})));
-  const fv=document.getElementById('f-variety');if(fv) fill('f-variety','variety',[...new Set(__rowsExcept('variety').map(r=>String(r.variety||'').trim()).filter(Boolean))].sort().map(x=>({v:x,t:x})));
-  const fcl=document.getElementById('f-color');if(fcl) fill('f-color','color',[...new Set(__rowsExcept('color').map(r=>String(r.color||'').trim()).filter(Boolean))].sort().map(x=>({v:x,t:x})));
-  const fst=document.getElementById('f-status');if(fst) fill('f-status','status',[...new Set(__rowsExcept('status').map(r=>String(r.shipping_status||'').trim()).filter(Boolean))].sort().map(x=>({v:x,t:x})));
-  const fmx=document.getElementById('f-mix');if(fmx) fill('f-mix','mix',[...new Set(__rowsExcept('mix').map(r=>String(r.mix_single||'').trim()).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  document.querySelectorAll('.ms[data-f]').forEach(el=>{
+    const fld=el.dataset.f;
+    const subset=__rowsExcept(fld);
+    const avail=new Set(subset.map(r=>__msVal(r,fld)).filter(Boolean));
+    el.querySelectorAll('.ms-opt:not(.ms-all)').forEach(opt=>{
+      const inp=opt.querySelector('input[data-v]');if(!inp)return;
+      const ok=avail.has(inp.dataset.v)||inp.checked;
+      if(ok){opt.classList.remove('ms-unavail');opt.style.display='';}
+      else{opt.classList.add('ms-unavail');opt.style.display='none';}
+    });
+  });
 }
 
 function yoyBadge(pct){
@@ -561,11 +624,8 @@ let __LDF='2026-05-12',__LDT='2026-06-01';  // actual data date range (set on lo
     WEEKS=[...new Set(cur.map(r=>parseInt(r.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b);
     TOTAL_NW=r2(cur.reduce((s,r)=>s+num(r.net_weight),0));
 
-    fillSel('f-week',WEEKS.map(w=>({v:w,t:'W'+w})));
     (function(){const lds=cur.map(r=>r.loading_date).filter(Boolean).sort();if(lds.length){__LDF=lds[0];__LDT=lds[lds.length-1];S.fromDate=__LDF;S.toDate=__LDT;const ff=document.getElementById('f-from'),ft=document.getElementById('f-to');if(ff){ff.value=__LDF;ff.min=__LDF;ff.max=__LDT;}if(ft){ft.value=__LDT;ft.min=__LDF;ft.max=__LDT;}}})();
-    fillSel('f-farm',FARMS_ALL.map(x=>x.f).sort().map(x=>({v:x,t:x})));
-    fillSel('f-mkt',[...new Set(cur.map(r=>r.receiving_country).filter(Boolean))].sort().map(x=>({v:x,t:x})));
-    fillSel('f-src',[...new Set(cur.map(r=>r.source_type).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+    buildMS();
     refreshFilterOptions();
 
     const __maxLD=cur.reduce((m,r)=>(r.loading_date&&r.loading_date>m)?r.loading_date:m,'');const __ctc=(function(){var o={};cur.forEach(function(r){var cn=(r.container_number||'').replace(/\s+/g,' ').trim();if(!cn)return;(o[cn]=o[cn]||[]).push(r.loading_date);});var t=0;for(var k in o){var ds=o[k].filter(Boolean).map(function(d){return +new Date(d+'T00:00:00');}).sort(function(a,b){return a-b;});if(!ds.length){t++;continue;}var c=1,p=ds[0];for(var i=1;i<ds.length;i++){if((ds[i]-p)/86400000>7)c++;p=ds[i];}t+=c;}return t;})();const __fmtLD=__maxLD?new Date(__maxLD+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'—';
@@ -599,7 +659,7 @@ function render(){
 }
 
 function renderKPIs(r,tot){
-  const prior=Object.entries(PFARM).filter(([f])=>!S.farm||f===S.farm).reduce((s,e)=>s+e[1],0);
+  const prior=Object.entries(PFARM).filter(([f])=>inSel(S.farm,f)).reduce((s,e)=>s+e[1],0);
   const yoy=prior>0?((tot-prior)/prior*100):null;
   const top=r[0];
   const __shown=new Set(r.map(x=>x.f));
@@ -970,15 +1030,27 @@ function drillFarm(farm){
 
 function closeDrill(){document.getElementById('drill-panel').classList.remove('vis');}
 function sortT(c){if(S.sortCol===c)S.sortDir*=-1;else{S.sortCol=c;S.sortDir=-1;}render();}
-function apply(){S.week=document.getElementById('f-week').value;S.farm=document.getElementById('f-farm').value;S.mkt=document.getElementById('f-mkt').value;S.src=document.getElementById('f-src').value;S.variety=document.getElementById('f-variety').value;S.color=document.getElementById('f-color').value;S.status=document.getElementById('f-status').value;S.mix=document.getElementById('f-mix').value;var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');S.fromDate=ff?ff.value:'';S.toDate=ft?ft.value:'';refreshFilterOptions();chips();render();}
-function reset(){['f-week','f-farm','f-mkt','f-src','f-variety','f-color','f-status','f-mix'].forEach(id=>document.getElementById(id).value='');var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');if(ff)ff.value=__LDF;if(ft)ft.value=__LDT;S={...S,week:'',farm:'',mkt:'',src:'',variety:'',color:'',status:'',mix:'',fromDate:__LDF,toDate:__LDT};refreshFilterOptions();chips();render();}
-function chips(){const L={week:'Wk',farm:'Farm',mkt:'Market',src:'Source'};document.getElementById('fctx').innerHTML=['week','farm','mkt','src'].filter(k=>S[k]).map(k=>`<div class="chip">${L[k]}: ${S[k]} <button onclick="removeChip('${k}')"><i class="ti ti-x" style="font-size:9px"></i></button></div>`).join('');}
-function removeChip(k){document.getElementById('f-'+k).value='';S[k]='';chips();render();}
+function apply(){var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');S.fromDate=ff?ff.value:'';S.toDate=ft?ft.value:'';refreshFilterOptions();chips();render();}
+function reset(){MSF.forEach(fld=>{S[fld]=[];});var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');if(ff)ff.value=__LDF;if(ft)ft.value=__LDT;S.fromDate=__LDF;S.toDate=__LDT;document.querySelectorAll('.ms[data-f]').forEach(el=>{el.querySelectorAll('input[data-v]').forEach(i=>i.checked=false);const all=el.querySelector('.ms-all input');if(all)all.checked=true;syncMS(el,el.dataset.f);});refreshFilterOptions();chips();render();}
+function chips(){
+  const defs=[['week','Week'],['farm','Farm'],['mkt','Market'],['src','Source'],['variety','Variety'],['color','Color'],['status','Status'],['mix','Mix/Single']];
+  const out=[];
+  defs.forEach(([k,lbl])=>{(S[k]||[]).forEach(v=>out.push({label:lbl+': '+(k==='week'?('W'+v):v),key:k,val:v}));});
+  if(S.fromDate!==__LDF||S.toDate!==__LDT) out.push({label:`${S.fromDate} \u2192 ${S.toDate}`,key:'date',val:''});
+  document.getElementById('fctx').innerHTML=out.map(c=>`<div class="fctx-chip">${c.label}<button onclick="removeChip('${c.key}','${String(c.val).replace(/'/g,"\\'")}')"><i class="ti ti-x" style="font-size:9px"></i></button></div>`).join('');
+}
+function removeChip(key,val){
+  if(key==='date'){S.fromDate=__LDF;S.toDate=__LDT;document.getElementById('f-from').value=__LDF;document.getElementById('f-to').value=__LDT;refreshFilterOptions();chips();render();return;}
+  S[key]=(S[key]||[]).filter(v=>v!==val);
+  const el=document.querySelector('.ms[data-f="'+key+'"]');
+  if(el){const inp=[...el.querySelectorAll('input[data-v]')].find(i=>i.dataset.v===val);if(inp)inp.checked=false;if(S[key].length===0){const all=el.querySelector('.ms-all input');if(all)all.checked=true;}syncMS(el,key);}
+  refreshFilterOptions();chips();render();
+}
 function doCSV(){const r=filt(),tot=r.reduce((s,x)=>s+x.nw,0);const hdr='Farm,Source,NW_T,Share_pct,Containers,Prior_T,YoY_pct'+String.fromCharCode(10);const rows=r.map(x=>{const p=PFARM[x.f]||0;const y=p>0?((x.nw-p)/p*100).toFixed(1):'N/A';return[x.f,x.src,x.nw.toFixed(2),(x.nw/tot*100).toFixed(1),x.containers,p||'N/A',y].join(',');}).join(String.fromCharCode(10));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([hdr+rows],{type:'text/csv'}));a.download='farms.csv';a.click();}
 
 function renderInsights(){
   const r=filt(), tot=r.reduce((s,x)=>s+x.nw,0);
-  const prior=Object.entries(PFARM).filter(([f])=>!S.farm||f===S.farm).reduce((s,e)=>s+e[1],0);
+  const prior=Object.entries(PFARM).filter(([f])=>inSel(S.farm,f)).reduce((s,e)=>s+e[1],0);
   const yoy=prior>0?((tot-prior)/prior*100):null;
   const top=r[0];
   const ownNw=r.filter(x=>x.src==='Daltex Farms').reduce((s,x)=>s+x.nw,0);
