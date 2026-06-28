@@ -659,6 +659,7 @@ async function loadLiveData(){
     (function(){const lds=cur.map(r=>r.loading_date).filter(Boolean).sort();if(lds.length){__LDF=lds[0];__LDT=lds[lds.length-1];SF.fromDate=__LDF;SF.toDate=__LDT;const ff=document.getElementById('f-from'),ft=document.getElementById('f-to');if(ff){ff.value=__LDF;ff.min=__LDF;ff.max=__LDT;}if(ft){ft.value=__LDT;ft.min=__LDF;ft.max=__LDT;}}})();
     fillSel('f-var','All Varieties',varsL.map(v=>({v:v,t:v})));
     fillSel('f-mkt','All Markets',mktsL.map(m=>({v:m,t:m})));
+    refreshFilterOptions();
 
     // assign into module-scope (now declared with let)
     CT=_CT; PT=_PT; CT_VAR=_CT_VAR; CT_MKT=_CT_MKT; CT_WK=_CT_WK;

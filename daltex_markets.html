@@ -772,6 +772,7 @@ async function loadLiveData(){
     fillSel('f-market',RAW.by_mkt.map(x=>x.c).sort().map(x=>({v:x,t:x})));
     fillSel('f-variety',[...new Set(cur.map(r=>norm(r.variety)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
     fillSel('f-color',[...new Set(cur.map(r=>norm(r.color)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+    refreshFilterOptions();
     {const __lds=cur.map(r=>r.loading_date).filter(Boolean).sort();
      if(__lds.length){__LDF=__lds[0];__LDT=__lds[__lds.length-1];
        const __ff=document.getElementById('f-from'),__ft=document.getElementById('f-to');
