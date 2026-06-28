@@ -320,6 +320,7 @@ input,select,button{font-family:var(--font)}
     <div class="fbar-sep"></div>
     <select class="fsel" id="f-week" onchange="applyFilters()"><option value="">All Weeks</option><option value="19">W19</option><option value="20">W20</option><option value="21">W21</option><option value="22">W22</option></select>
     <select class="fsel" id="f-client" onchange="applyFilters()"><option value="">All Clients</option><option>Daltex UK</option><option>Capespan</option><option>ISEPPI Frutta SA</option><option>Bama Gruppen AS</option><option>Dankers</option><option>Pantera EUR</option><option>RGS</option><option>Majed Alfuttaim</option><option>Asia Fresh</option><option>Karsten Marketing</option><option>Parallel</option><option>SEED</option></select>
+    <select class="fsel" id="f-subclient" onchange="applyFilters()"><option value="">All Sub-Clients</option></select>
     <select class="fsel" id="f-market" onchange="applyFilters()"><option value="">All Markets</option><option>UK</option><option>Holland</option><option>Switzerland</option><option>Slovenia</option><option>Norway</option><option>Lativia</option><option>South Africa</option><option>Russia</option><option>UAE</option><option>Spain</option></select>
     <select class="fsel" id="f-variety" onchange="applyFilters()"><option value="">All Varieties</option><option>Flame</option><option>Prime</option><option>Arra 30</option><option>Star Light</option><option>Early Flame</option><option>Early Pearl</option></select>
     <select class="fsel" id="f-color" onchange="applyFilters()"><option value="">All Colors</option><option>Red</option><option>White</option><option>Black</option></select>
@@ -508,7 +509,7 @@ const PAL=['#142850','#DC6428','#1a3668','#d46024','#3d6fa8','#f4a55a','#16a34a'
 const CL_COL={'Daltex UK':'#142850','Capespan':'#DC6428','ISEPPI Frutta SA':'#1a3668','Bama Gruppen AS':'#d46024','Dankers':'#3d6fa8','Pantera EUR':'#f4a55a','RGS':'#16a34a','Majed Alfuttaim':'#6b7280','Asia Fresh':'#5c8fc9','Karsten Marketing':'#d97706','Parallel':'#9ca3af','SEED':'#4b5563'};
 const VAR_COL={Flame:'#DC6428',Prime:'#142850','Arra 30':'#3d6fa8','Star Light':'#16a34a','Early Flame':'#e8872e','Early Pearl':'#6b7280'};
 
-let S={client:'',market:'',variety:'',week:'',fromDate:'2026-05-12',toDate:'2026-06-01',sortCol:'nw',sortDir:-1,mainMetric:'nw',weekView:'stacked',dim:'client'};
+let S={client:'',subclient:'',market:'',variety:'',week:'',fromDate:'2026-05-12',toDate:'2026-06-01',sortCol:'nw',sortDir:-1,mainMetric:'nw',weekView:'stacked',dim:'client'};
 function setDim(d,btn){S.dim=d;S.client='';if(btn&&btn.parentElement)btn.parentElement.querySelectorAll('.cc-btn').forEach(b=>b.classList.toggle('on',b===btn));render();}
 let WLBL='cur';
 let BLBL='cur';
@@ -563,6 +564,7 @@ function __clFilteredRows(){
   const norm=s=>s==null?'':String(s).trim();
   let rows=__ROWS;
   if(S.market)  rows=rows.filter(r=>norm(r.receiving_country)===S.market);
+  if(S.subclient) rows=rows.filter(r=>norm(r.subclient)===S.subclient);
   if(S.variety) rows=rows.filter(r=>norm(r.variety)===S.variety);
   if(S.color)   rows=rows.filter(r=>norm(r.color)===S.color);
   if(S.farm)    rows=rows.filter(r=>norm(r.farm_source)===S.farm);
@@ -577,6 +579,7 @@ function __rowsExcept(skip){
   const norm=s=>s==null?'':String(s).trim();
   let rows=__ROWS;
   if(skip!=='client'&&S.client) rows=rows.filter(r=>norm(r.client)===S.client);
+  if(skip!=='subclient'&&S.subclient) rows=rows.filter(r=>norm(r.subclient)===S.subclient);
   if(skip!=='market'&&S.market) rows=rows.filter(r=>norm(r.receiving_country)===S.market);
   if(skip!=='variety'&&S.variety) rows=rows.filter(r=>norm(r.variety)===S.variety);
   if(skip!=='week'&&S.week) rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===S.week);
@@ -601,6 +604,7 @@ function refreshFilterOptions(){
   };
   fill('f-week','week',[...new Set(__rowsExcept('week').map(r=>parseInt(r.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b).map(w=>({v:w,t:'W'+w})));
   fill('f-client','client',[...new Set(__rowsExcept('client').map(r=>norm(r.client)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  const fsc=document.getElementById('f-subclient');if(fsc) fill('f-subclient','subclient',[...new Set(__rowsExcept('subclient').map(r=>norm(r.subclient)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
   fill('f-market','market',[...new Set(__rowsExcept('market').map(r=>norm(r.receiving_country)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
   fill('f-variety','variety',[...new Set(__rowsExcept('variety').map(r=>norm(r.variety)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
   const fc=document.getElementById('f-color');if(fc) fill('f-color','color',[...new Set(__rowsExcept('color').map(r=>norm(r.color)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
@@ -675,6 +679,7 @@ async function loadLiveData(){
     fillSel('f-week',[...new Set(cur.map(r=>parseInt(r.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b).map(w=>({v:w,t:'W'+w})));
     (function(){const lds=cur.map(r=>r.loading_date).filter(Boolean).sort();if(lds.length){__LDF=lds[0];__LDT=lds[lds.length-1];S.fromDate=__LDF;S.toDate=__LDT;const ff=document.getElementById('f-from'),ft=document.getElementById('f-to');if(ff){ff.value=__LDF;ff.min=__LDF;ff.max=__LDT;}if(ft){ft.value=__LDT;ft.min=__LDF;ft.max=__LDT;}}})();
     fillSel('f-client',CLIENTS.map(x=>x.cl).sort().map(x=>({v:x,t:x})));
+    fillSel('f-subclient',[...new Set(cur.map(r=>norm(r.subclient)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
     fillSel('f-market',[...new Set(cur.map(r=>norm(r.receiving_country)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
     fillSel('f-variety',[...new Set(cur.map(r=>norm(r.variety)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
 
@@ -1176,21 +1181,22 @@ async function askAI(){
 document.getElementById('ai-q').addEventListener('keydown',function(e){if(e.key==='Enter') askAI();});
 
 function applyFilters(){
-  S.client=document.getElementById('f-client').value;S.market=document.getElementById('f-market').value;
+  S.client=document.getElementById('f-client').value;S.subclient=document.getElementById('f-subclient').value;S.market=document.getElementById('f-market').value;
   S.variety=document.getElementById('f-variety').value;S.color=document.getElementById('f-color').value;S.farm=document.getElementById('f-farm').value;S.src=document.getElementById('f-src').value;S.status=document.getElementById('f-status').value;S.week=document.getElementById('f-week').value;
   S.fromDate=document.getElementById('f-from').value;S.toDate=document.getElementById('f-to').value;
   refreshFilterOptions();
   renderChips();render();
 }
 function resetFilters(){
-  ['f-client','f-market','f-variety','f-color','f-farm','f-src','f-status','f-week'].forEach(id=>document.getElementById(id).value='');
+  ['f-client','f-subclient','f-market','f-variety','f-color','f-farm','f-src','f-status','f-week'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-from').value=__LDF;document.getElementById('f-to').value=__LDT;
-  S=Object.assign({},S,{client:'',market:'',variety:'',color:'',farm:'',src:'',status:'',week:'',fromDate:__LDF,toDate:__LDT});
+  S=Object.assign({},S,{client:'',subclient:'',market:'',variety:'',color:'',farm:'',src:'',status:'',week:'',fromDate:__LDF,toDate:__LDT});
   renderChips();render();
 }
 function renderChips(){
   const chips=[];
   if(S.client) chips.push({label:'Client: '+S.client,key:'client'});
+  if(S.subclient) chips.push({label:'Sub-Client: '+S.subclient,key:'subclient'});
   if(S.market) chips.push({label:'Market: '+S.market,key:'market'});
   if(S.variety) chips.push({label:'Variety: '+S.variety,key:'variety'});
   if(S.week) chips.push({label:'Week: '+S.week,key:'week'});
@@ -1199,10 +1205,12 @@ function renderChips(){
 }
 function removeChip(key){
   if(key==='client'){S.client='';document.getElementById('f-client').value='';}
+  if(key==='subclient'){S.subclient='';var esc=document.getElementById('f-subclient');if(esc)esc.value='';}
   if(key==='market'){S.market='';document.getElementById('f-market').value='';}
   if(key==='variety'){S.variety='';document.getElementById('f-variety').value='';}
   if(key==='week'){S.week='';document.getElementById('f-week').value='';}
-  if(key==='date'){S.fromDate='2026-05-12';S.toDate='2026-06-01';document.getElementById('f-from').value=__LDF;document.getElementById('f-to').value=__LDT;}
+  if(key==='date'){S.fromDate=__LDF;S.toDate=__LDT;document.getElementById('f-from').value=__LDF;document.getElementById('f-to').value=__LDT;}
+  refreshFilterOptions();
   renderChips();render();
 }
 function setMainMetric(m,btn){S.mainMetric=m;document.querySelectorAll('#cc-main .cc-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderMainBar(filteredClients(),filteredClients().reduce((s,r)=>s+r.nw,0));}
