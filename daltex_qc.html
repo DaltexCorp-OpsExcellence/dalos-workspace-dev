@@ -52,6 +52,54 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+/* ── Shared external HTML tooltip (renders outside the canvas so it's never clipped) ── */
+(function(){
+  if(window.__dalosTipReady) return;
+  function getTipEl(){
+    let el=document.getElementById('dalos-chart-tip');
+    if(!el){
+      el=document.createElement('div');
+      el.id='dalos-chart-tip';
+      el.style.cssText='position:fixed;pointer-events:none;z-index:9999;background:#0e1f3d;color:#fff;border-radius:8px;padding:8px 10px;font-family:\'IBM Plex Mono\',monospace;font-size:11px;line-height:1.5;box-shadow:0 6px 22px rgba(14,31,61,.28);opacity:0;transition:opacity .12s;max-width:280px;white-space:nowrap';
+      document.body.appendChild(el);
+    }
+    return el;
+  }
+  window.__dalosExternalTip=function(context){
+    const tip=getTipEl();
+    const tt=context.tooltip;
+    if(!tt||tt.opacity===0){tip.style.opacity='0';return;}
+    let html='';
+    if(tt.title&&tt.title.length) html+='<div style="font-weight:600;margin-bottom:3px;color:#cdd6e8">'+tt.title.join(' ')+'</div>';
+    (tt.body||[]).forEach((b,i)=>{
+      const colors=tt.labelColors[i]||{};
+      const sw=colors.backgroundColor?('<span style="display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;background:'+colors.backgroundColor+'"></span>'):'';
+      html+='<div style="display:flex;align-items:center">'+sw+'<span>'+b.lines.join(' ')+'</span></div>';
+    });
+    tip.innerHTML=html;
+    const canvasRect=context.chart.canvas.getBoundingClientRect();
+    let x=canvasRect.left+tt.caretX+12;
+    let y=canvasRect.top+tt.caretY;
+    tip.style.opacity='1';
+    // measure then clamp within viewport so it's never cut
+    const tw=tip.offsetWidth, th=tip.offsetHeight, vw=window.innerWidth, vh=window.innerHeight;
+    if(x+tw>vw-8) x=canvasRect.left+tt.caretX-tw-12;     // flip to left of cursor
+    if(x<8) x=8;
+    y=y-th/2;                                            // vertically center on caret
+    if(y+th>vh-8) y=vh-th-8;                             // keep off the bottom edge
+    if(y<8) y=8;                                         // keep off the top edge
+    tip.style.left=x+'px';
+    tip.style.top=y+'px';
+  };
+  if(window.Chart){
+    Chart.defaults.plugins.tooltip.enabled=false;
+    Chart.defaults.plugins.tooltip.external=window.__dalosExternalTip;
+  }
+  window.__dalosTipReady=true;
+})();
+
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <style>
 :root {
