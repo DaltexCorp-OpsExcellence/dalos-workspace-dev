@@ -844,6 +844,7 @@ async function loadLiveData() {
       fillSel('f-market',[...new Set(dn('receiving_country'))].map(x=>({v:x,t:x})));
       fillSel('f-variety',[...new Set(dn('variety'))].map(x=>({v:x,t:x})));
     })();
+    if(typeof refreshFilterOptions==='function') refreshFilterOptions();
 
     renderAll();
   } catch(e) {
@@ -894,6 +895,43 @@ function __filteredRows(){
     return true;
   });
 }
+// Dynamic (cascading) filters: rows filtered by all filters EXCEPT the named one.
+function __rowsExcept(skip){
+  return __ROWS.filter(r=>{
+    const d=r.loading_date||'';
+    if(d<F.from||d>F.to) return false;
+    if(skip!=='week'   && F.week!=='all'   && (parseInt(r.shipping_week)||0)!==parseInt(F.week)) return false;
+    if(skip!=='status' && F.status!=='all' && __ctWS(r.shipping_status)!==F.status) return false;
+    if(skip!=='source' && F.source!=='all' && __ctWS(r.source_type)!==F.source) return false;
+    if(skip!=='farm'   && F.farm!=='all'   && __ctWS(r.farm_source)!==F.farm) return false;
+    if(skip!=='market' && F.market!=='all' && __ctWS(r.receiving_country)!==F.market) return false;
+    if(skip!=='variety'&& F.variety!=='all'&& __ctWS(r.variety)!==F.variety) return false;
+    return true;
+  });
+}
+// Repopulate each filter dropdown to show only options that exist given the OTHER filters.
+function refreshFilterOptions(){
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  const fill=(id,field,vals)=>{
+    const el=document.getElementById(id);
+    if(!el||el.tagName!=='SELECT') return;
+    const cur=F[field];
+    const first=el.querySelector('option');
+    const allHTML=first?first.outerHTML:'<option value="all">All</option>';
+    // always keep the currently-selected value present even if it filtered itself out
+    let list=vals.slice();
+    if(cur&&cur!=='all'&&!list.some(o=>o.v===cur)) list.push({v:cur,t:cur});
+    el.innerHTML=allHTML+list.map(o=>`<option value="${esc(o.v)}">${esc(o.t)}</option>`).join('');
+    el.value=cur;
+  };
+  const dn=(rows,k)=>[...new Set(rows.map(r=>__ctWS(r[k])).filter(x=>x!=null&&String(x).trim()!==''))].map(x=>String(x).trim()).sort();
+  fill('f-week','week',[...new Set(__rowsExcept('week').map(r=>parseInt(r.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b).map(w=>({v:String(w),t:'Week '+w})));
+  fill('f-status','status',dn(__rowsExcept('status'),'shipping_status').map(x=>({v:x,t:x})));
+  fill('f-source','source',dn(__rowsExcept('source'),'source_type').map(x=>({v:x,t:x})));
+  fill('f-farm','farm',dn(__rowsExcept('farm'),'farm_source').map(x=>({v:x,t:x})));
+  fill('f-market','market',dn(__rowsExcept('market'),'receiving_country').map(x=>({v:x,t:x})));
+  fill('f-variety','variety',dn(__rowsExcept('variety'),'variety').map(x=>({v:x,t:x})));
+}
 function filteredData() {
   return DAILY.filter(d => {
     if (d.date < F.from || d.date > F.to) return false;
@@ -916,6 +954,7 @@ function applyFilters() {
   F.farm   = document.getElementById('f-farm').value;
   F.market = document.getElementById('f-market').value;
   F.variety= document.getElementById('f-variety').value;
+  refreshFilterOptions();
   renderAll();
 }
 
