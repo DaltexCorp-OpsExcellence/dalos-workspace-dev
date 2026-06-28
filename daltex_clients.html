@@ -72,21 +72,27 @@
     if(!tt||tt.opacity===0){tip.style.opacity='0';return;}
     let html='';
     if(tt.title&&tt.title.length) html+='<div style="font-weight:600;margin-bottom:3px;color:#cdd6e8">'+tt.title.join(' ')+'</div>';
+    let shown=0;
     (tt.body||[]).forEach((b,i)=>{
+      const line=b.lines.join(' ');
+      // skip rows whose numeric value is 0 (e.g. markets with no shipments that week) to keep it short
+      const m=line.match(/-?\d[\d,]*\.?\d*/);
+      if(m && parseFloat(m[0].replace(/,/g,''))===0) return;
       const colors=tt.labelColors[i]||{};
-      const sw=colors.backgroundColor?('<span style="display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;background:'+colors.backgroundColor+'"></span>'):'';
-      html+='<div style="display:flex;align-items:center">'+sw+'<span>'+b.lines.join(' ')+'</span></div>';
+      const sw=colors.backgroundColor?('<span style="display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;flex-shrink:0;background:'+colors.backgroundColor+'"></span>'):'';
+      html+='<div style="display:flex;align-items:center">'+sw+'<span>'+line+'</span></div>';
+      shown++;
     });
+    if(!shown){tip.style.opacity='0';return;}
     tip.innerHTML=html;
-    const canvasRect=context.chart.canvas.getBoundingClientRect();
-    let x=canvasRect.left+tt.caretX+12;
-    let y=canvasRect.top+tt.caretY;
     tip.style.opacity='1';
-    // measure then clamp within viewport so it's never cut
-    const tw=tip.offsetWidth, th=tip.offsetHeight, vw=window.innerWidth, vh=window.innerHeight;
-    if(x+tw>vw-8) x=canvasRect.left+tt.caretX-tw-12;     // flip to left of cursor
+    const canvasRect=context.chart.canvas.getBoundingClientRect();
+    const vw=window.innerWidth, vh=window.innerHeight;
+    const tw=tip.offsetWidth, th=tip.offsetHeight;
+    let x=canvasRect.left+tt.caretX+12;
+    let y=canvasRect.top+tt.caretY-th/2;
+    if(x+tw>vw-8) x=canvasRect.left+tt.caretX-tw-12;     // flip to left of cursor near right edge
     if(x<8) x=8;
-    y=y-th/2;                                            // vertically center on caret
     if(y+th>vh-8) y=vh-th-8;                             // keep off the bottom edge
     if(y<8) y=8;                                         // keep off the top edge
     tip.style.left=x+'px';
