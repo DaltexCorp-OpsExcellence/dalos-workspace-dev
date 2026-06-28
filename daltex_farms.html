@@ -474,6 +474,32 @@ function __farmFilteredRows(){
   if(S.week) rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===S.week);
   return rows;
 }
+// Dynamic cascading filters: rows filtered by all filters EXCEPT the named one.
+function __rowsExcept(skip){
+  let rows=__ROWS;
+  if(skip!=='farm'&&S.farm) rows=rows.filter(r=>String(r.farm_source||'')===S.farm);
+  if(skip!=='mkt'&&S.mkt) rows=rows.filter(r=>String(r.receiving_country||'')===S.mkt);
+  if(skip!=='src'&&S.src) rows=rows.filter(r=>String(r.source_type||'')===S.src);
+  if(skip!=='week'&&S.week) rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===S.week);
+  return rows;
+}
+function refreshFilterOptions(){
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  const fill=(id,key,vals)=>{
+    const el=document.getElementById(id);if(!el)return;
+    const cur=S[key]||'';
+    const first=el.querySelector('option');
+    const allHTML=first?first.outerHTML:'<option value="">All</option>';
+    let list=vals.slice();
+    if(cur&&!list.some(o=>String(o.v)===String(cur))) list.push({v:cur,t:cur});
+    el.innerHTML=allHTML+list.map(o=>`<option value="${esc(o.v)}">${esc(o.t)}</option>`).join('');
+    el.value=cur;
+  };
+  fill('f-week','week',[...new Set(__rowsExcept('week').map(r=>parseInt(r.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b).map(w=>({v:w,t:'W'+w})));
+  fill('f-farm','farm',[...new Set(__rowsExcept('farm').map(r=>String(r.farm_source||'').trim()).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  fill('f-mkt','mkt',[...new Set(__rowsExcept('mkt').map(r=>String(r.receiving_country||'').trim()).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  fill('f-src','src',[...new Set(__rowsExcept('src').map(r=>String(r.source_type||'').trim()).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+}
 
 function yoyBadge(pct){
   if(pct===null||isNaN(pct))return'';
@@ -909,7 +935,7 @@ function drillFarm(farm){
 
 function closeDrill(){document.getElementById('drill-panel').classList.remove('vis');}
 function sortT(c){if(S.sortCol===c)S.sortDir*=-1;else{S.sortCol=c;S.sortDir=-1;}render();}
-function apply(){S.week=document.getElementById('f-week').value;S.farm=document.getElementById('f-farm').value;S.mkt=document.getElementById('f-mkt').value;S.src=document.getElementById('f-src').value;chips();render();}
+function apply(){S.week=document.getElementById('f-week').value;S.farm=document.getElementById('f-farm').value;S.mkt=document.getElementById('f-mkt').value;S.src=document.getElementById('f-src').value;refreshFilterOptions();chips();render();}
 function reset(){['f-week','f-farm','f-mkt','f-src'].forEach(id=>document.getElementById(id).value='');S={...S,week:'',farm:'',mkt:'',src:''};chips();render();}
 function chips(){const L={week:'Wk',farm:'Farm',mkt:'Market',src:'Source'};document.getElementById('fctx').innerHTML=['week','farm','mkt','src'].filter(k=>S[k]).map(k=>`<div class="chip">${L[k]}: ${S[k]} <button onclick="removeChip('${k}')"><i class="ti ti-x" style="font-size:9px"></i></button></div>`).join('');}
 function removeChip(k){document.getElementById('f-'+k).value='';S[k]='';chips();render();}

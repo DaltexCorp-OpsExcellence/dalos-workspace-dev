@@ -508,6 +508,30 @@ function __ctFilteredRows(){
   if(SF.week) rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===SF.week);
   return rows;
 }
+// Dynamic cascading filters: rows filtered by all filters EXCEPT the named one.
+function __rowsExcept(skip){
+  const norm=s=>s==null?'':String(s).trim();
+  let rows=__ROWS;
+  if(skip!=='var'&&SF.var) rows=rows.filter(r=>norm(r.variety)===SF.var);
+  if(skip!=='mkt'&&SF.mkt) rows=rows.filter(r=>norm(r.receiving_country)===SF.mkt);
+  if(skip!=='week'&&SF.week) rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===SF.week);
+  return rows;
+}
+function refreshFilterOptions(){
+  const norm=s=>s==null?'':String(s).trim();
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  const fill=(id,key,allLabel,vals)=>{
+    const el=document.getElementById(id);if(!el)return;
+    const cur=SF[key]||'';
+    let list=vals.slice();
+    if(cur&&!list.some(o=>String(o.v)===String(cur))) list.push({v:cur,t:cur});
+    el.innerHTML='<option value="">'+allLabel+'</option>'+list.map(o=>`<option value="${esc(o.v)}">${esc(o.t)}</option>`).join('');
+    el.value=cur;
+  };
+  fill('f-week','week','All Weeks',[...new Set(__rowsExcept('week').map(r=>parseInt(r.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b).map(w=>({v:w,t:'W'+w})));
+  fill('f-var','var','All Varieties',[...new Set(__rowsExcept('var').map(r=>norm(r.variety)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  fill('f-mkt','mkt','All Markets',[...new Set(__rowsExcept('mkt').map(r=>norm(r.receiving_country)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+}
 
 function filtCT(){
   // CT already rebuilt from rows matching var/mkt/week; just return sorted.
@@ -864,7 +888,7 @@ function showSeg(type,btn){
   document.getElementById('ct-section').style.display=type==='ct'?'':'none';
   document.getElementById('pt-section').style.display=type==='pt'?'':'none';
 }
-function applyF(){SF.week=document.getElementById('f-week').value;SF.var=document.getElementById('f-var').value;SF.mkt=document.getElementById('f-mkt').value;render();}
+function applyF(){SF.week=document.getElementById('f-week').value;SF.var=document.getElementById('f-var').value;SF.mkt=document.getElementById('f-mkt').value;refreshFilterOptions();render();}
 function resetF(){['f-week','f-var','f-mkt'].forEach(id=>document.getElementById(id).value='');SF={week:'',var:'',mkt:''};render();}
 function doCSV(type){const items=type==='ct'?filtCT():filtPT();const tot=items.reduce((s,x)=>s+x.nw,0);const hdr='Name,NW_T,Share_pct,Cartons,Containers,Prior_T,YoY_pct'+String.fromCharCode(10);const rows=items.map(x=>{const p=type==='ct'?(PRIOR_CT[x.n]||0):(PRIOR_PT[x.n]||0);return[x.n,x.nw.toFixed(2),(x.nw/tot*100).toFixed(1),x.cartons,x.containers,p||'N/A',p>0?((x.nw-p)/p*100).toFixed(1):'N/A'].join(',');}).join(String.fromCharCode(10));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([hdr+rows],{type:'text/csv'}));a.download=type+'s.csv';a.click();}
 

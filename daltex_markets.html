@@ -673,6 +673,35 @@ function __filteredRows(){
   if(S.color)           rows=rows.filter(r=>norm(r.color)===S.color);
   return rows;
 }
+// Dynamic cascading filters: rows filtered by all filters EXCEPT the named one.
+function __rowsExcept(skip){
+  const norm=s=>s==null?'':String(s).trim();
+  let rows=__ALLROWS;
+  if(skip!=='week'&&S.week) rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===S.week);
+  if(skip!=='market'&&S.market) rows=rows.filter(r=>norm(r.receiving_country)===S.market);
+  if(skip!=='variety'&&S.variety) rows=rows.filter(r=>norm(r.variety)===S.variety);
+  if(skip!=='color'&&S.color) rows=rows.filter(r=>norm(r.color)===S.color);
+  return rows;
+}
+function refreshFilterOptions(){
+  const norm=s=>s==null?'':String(s).trim();
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  const fill=(id,key,vals)=>{
+    const el=document.getElementById(id);if(!el)return;
+    const cur=S[key]||'';
+    const first=el.querySelector('option');
+    const allHTML=first?first.outerHTML:'<option value="">All</option>';
+    let list=vals.slice();
+    if(cur&&!list.some(o=>String(o.v)===String(cur))) list.push({v:cur,t:cur});
+    el.innerHTML=allHTML+list.map(o=>`<option value="${esc(o.v)}">${esc(o.t)}</option>`).join('');
+    el.value=cur;
+  };
+  fill('f-week','week',[...new Set(__rowsExcept('week').map(r=>parseInt(r.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b).map(w=>({v:w,t:'W'+w})));
+  fill('f-market','market',[...new Set(__rowsExcept('market').map(r=>norm(r.receiving_country)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  fill('f-variety','variety',[...new Set(__rowsExcept('variety').map(r=>norm(r.variety)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  const fc=document.getElementById('f-color');
+  if(fc) fill('f-color','color',[...new Set(__rowsExcept('color').map(r=>norm(r.color)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+}
 let __LDF='2026-05-12',__LDT='2026-06-01';
 let barChart,donutChart,weeklyChart,classDonut;
 
@@ -1457,6 +1486,7 @@ function applyFilters(){
   S.fromDate=document.getElementById('f-from').value;
   S.toDate=document.getElementById('f-to').value;
   S.week=document.getElementById('f-week').value;
+  refreshFilterOptions();
   renderChips();render();
 }
 function resetFilters(){
