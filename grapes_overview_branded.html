@@ -582,32 +582,32 @@ input, select, button { font-family: var(--font); }
 
     <div class="date-grp">
       <span class="date-lbl">From</span>
-      <input type="date" class="finput" id="f-from" value="2026-05-12" min="2026-05-12" max="2026-06-01">
+      <input type="date" class="finput" id="f-from" value="2026-05-12" min="2026-05-12" max="2026-06-01" onchange="applyFilters()">
     </div>
     <div class="date-grp">
       <span class="date-lbl">To</span>
-      <input type="date" class="finput" id="f-to" value="2026-06-01" min="2026-05-12" max="2026-06-01">
+      <input type="date" class="finput" id="f-to" value="2026-06-01" min="2026-05-12" max="2026-06-01" onchange="applyFilters()">
     </div>
     <div class="fbar-sep"></div>
 
-    <select class="fsel" id="f-week">
+    <select class="fsel" id="f-week" onchange="applyFilters()">
       <option value="all">All weeks</option>
       <option value="19">Week 19</option>
       <option value="20">Week 20</option>
       <option value="21">Week 21</option>
       <option value="22">Week 22</option>
     </select>
-    <select class="fsel" id="f-status">
+    <select class="fsel" id="f-status" onchange="applyFilters()">
       <option value="all">All statuses</option>
       <option value="Shipped">Shipped</option>
       <option value="Delivered">Delivered</option>
     </select>
-    <select class="fsel" id="f-source">
+    <select class="fsel" id="f-source" onchange="applyFilters()">
       <option value="all">All sources</option>
       <option value="Daltex Farms">Daltex Farms</option>
       <option value="Out Source">Out Source</option>
     </select>
-    <select class="fsel" id="f-farm">
+    <select class="fsel" id="f-farm" onchange="applyFilters()">
       <option value="all">All farms</option>
       <option value="Menia">Menia</option>
       <option value="Hana">Hana</option>
@@ -617,7 +617,7 @@ input, select, button { font-family: var(--font); }
       <option value="Dina Farms">Dina Farms</option>
       <option value="Elmasa">Elmasa</option>
     </select>
-    <select class="fsel" id="f-market">
+    <select class="fsel" id="f-market" onchange="applyFilters()">
       <option value="all">All markets</option>
       <option value="UK">UK</option>
       <option value="Holland">Holland</option>
@@ -630,7 +630,7 @@ input, select, button { font-family: var(--font); }
       <option value="UAE">UAE</option>
       <option value="Spain">Spain</option>
     </select>
-    <select class="fsel" id="f-variety">
+    <select class="fsel" id="f-variety" onchange="applyFilters()">
       <option value="all">All varieties</option>
       <option value="Flame">Flame</option>
       <option value="Prime">Prime</option>
