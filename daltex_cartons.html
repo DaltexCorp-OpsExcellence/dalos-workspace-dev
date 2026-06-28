@@ -338,6 +338,7 @@ input,select,button,textarea{font-family:var(--font)}
   <select class="fsel" id="f-farm" onchange="applyF()"><option value="">All Farms</option></select>
   <select class="fsel" id="f-src" onchange="applyF()"><option value="">All Sources</option><option>Daltex Farms</option><option>Out Source</option></select>
   <select class="fsel" id="f-status" onchange="applyF()"><option value="">All Statuses</option><option>Shipped</option><option>Delivered</option></select>
+  <select class="fsel" id="f-mix" onchange="applyF()"><option value="">All Pack Types</option></select>
   <div class="factions">
     <button class="fbtn fbtn-reset" onclick="resetF()"><i class="ti ti-refresh" style="font-size:11px"></i> Reset</button>
   </div>
@@ -475,7 +476,7 @@ const FARM_COL = {Menia:'#142850',Hana:'#DC6428',Salma:'#1a3668','El khier':'#d4
 const CT_COL   = {'Green 5.5 KG':'#16a34a','Black 5 KG':'#142850','Green 5 KG':'#22c55e','Green 9 KG':'#4ade80','Black 4 KG':'#1a3668','Black 9 KG':'#1e3a5f','Brown 9 KG':'#92400e','Green 4 KG':'#86efac','Brown 4 KG':'#d97706'};
 const PT_COL   = {'PUNNET K37':'#142850','PUNNET CLAMSHELL':'#DC6428','LOOSE':'#3d6fa8','PUNNET B40':'#16a34a','PUNNET K37 No Ventilation':'#d46024','PUNNET K30':'#f4a55a'};
 
-let SF={week:'',var:'',mkt:'',color:'',client:'',farm:'',src:'',status:'',fromDate:'2026-05-12',toDate:'2026-06-01'};
+let SF={week:'',var:'',mkt:'',color:'',client:'',farm:'',src:'',status:'',mix:'',fromDate:'2026-05-12',toDate:'2026-06-01'};
 let BLBL='cur';
 function setBarLbl(m,btn){BLBL=m;['ct','pt'].forEach(p=>{['cur','prior','both'].forEach(k=>{const el=document.getElementById(p+'blbl-'+k);if(el)el.classList.toggle('on',k===m);});});render();}
 let __ROWS=[];   // raw shipment rows kept so cross-tabs can be rebuilt against active filters
@@ -519,6 +520,7 @@ function __ctFilteredRows(){
   if(SF.farm) rows=rows.filter(r=>norm(r.farm_source)===SF.farm);
   if(SF.src) rows=rows.filter(r=>norm(r.source_type)===SF.src);
   if(SF.status) rows=rows.filter(r=>norm(r.shipping_status)===SF.status);
+  if(SF.mix) rows=rows.filter(r=>norm(r.mix_single)===SF.mix);
   if(SF.fromDate&&SF.toDate&&(SF.fromDate!==__LDF||SF.toDate!==__LDT)) rows=rows.filter(r=>r.loading_date&&r.loading_date>=SF.fromDate&&r.loading_date<=SF.toDate);
   return rows;
 }
@@ -534,6 +536,7 @@ function __rowsExcept(skip){
   if(skip!=='farm'&&SF.farm) rows=rows.filter(r=>norm(r.farm_source)===SF.farm);
   if(skip!=='src'&&SF.src) rows=rows.filter(r=>norm(r.source_type)===SF.src);
   if(skip!=='status'&&SF.status) rows=rows.filter(r=>norm(r.shipping_status)===SF.status);
+  if(skip!=='mix'&&SF.mix) rows=rows.filter(r=>norm(r.mix_single)===SF.mix);
   if(SF.fromDate&&SF.toDate&&(SF.fromDate!==__LDF||SF.toDate!==__LDT)) rows=rows.filter(r=>r.loading_date&&r.loading_date>=SF.fromDate&&r.loading_date<=SF.toDate);
   return rows;
 }
@@ -556,6 +559,7 @@ function refreshFilterOptions(){
   const ff=document.getElementById('f-farm');if(ff) fill('f-farm','farm','All Farms',[...new Set(__rowsExcept('farm').map(r=>norm(r.farm_source)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
   const fs=document.getElementById('f-src');if(fs) fill('f-src','src','All Sources',[...new Set(__rowsExcept('src').map(r=>norm(r.source_type)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
   const fst=document.getElementById('f-status');if(fst) fill('f-status','status','All Statuses',[...new Set(__rowsExcept('status').map(r=>norm(r.shipping_status)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  const fmx=document.getElementById('f-mix');if(fmx) fill('f-mix','mix','All Pack Types',[...new Set(__rowsExcept('mix').map(r=>norm(r.mix_single)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
 }
 
 function filtCT(){
@@ -925,8 +929,8 @@ function showSeg(type,btn){
   document.getElementById('ct-section').style.display=type==='ct'?'':'none';
   document.getElementById('pt-section').style.display=type==='pt'?'':'none';
 }
-function applyF(){SF.week=document.getElementById('f-week').value;SF.var=document.getElementById('f-var').value;SF.mkt=document.getElementById('f-mkt').value;SF.color=document.getElementById('f-color').value;SF.client=document.getElementById('f-client').value;SF.farm=document.getElementById('f-farm').value;SF.src=document.getElementById('f-src').value;SF.status=document.getElementById('f-status').value;var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');SF.fromDate=ff?ff.value:'';SF.toDate=ft?ft.value:'';refreshFilterOptions();render();}
-function resetF(){['f-week','f-var','f-mkt','f-color','f-client','f-farm','f-src','f-status'].forEach(id=>{var e=document.getElementById(id);if(e)e.value='';});var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');if(ff)ff.value=__LDF;if(ft)ft.value=__LDT;SF={week:'',var:'',mkt:'',color:'',client:'',farm:'',src:'',status:'',fromDate:__LDF,toDate:__LDT};refreshFilterOptions();render();}
+function applyF(){SF.week=document.getElementById('f-week').value;SF.var=document.getElementById('f-var').value;SF.mkt=document.getElementById('f-mkt').value;SF.color=document.getElementById('f-color').value;SF.client=document.getElementById('f-client').value;SF.farm=document.getElementById('f-farm').value;SF.src=document.getElementById('f-src').value;SF.status=document.getElementById('f-status').value;SF.mix=document.getElementById('f-mix').value;var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');SF.fromDate=ff?ff.value:'';SF.toDate=ft?ft.value:'';refreshFilterOptions();render();}
+function resetF(){['f-week','f-var','f-mkt','f-color','f-client','f-farm','f-src','f-status','f-mix'].forEach(id=>{var e=document.getElementById(id);if(e)e.value='';});var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');if(ff)ff.value=__LDF;if(ft)ft.value=__LDT;SF={week:'',var:'',mkt:'',color:'',client:'',farm:'',src:'',status:'',mix:'',fromDate:__LDF,toDate:__LDT};refreshFilterOptions();render();}
 function doCSV(type){const items=type==='ct'?filtCT():filtPT();const tot=items.reduce((s,x)=>s+x.nw,0);const hdr='Name,NW_T,Share_pct,Cartons,Containers,Prior_T,YoY_pct'+String.fromCharCode(10);const rows=items.map(x=>{const p=type==='ct'?(PRIOR_CT[x.n]||0):(PRIOR_PT[x.n]||0);return[x.n,x.nw.toFixed(2),(x.nw/tot*100).toFixed(1),x.cartons,x.containers,p||'N/A',p>0?((x.nw-p)/p*100).toFixed(1):'N/A'].join(',');}).join(String.fromCharCode(10));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([hdr+rows],{type:'text/csv'}));a.download=type+'s.csv';a.click();}
 
 function renderInsights(){

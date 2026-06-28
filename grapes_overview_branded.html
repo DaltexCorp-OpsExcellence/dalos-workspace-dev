@@ -641,6 +641,9 @@ input, select, button { font-family: var(--font); }
     <select class="fsel" id="f-color" onchange="applyFilters()">
       <option value="all">All colors</option>
     </select>
+    <select class="fsel" id="f-mix" onchange="applyFilters()">
+      <option value="all">All pack types</option>
+    </select>
 
     <div class="factions">
       <button class="fbtn fbtn-reset" onclick="resetFilters()">
@@ -863,7 +866,7 @@ const PRIOR_WEEKLY = {};
 
 // ── FILTER STATE ──
 let DEF_FROM='2026-05-12', DEF_TO='2026-06-01';
-let F = {from:DEF_FROM,to:DEF_TO,week:'all',status:'all',source:'all',farm:'all',market:'all',variety:'all',color:'all'};
+let F = {from:DEF_FROM,to:DEF_TO,week:'all',status:'all',source:'all',farm:'all',market:'all',variety:'all',color:'all',mix:'all'};
 
 // ── CONTAINER COUNT (unique container# + loading-date, ±7d tolerance) ──
 let __ROWS=[], __FULL_CT=0;
@@ -892,6 +895,7 @@ function __filteredRows(){
     if(F.market!=='all' && __ctWS(r.receiving_country)!==F.market) return false;
     if(F.variety!=='all'&& __ctWS(r.variety)!==F.variety) return false;
     if(F.color!=='all'  && __ctWS(r.color)!==F.color) return false;
+    if(F.mix!=='all'    && __ctWS(r.mix_single)!==F.mix) return false;
     return true;
   });
 }
@@ -907,6 +911,7 @@ function __rowsExcept(skip){
     if(skip!=='market' && F.market!=='all' && __ctWS(r.receiving_country)!==F.market) return false;
     if(skip!=='variety'&& F.variety!=='all'&& __ctWS(r.variety)!==F.variety) return false;
     if(skip!=='color'  && F.color!=='all'  && __ctWS(r.color)!==F.color) return false;
+    if(skip!=='mix'    && F.mix!=='all'    && __ctWS(r.mix_single)!==F.mix) return false;
     return true;
   });
 }
@@ -933,6 +938,7 @@ function refreshFilterOptions(){
   fill('f-market','market',dn(__rowsExcept('market'),'receiving_country').map(x=>({v:x,t:x})));
   fill('f-variety','variety',dn(__rowsExcept('variety'),'variety').map(x=>({v:x,t:x})));
   fill('f-color','color',dn(__rowsExcept('color'),'color').map(x=>({v:x,t:x})));
+  fill('f-mix','mix',dn(__rowsExcept('mix'),'mix_single').map(x=>({v:x,t:x})));
 }
 function filteredData() {
   return DAILY.filter(d => {
@@ -957,6 +963,7 @@ function applyFilters() {
   F.market = document.getElementById('f-market').value;
   F.variety= document.getElementById('f-variety').value;
   F.color  = document.getElementById('f-color').value;
+  F.mix    = document.getElementById('f-mix').value;
   refreshFilterOptions();
   renderAll();
 }
@@ -964,7 +971,7 @@ function applyFilters() {
 function resetFilters() {
   F = {from:DEF_FROM,to:DEF_TO,week:'all',status:'all',source:'all',farm:'all',market:'all',variety:'all',color:'all'};
   document.getElementById('f-from').value=DEF_FROM;document.getElementById('f-to').value=DEF_TO;
-  ['f-week','f-status','f-source','f-farm','f-market','f-variety','f-color'].forEach(id=>document.getElementById(id).value='all');
+  ['f-week','f-status','f-source','f-farm','f-market','f-variety','f-color','f-mix'].forEach(id=>document.getElementById(id).value='all');
   renderAll();
 }
 

@@ -378,6 +378,7 @@ input,select,button{font-family:var(--font)}
       <option value="">All Statuses</option>
       <option>Shipped</option><option>Delivered</option>
     </select>
+    <select class="fsel" id="f-mix" onchange="applyFilters()"><option value="">All Pack Types</option></select>
     <select class="fsel" id="f-week" onchange="applyFilters()">
       <option value="">All Weeks</option>
       <option value="19">W19</option>
@@ -686,6 +687,7 @@ function __filteredRows(){
   if(S.farm)            rows=rows.filter(r=>norm(r.farm_source)===S.farm);
   if(S.src)             rows=rows.filter(r=>norm(r.source_type)===S.src);
   if(S.status)          rows=rows.filter(r=>norm(r.shipping_status)===S.status);
+  if(S.mix)             rows=rows.filter(r=>norm(r.mix_single)===S.mix);
   return rows;
 }
 // Dynamic cascading filters: rows filtered by all filters EXCEPT the named one.
@@ -699,6 +701,7 @@ function __rowsExcept(skip){
   if(skip!=='farm'&&S.farm) rows=rows.filter(r=>norm(r.farm_source)===S.farm);
   if(skip!=='src'&&S.src) rows=rows.filter(r=>norm(r.source_type)===S.src);
   if(skip!=='status'&&S.status) rows=rows.filter(r=>norm(r.shipping_status)===S.status);
+  if(skip!=='mix'&&S.mix) rows=rows.filter(r=>norm(r.mix_single)===S.mix);
   return rows;
 }
 function refreshFilterOptions(){
@@ -725,6 +728,8 @@ function refreshFilterOptions(){
   if(fs) fill('f-src','src',[...new Set(__rowsExcept('src').map(r=>norm(r.source_type)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
   const fst=document.getElementById('f-status');
   if(fst) fill('f-status','status',[...new Set(__rowsExcept('status').map(r=>norm(r.shipping_status)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  const fmx=document.getElementById('f-mix');
+  if(fmx) fill('f-mix','mix',[...new Set(__rowsExcept('mix').map(r=>norm(r.mix_single)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
 }
 let __LDF='2026-05-12',__LDT='2026-06-01';
 let barChart,donutChart,weeklyChart,classDonut;
@@ -1526,10 +1531,10 @@ function applyFilters(){
   renderChips();render();
 }
 function resetFilters(){
-  ['f-market','f-variety','f-color','f-farm','f-src','f-status','f-week'].forEach(id=>{var e=document.getElementById(id);if(e)e.value='';});
+  ['f-market','f-variety','f-color','f-farm','f-src','f-status','f-mix','f-week'].forEach(id=>{var e=document.getElementById(id);if(e)e.value='';});
   document.getElementById('f-from').value=__LDF;
   document.getElementById('f-to').value=__LDT;
-  S={...S,market:'',variety:'',color:'',farm:'',src:'',status:'',fromDate:__LDF,toDate:__LDT,week:''};
+  S={...S,market:'',variety:'',color:'',farm:'',src:'',status:'',mix:'',fromDate:__LDF,toDate:__LDT,week:''};
   renderChips();render();
 }
 function renderChips(){
@@ -1540,6 +1545,7 @@ function renderChips(){
   if(S.farm) chips.push({label:'Farm: '+S.farm,key:'farm'});
   if(S.src) chips.push({label:'Source: '+S.src,key:'src'});
   if(S.status) chips.push({label:'Status: '+S.status,key:'status'});
+  if(S.mix) chips.push({label:'Pack: '+S.mix,key:'mix'});
   if(S.week) chips.push({label:'Week: '+S.week,key:'week'});
   if(S.fromDate!==__LDF||S.toDate!==__LDT) chips.push({label:`${S.fromDate} → ${S.toDate}`,key:'date'});
   document.getElementById('fctx').innerHTML=chips.map(c=>`<div class="fctx-chip">${c.label}<button onclick="removeChip('${c.key}')"><i class="ti ti-x" style="font-size:9px"></i></button></div>`).join('');
@@ -1551,6 +1557,7 @@ function removeChip(key){
   if(key==='farm'){S.farm='';var e=document.getElementById('f-farm');if(e)e.value='';}
   if(key==='src'){S.src='';var e2=document.getElementById('f-src');if(e2)e2.value='';}
   if(key==='status'){S.status='';var e3=document.getElementById('f-status');if(e3)e3.value='';}
+  if(key==='mix'){S.mix='';var e4=document.getElementById('f-mix');if(e4)e4.value='';}
   if(key==='week'){S.week='';document.getElementById('f-week').value='';}
   if(key==='date'){S.fromDate=__LDF;S.toDate=__LDT;document.getElementById('f-from').value=__LDF;document.getElementById('f-to').value=__LDT;}
   refreshFilterOptions();
