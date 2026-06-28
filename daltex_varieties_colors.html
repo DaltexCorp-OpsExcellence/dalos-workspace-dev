@@ -476,11 +476,11 @@ input,select,button{font-family:var(--font)}
 <!-- ROW 4: Color×Market LEFT, Variety×Market RIGHT -->
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
   <div class="cc">
-    <div class="cc-header"><div><div class="cc-title">Color × Market</div><div class="cc-sub">Net weight per cell · <strong id="cm-mode-lbl">Tonnes (T)</strong></div></div><div style="display:flex;gap:5px"><button id="btn-cm-t" onclick="setHeatMode('cm','t')" style="padding:4px 12px;border-radius:6px;border:1px solid #e2e6f0;background:#142850;color:#fff;font-size:11px;font-weight:600;cursor:pointer">T</button><button id="btn-cm-pct" onclick="setHeatMode('cm','pct')" style="padding:4px 12px;border-radius:6px;border:1px solid #e2e6f0;background:#fff;color:#4a5778;font-size:11px;font-weight:600;cursor:pointer">%</button></div></div>
+    <div class="cc-header"><div><div class="cc-title">Color × Market</div><div class="cc-sub">Net weight per cell</div></div><select onchange="setHeatMode('cm',this.value)" style="height:28px;border:1px solid #e2e6f0;border-radius:6px;background:#fff;color:#142850;font-size:11px;font-weight:600;padding:0 6px;cursor:pointer;font-family:inherit"><option value="t">Tonnes (T)</option><option value="row">% of row</option><option value="col">% of column</option><option value="grand">% of grand total</option></select></div>
     <div class="heat-wrap" id="heat-col-mkt"></div>
   </div>
   <div class="cc">
-    <div class="cc-header"><div><div class="cc-title">Variety × Market</div><div class="cc-sub">Net weight per cell · <strong id="vm-mode-lbl">Tonnes (T)</strong></div></div><div style="display:flex;gap:5px"><button id="btn-vm-t" onclick="setHeatMode('vm','t')" style="padding:4px 12px;border-radius:6px;border:1px solid #e2e6f0;background:#142850;color:#fff;font-size:11px;font-weight:600;cursor:pointer">T</button><button id="btn-vm-pct" onclick="setHeatMode('vm','pct')" style="padding:4px 12px;border-radius:6px;border:1px solid #e2e6f0;background:#fff;color:#4a5778;font-size:11px;font-weight:600;cursor:pointer">%</button></div></div>
+    <div class="cc-header"><div><div class="cc-title">Variety × Market</div><div class="cc-sub">Net weight per cell</div></div><select onchange="setHeatMode('vm',this.value)" style="height:28px;border:1px solid #e2e6f0;border-radius:6px;background:#fff;color:#142850;font-size:11px;font-weight:600;padding:0 6px;cursor:pointer;font-family:inherit"><option value="t">Tonnes (T)</option><option value="row">% of row</option><option value="col">% of column</option><option value="grand">% of grand total</option></select></div>
     <div class="heat-wrap" id="heat-var-mkt"></div>
   </div>
 </div>
@@ -1093,12 +1093,6 @@ function renderWeeklyColor(cols){
 var heatMode={vm:'t',cm:'t'};
 function setHeatMode(which,mode){
   heatMode[which]=mode;
-  var tBtn=document.getElementById('btn-'+which+'-t'),pBtn=document.getElementById('btn-'+which+'-pct');
-  if(tBtn&&pBtn){
-    tBtn.style.background=mode==='t'?'#142850':'#fff';tBtn.style.color=mode==='t'?'#fff':'#4a5778';
-    pBtn.style.background=mode==='pct'?'#142850':'#fff';pBtn.style.color=mode==='pct'?'#fff':'#4a5778';
-  }
-  var lbl=document.getElementById(which+'-mode-lbl');if(lbl)lbl.textContent=mode==='pct'?'% of row':'Tonnes (T)';
   if(which==='vm') renderHeatVarMkt(filteredVarieties());
   else renderHeatColMkt(filteredColors());
 }
@@ -1106,9 +1100,11 @@ function renderHeat(containerId,rowData,rows,cols,colKey,rowKey,colLabel,rowLabe
   mode=mode||'t';
   const maxVal=Math.max(...rowData.map(r=>r.nw),1);
   const lw=rowLabel==='variety'?80:50;
-  // precompute row totals for % mode
-  const rowTotals={};
+  const rowTotals={},colTotals={};
   rows.forEach(r=>{rowTotals[r]=cols.reduce((s,c)=>{const it=rowData.find(d=>d[rowKey]===r&&d[colKey]===c);return s+(it?it.nw:0);},0);});
+  cols.forEach(c=>{colTotals[c]=rows.reduce((s,r)=>{const it=rowData.find(d=>d[rowKey]===r&&d[colKey]===c);return s+(it?it.nw:0);},0);});
+  const grand=Object.values(rowTotals).reduce((s,v)=>s+v,0)||1;
+  const isPct=(mode==='row'||mode==='col'||mode==='grand');
   let html=`<div class="heat-hdr-row" style="gap:2px"><div class="heat-hdr-lbl" style="width:${lw}px"></div>${cols.map(c=>`<div class="heat-hdr-cell" style="font-size:9px;color:var(--text3)">${c}</div>`).join('')}</div>`;
   rows.forEach(r=>{
     const rowTotal=rowTotals[r]||0;
@@ -1116,7 +1112,7 @@ function renderHeat(containerId,rowData,rows,cols,colKey,rowKey,colLabel,rowLabe
       const item=rowData.find(d=>d[rowKey]===r&&d[colKey]===c);
       const v=item?.nw||0;
       let displayVal,heatVal;
-      if(mode==='pct'){const pct=rowTotal>0?v/rowTotal*100:0;displayVal=pct>0?pct.toFixed(1)+'%':'—';heatVal=pct/100;}
+      if(isPct){const base=mode==='row'?rowTotal:(mode==='col'?(colTotals[c]||0):grand);const pct=base>0?v/base*100:0;displayVal=pct>0?pct.toFixed(1)+'%':'—';heatVal=pct/100;}
       else{displayVal=v>0?v.toFixed(1)+'T':'—';heatVal=v>0?(v/maxVal):0;}
       const alpha=heatVal>0?0.1+heatVal*0.85:0;
       const bg=heatVal>0?`rgba(20,40,80,${alpha.toFixed(2)})`:'var(--border)';

@@ -381,8 +381,8 @@ input,select,button,textarea{font-family:var(--font)}
 </div>
 
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-  <div class="cc"><div class="cc-header"><div><div class="cc-title">Farm &#215; Variety</div><div class="cc-sub">Net weight heatmap · <strong id="fv-mode-lbl">Tonnes (T)</strong></div></div><div style="display:flex;gap:5px"><button id="btn-fv-t" onclick="setHeatMode('fv','t',this)" style="padding:4px 12px;border-radius:6px;border:1px solid #e2e6f0;background:#142850;color:#fff;font-size:11px;font-weight:600;cursor:pointer">T</button><button id="btn-fv-pct" onclick="setHeatMode('fv','pct',this)" style="padding:4px 12px;border-radius:6px;border:1px solid #e2e6f0;background:#fff;color:#4a5778;font-size:11px;font-weight:600;cursor:pointer">%</button></div></div><div id="heat-fv"></div></div>
-  <div class="cc"><div class="cc-header"><div><div class="cc-title">Farm &#215; Market</div><div class="cc-sub">Net weight heatmap · <strong id="fm-mode-lbl">Tonnes (T)</strong></div></div><div style="display:flex;gap:5px"><button id="btn-fm-t" onclick="setHeatMode('fm','t',this)" style="padding:4px 12px;border-radius:6px;border:1px solid #e2e6f0;background:#142850;color:#fff;font-size:11px;font-weight:600;cursor:pointer">T</button><button id="btn-fm-pct" onclick="setHeatMode('fm','pct',this)" style="padding:4px 12px;border-radius:6px;border:1px solid #e2e6f0;background:#fff;color:#4a5778;font-size:11px;font-weight:600;cursor:pointer">%</button></div></div><div id="heat-fm"></div></div>
+  <div class="cc"><div class="cc-header"><div><div class="cc-title">Farm &#215; Variety</div><div class="cc-sub">Net weight heatmap</div></div><select onchange="setHeatMode('fv',this.value)" style="height:28px;border:1px solid #e2e6f0;border-radius:6px;background:#fff;color:#142850;font-size:11px;font-weight:600;padding:0 6px;cursor:pointer;font-family:inherit"><option value="t">Tonnes (T)</option><option value="row">% of row</option><option value="col">% of column</option><option value="grand">% of grand total</option></select></div><div id="heat-fv"></div></div>
+  <div class="cc"><div class="cc-header"><div><div class="cc-title">Farm &#215; Market</div><div class="cc-sub">Net weight heatmap</div></div><select onchange="setHeatMode('fm',this.value)" style="height:28px;border:1px solid #e2e6f0;border-radius:6px;background:#fff;color:#142850;font-size:11px;font-weight:600;padding:0 6px;cursor:pointer;font-family:inherit"><option value="t">Tonnes (T)</option><option value="row">% of row</option><option value="col">% of column</option><option value="grand">% of grand total</option></select></div><div id="heat-fm"></div></div>
 </div>
 
 <!-- AUTO INSIGHTS -->
@@ -760,16 +760,8 @@ function renderVarTable(r){
 
 var heatMode={fv:'t',fm:'t'};
 
-function setHeatMode(which,mode,btn){
+function setHeatMode(which,mode){
   heatMode[which]=mode;
-  var tBtn=document.getElementById('btn-'+which+'-t');
-  var pBtn=document.getElementById('btn-'+which+'-pct');
-  if(tBtn&&pBtn){
-    tBtn.style.background=mode==='t'?'#142850':'#fff';
-    tBtn.style.color=mode==='t'?'#fff':'#4a5778';
-    pBtn.style.background=mode==='pct'?'#142850':'#fff';
-    pBtn.style.color=mode==='pct'?'#fff':'#4a5778';
-  }
   renderHeatmaps(filt());
 }
 
@@ -792,7 +784,15 @@ function renderHeatmaps(r){
         return s+(item?item.nw:0);
       },0);
     });
+    var colTotals={};
+    cols.forEach(function(col){
+      colTotals[col]=rows.reduce(function(s,row){
+        var item=data.find(function(d){return d[rk]===row&&d[ck]===col;});
+        return s+(item?item.nw:0);
+      },0);
+    });
     var grandTotal=Object.values(rowTotals).reduce(function(s,v){return s+v;},0)||1;
+    var isPct=(mode==='row'||mode==='col'||mode==='grand');
 
     var h='<div style="overflow-x:auto">'
       +'<div style="display:flex;gap:2px;margin-bottom:3px">'
@@ -803,15 +803,15 @@ function renderHeatmaps(r){
 
     rows.forEach(function(row){
       var rowTotal=rowTotals[row];
-      var rowPct=rowTotal/grandTotal*100;
       h+='<div style="display:flex;gap:2px;margin-bottom:2px">'
         +'<div style="width:110px;flex-shrink:0;font-size:9px;font-weight:500;color:#4a5778;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+row+'</div>';
       cols.forEach(function(col){
         var item=data.find(function(d){return d[rk]===row&&d[ck]===col;});
         var nw=item?item.nw:0;
         var displayVal,heatVal;
-        if(mode==='pct'){
-          var pct=rowTotal>0?nw/rowTotal*100:0;
+        if(isPct){
+          var base=mode==='row'?rowTotal:(mode==='col'?colTotals[col]:grandTotal);
+          var pct=base>0?nw/base*100:0;
           displayVal=pct>0?pct.toFixed(1)+'%':'—';
           heatVal=pct/100;
         } else {
@@ -823,7 +823,11 @@ function renderHeatmaps(r){
         var tc=a>0.45?'#fff':'#142850';
         h+='<div style="flex:1;min-width:60px;height:24px;border-radius:3px;background:'+bg+';color:'+tc+';display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600">'+displayVal+'</div>';
       });
-      var rowDisp=mode==='pct'?rowPct.toFixed(1)+'%':rowTotal.toFixed(1)+'T';
+      var rowDisp;
+      if(mode==='grand') rowDisp=(rowTotal/grandTotal*100).toFixed(1)+'%';
+      else if(mode==='row') rowDisp='100%';
+      else if(mode==='col') rowDisp=rowTotal.toFixed(1)+'T';
+      else rowDisp=rowTotal.toFixed(1)+'T';
       h+='<div style="width:52px;height:24px;border-radius:3px;background:#f4f6fb;border:1px solid #e2e6f0;color:#142850;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">'+rowDisp+'</div>';
       h+='</div>';
     });

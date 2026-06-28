@@ -538,8 +538,7 @@ input,select,button{font-family:var(--font)}
       <button class="cc-btn on" id="btn-heat-nw" onclick="setHeatMetric('nw',this)">Net Wt</button>
       <button class="cc-btn" id="btn-heat-ctr" onclick="setHeatMetric('containers',this)">Containers</button>
       <span style="width:1px;height:18px;background:#e2e6f0;margin:0 4px"></span>
-      <button class="cc-btn on" id="btn-heat-t" onclick="setHeatScale('t',this)">T/#</button>
-      <button class="cc-btn" id="btn-heat-pct" onclick="setHeatScale('pct',this)">%</button>
+      <select onchange="setHeatScale(this.value)" style="height:28px;border:1px solid #e2e6f0;border-radius:6px;background:#fff;color:#142850;font-size:11px;font-weight:600;padding:0 6px;cursor:pointer;font-family:inherit"><option value="t">Value (T)</option><option value="row">% of row</option><option value="col">% of column</option><option value="grand">% of grand total</option></select>
     </div>
   </div>
   <div id="heat-container" style="overflow-x:auto"></div>
@@ -1223,10 +1222,14 @@ function renderHeatmap(){
   const shown=S.market?all.filter(c=>c===S.market):all;
   const allVals=RAW.by_mkt_week.map(r=>metric==='nw'?r.nw:r.ctr);
   const maxVal=Math.max(...allVals);
-  const pctMode=S.heatScale==='pct';
-  // row (market) totals in the current metric, for % mode
-  const rowTot={};
-  shown.forEach(m=>{rowTot[m]=weeks.reduce((s,w)=>{const row=RAW.by_mkt_week.find(r=>r.c===m&&r.wk===w);return s+(row?(metric==='nw'?row.nw:row.ctr):0);},0);});
+  const scale=S.heatScale||'t';
+  const isPct=(scale==='row'||scale==='col'||scale==='grand');
+  const cellVal=(m,w)=>{const row=RAW.by_mkt_week.find(r=>r.c===m&&r.wk===w);return row?(metric==='nw'?row.nw:row.ctr):0;};
+  // row (market) totals, column (week) totals, grand total in the current metric
+  const rowTot={},colTot={};
+  shown.forEach(m=>{rowTot[m]=weeks.reduce((s,w)=>s+cellVal(m,w),0);});
+  weeks.forEach(w=>{colTot[w]=shown.reduce((s,m)=>s+cellVal(m,w),0);});
+  const grandTot=shown.reduce((s,m)=>s+rowTot[m],0)||1;
 
   let html=`<div class="heat-hdr-row">
     <div class="heat-hdr-lbl"></div>
@@ -1236,10 +1239,9 @@ function renderHeatmap(){
     html+=`<div class="heat-row">
       <div class="heat-lbl">${flagImg(m)}<span>${m}</span></div>
       ${weeks.map(w=>{
-        const row=RAW.by_mkt_week.find(r=>r.c===m&&r.wk===w);
-        const v=row?(metric==='nw'?row.nw:row.ctr):0;
+        const v=cellVal(m,w);
         let disp,heatVal;
-        if(pctMode){const pct=rowTot[m]>0?v/rowTot[m]*100:0;disp=pct>0?pct.toFixed(1)+'%':'-';heatVal=pct/100;}
+        if(isPct){const base=scale==='row'?rowTot[m]:(scale==='col'?colTot[w]:grandTot);const pct=base>0?v/base*100:0;disp=pct>0?pct.toFixed(1)+'%':'-';heatVal=pct/100;}
         else{disp=v>0?(metric==='nw'?v.toFixed(1)+'T':v):'-';heatVal=v>0?(v/maxVal):0;}
         const alpha=heatVal>0?0.12+heatVal*0.82:0;
         const bg=heatVal>0?`rgba(20,40,80,${alpha.toFixed(2)})`:'var(--border)';
@@ -1571,10 +1573,8 @@ function setHeatMetric(m,btn){
   document.getElementById('btn-heat-ctr').classList.toggle('on',m==='containers');
   renderHeatmap();
 }
-function setHeatScale(s,btn){
+function setHeatScale(s){
   S.heatScale=s;
-  document.getElementById('btn-heat-t').classList.toggle('on',s==='t');
-  document.getElementById('btn-heat-pct').classList.toggle('on',s==='pct');
   renderHeatmap();
 }
 function exportCSV(){
