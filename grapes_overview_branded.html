@@ -969,7 +969,7 @@ function applyFilters() {
 }
 
 function resetFilters() {
-  F = {from:DEF_FROM,to:DEF_TO,week:'all',status:'all',source:'all',farm:'all',market:'all',variety:'all',color:'all'};
+  F = {from:DEF_FROM,to:DEF_TO,week:'all',status:'all',source:'all',farm:'all',market:'all',variety:'all',color:'all',mix:'all'};
   document.getElementById('f-from').value=DEF_FROM;document.getElementById('f-to').value=DEF_TO;
   ['f-week','f-status','f-source','f-farm','f-market','f-variety','f-color','f-mix'].forEach(id=>document.getElementById(id).value='all');
   renderAll();
