@@ -326,6 +326,9 @@ input,select,button,textarea{font-family:var(--font)}
 <div class="fbar"><div class="fbar-top">
   <span class="fbar-label"><i class="ti ti-sliders-horizontal"></i> Filters</span>
   <div class="fbar-sep"></div>
+  <div class="date-grp"><span class="date-lbl">From</span><input type="date" class="finput" id="f-from" value="2026-05-12" min="2026-05-12" max="2026-06-01" onchange="apply()"></div>
+  <div class="date-grp"><span class="date-lbl">To</span><input type="date" class="finput" id="f-to" value="2026-06-01" min="2026-05-12" max="2026-06-01" onchange="apply()"></div>
+  <div class="fbar-sep"></div>
   <select class="fsel" id="f-week" onchange="apply()"><option value="">All Weeks</option><option value="19">W19</option><option value="20">W20</option><option value="21">W21</option><option value="22">W22</option></select>
   <select class="fsel" id="f-farm" onchange="apply()"><option value="">All Farms</option><option>Hana</option><option>Salma</option><option>El khier</option><option>Menia</option><option>Dina Farms</option><option>Akram Shawky</option><option>Elmasa</option><option>Abu Dhabi</option></select>
   <select class="fsel" id="f-mkt" onchange="apply()"><option value="">All Markets</option><option>UK</option><option>Holland</option><option>South Africa</option><option>Switzerland</option><option>Slovenia</option><option>Lativia</option><option>Norway</option><option>Russia</option><option>Spain</option><option>UAE</option><option>Belarus</option><option>Poland</option></select>
@@ -438,7 +441,7 @@ const PAL_FARM={Menia:'#142850',Hana:'#DC6428',Salma:'#1a3668','El khier':'#d460
 const PAL_MKT={UK:'#142850',Holland:'#DC6428',Switzerland:'#1a3668',Slovenia:'#d46024',Norway:'#3d6fa8',Lativia:'#f4a55a','South Africa':'#16a34a',Russia:'#6b7280',UAE:'#5c8fc9',Spain:'#d97706'};
 const PAL_VAR={Flame:'#DC6428',Prime:'#142850','Arra 30':'#3d6fa8','Star Light':'#16a34a','Early Flame':'#e8872e','Early Pearl':'#6b7280'};
 
-let S={farm:'',mkt:'',src:'',week:'',sortCol:'nw',sortDir:-1};
+let S={farm:'',mkt:'',src:'',week:'',fromDate:'2026-05-12',toDate:'2026-06-01',sortCol:'nw',sortDir:-1};
 
 function filt(){
   // FARMS_ALL is already rebuilt from rows matching market/source/week (see render()).
@@ -471,6 +474,7 @@ function __farmFilteredRows(){
   if(S.mkt)  rows=rows.filter(r=>String(r.receiving_country||'')===S.mkt);
   if(S.src)  rows=rows.filter(r=>String(r.source_type||'')===S.src);
   if(S.week) rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===S.week);
+  if(S.fromDate&&S.toDate&&(S.fromDate!=='2026-05-12'||S.toDate!=='2026-06-01')) rows=rows.filter(r=>r.loading_date&&r.loading_date>=S.fromDate&&r.loading_date<=S.toDate);
   return rows;
 }
 // Dynamic cascading filters: rows filtered by all filters EXCEPT the named one.
@@ -480,6 +484,7 @@ function __rowsExcept(skip){
   if(skip!=='mkt'&&S.mkt) rows=rows.filter(r=>String(r.receiving_country||'')===S.mkt);
   if(skip!=='src'&&S.src) rows=rows.filter(r=>String(r.source_type||'')===S.src);
   if(skip!=='week'&&S.week) rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===S.week);
+  if(S.fromDate&&S.toDate&&(S.fromDate!=='2026-05-12'||S.toDate!=='2026-06-01')) rows=rows.filter(r=>r.loading_date&&r.loading_date>=S.fromDate&&r.loading_date<=S.toDate);
   return rows;
 }
 function refreshFilterOptions(){
@@ -934,8 +939,8 @@ function drillFarm(farm){
 
 function closeDrill(){document.getElementById('drill-panel').classList.remove('vis');}
 function sortT(c){if(S.sortCol===c)S.sortDir*=-1;else{S.sortCol=c;S.sortDir=-1;}render();}
-function apply(){S.week=document.getElementById('f-week').value;S.farm=document.getElementById('f-farm').value;S.mkt=document.getElementById('f-mkt').value;S.src=document.getElementById('f-src').value;refreshFilterOptions();chips();render();}
-function reset(){['f-week','f-farm','f-mkt','f-src'].forEach(id=>document.getElementById(id).value='');S={...S,week:'',farm:'',mkt:'',src:''};chips();render();}
+function apply(){S.week=document.getElementById('f-week').value;S.farm=document.getElementById('f-farm').value;S.mkt=document.getElementById('f-mkt').value;S.src=document.getElementById('f-src').value;var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');S.fromDate=ff?ff.value:'';S.toDate=ft?ft.value:'';refreshFilterOptions();chips();render();}
+function reset(){['f-week','f-farm','f-mkt','f-src'].forEach(id=>document.getElementById(id).value='');var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');if(ff)ff.value='2026-05-12';if(ft)ft.value='2026-06-01';S={...S,week:'',farm:'',mkt:'',src:'',fromDate:'2026-05-12',toDate:'2026-06-01'};refreshFilterOptions();chips();render();}
 function chips(){const L={week:'Wk',farm:'Farm',mkt:'Market',src:'Source'};document.getElementById('fctx').innerHTML=['week','farm','mkt','src'].filter(k=>S[k]).map(k=>`<div class="chip">${L[k]}: ${S[k]} <button onclick="removeChip('${k}')"><i class="ti ti-x" style="font-size:9px"></i></button></div>`).join('');}
 function removeChip(k){document.getElementById('f-'+k).value='';S[k]='';chips();render();}
 function doCSV(){const r=filt(),tot=r.reduce((s,x)=>s+x.nw,0);const hdr='Farm,Source,NW_T,Share_pct,Containers,Prior_T,YoY_pct'+String.fromCharCode(10);const rows=r.map(x=>{const p=PFARM[x.f]||0;const y=p>0?((x.nw-p)/p*100).toFixed(1):'N/A';return[x.f,x.src,x.nw.toFixed(2),(x.nw/tot*100).toFixed(1),x.containers,p||'N/A',y].join(',');}).join(String.fromCharCode(10));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([hdr+rows],{type:'text/csv'}));a.download='farms.csv';a.click();}
