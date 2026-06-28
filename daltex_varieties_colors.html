@@ -621,6 +621,7 @@ let TOTAL_NW = 1285.85;
 
 let S={variety:'',color:'',market:'',farm:'',week:'',fromDate:'2026-05-12',toDate:'2026-06-01',varSortCol:'nw',varSortDir:-1,colSortCol:'nw',colSortDir:-1,varWeekView:'stacked',colWeekView:'stacked'};
 let __ROWS=[];   // raw shipment rows kept so cross-tabs can be rebuilt against active filters
+let __LDF='2026-05-12',__LDT='2026-06-01';  // actual data date range (set on load)
 let WLBL='cur';
 let BLBL='cur';
 function setBarLbl(m,btn){BLBL=m;['c','v'].forEach(p=>{['cur','prior','both'].forEach(k=>{const el=document.getElementById(p+'blbl-'+k);if(el)el.classList.toggle('on',k===m);});});render();}
@@ -668,7 +669,7 @@ function __vcFilteredRows(){
   if(S.src)    rows=rows.filter(r=>norm(r.source_type)===S.src);
   if(S.status) rows=rows.filter(r=>norm(r.shipping_status)===S.status);
   if(S.week)   rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===S.week);
-  if(S.fromDate&&S.toDate&&(S.fromDate!=='2026-05-12'||S.toDate!=='2026-06-01')) rows=rows.filter(r=>r.loading_date&&r.loading_date>=S.fromDate&&r.loading_date<=S.toDate);
+  if(S.fromDate&&S.toDate&&(S.fromDate!==__LDF||S.toDate!==__LDT)) rows=rows.filter(r=>r.loading_date&&r.loading_date>=S.fromDate&&r.loading_date<=S.toDate);
   return rows;
 }
 // Dynamic cascading filters: rows filtered by all filters EXCEPT the named one.
@@ -754,6 +755,17 @@ async function loadLiveData(){
     TOTAL_NW=r2(cur.reduce((s,r)=>s+num(r.net_weight),0));
 
     fillSel('f-week',[...new Set(cur.map(r=>parseInt(r.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b).map(w=>({v:w,t:'W'+w})));
+    // Set the date filter range from the actual loaded data (don't hardcode the max)
+    (function(){
+      const lds=cur.map(r=>r.loading_date).filter(Boolean).sort();
+      if(lds.length){
+        __LDF=lds[0];__LDT=lds[lds.length-1];
+        S.fromDate=__LDF;S.toDate=__LDT;
+        const ff=document.getElementById('f-from'),ft=document.getElementById('f-to');
+        if(ff){ff.value=__LDF;ff.min=__LDF;ff.max=__LDT;}
+        if(ft){ft.value=__LDT;ft.min=__LDF;ft.max=__LDT;}
+      }
+    })();
     fillSel('f-variety',VARIETIES.map(x=>x.v).sort().map(x=>({v:x,t:x})));
     fillSel('f-color',COLORS.map(x=>x.c).sort().map(x=>({v:x,t:x})));
     fillSel('f-market',[...new Set(cur.map(r=>norm(r.receiving_country)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
@@ -1578,8 +1590,8 @@ function applyFilters(){
 }
 function resetFilters(){
   ['f-variety','f-color','f-market','f-farm','f-src','f-status','f-week'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('f-from').value='2026-05-12';document.getElementById('f-to').value='2026-06-01';
-  S={...S,variety:'',color:'',market:'',farm:'',src:'',status:'',week:'',fromDate:'2026-05-12',toDate:'2026-06-01'};
+  document.getElementById('f-from').value=__LDF;document.getElementById('f-to').value=__LDT;
+  S={...S,variety:'',color:'',market:'',farm:'',src:'',status:'',week:'',fromDate:__LDF,toDate:__LDT};
   renderChips();render();
 }
 function renderChips(){
@@ -1589,7 +1601,7 @@ function renderChips(){
   if(S.market) chips.push({label:'Market: '+S.market,key:'market'});
   if(S.farm) chips.push({label:'Farm: '+S.farm,key:'farm'});
   if(S.week) chips.push({label:'Week: '+S.week,key:'week'});
-  if(S.fromDate!=='2026-05-12'||S.toDate!=='2026-06-01') chips.push({label:`${S.fromDate} → ${S.toDate}`,key:'date'});
+  if(S.fromDate!==__LDF||S.toDate!==__LDT) chips.push({label:`${S.fromDate} → ${S.toDate}`,key:'date'});
   document.getElementById('fctx').innerHTML=chips.map(c=>`<div class="fctx-chip">${c.label}<button onclick="removeChip('${c.key}')"><i class="ti ti-x" style="font-size:9px"></i></button></div>`).join('');
 }
 function removeChip(key){
@@ -1598,7 +1610,7 @@ function removeChip(key){
   if(key==='market'){S.market='';document.getElementById('f-market').value='';}
   if(key==='farm'){S.farm='';document.getElementById('f-farm').value='';}
   if(key==='week'){S.week='';document.getElementById('f-week').value='';}
-  if(key==='date'){S.fromDate='2026-05-12';S.toDate='2026-06-01';document.getElementById('f-from').value='2026-05-12';document.getElementById('f-to').value='2026-06-01';}
+  if(key==='date'){S.fromDate='2026-05-12';S.toDate='2026-06-01';document.getElementById('f-from').value=__LDF;document.getElementById('f-to').value=__LDT;}
   renderChips();render();
 }
 function setVarWeekView(v,btn){S.varWeekView=v;document.getElementById('vwk-stack').classList.toggle('on',v==='stacked');document.getElementById('vwk-group').classList.toggle('on',v==='grouped');renderWeeklyVariety(filteredVarieties());}
