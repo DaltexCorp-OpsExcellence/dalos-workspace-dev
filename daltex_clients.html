@@ -313,7 +313,7 @@ input,select,button{font-family:var(--font)}
     <span class="fbar-label"><i class="ti ti-sliders-horizontal"></i> Filters</span>
     <div class="fbar-sep"></div>
     <span style="font-size:11px;color:var(--text3);margin-right:2px">View by</span>
-    <span class="seg" style="display:inline-flex;gap:0;margin-right:4px"><button class="cc-btn on" onclick="setDim('client',this)">Client</button><button class="cc-btn" onclick="setDim('subclient',this)">Sub-Client</button></span>
+    <span class="seg" style="display:inline-flex;gap:0;margin-right:4px"><button class="cc-btn" onclick="setDim('client',this)">Client</button><button class="cc-btn on" onclick="setDim('subclient',this)">Sub-Client</button></span>
     <div class="fbar-sep"></div>
     <div class="date-grp"><span class="date-lbl">From</span><input type="date" class="finput" id="f-from" value="2026-05-12" min="2026-05-12" max="2026-06-01" onchange="applyFilters()"></div>
     <div class="date-grp"><span class="date-lbl">To</span><input type="date" class="finput" id="f-to" value="2026-06-01" min="2026-05-12" max="2026-06-01" onchange="applyFilters()"></div>
@@ -509,7 +509,7 @@ const PAL=['#142850','#DC6428','#1a3668','#d46024','#3d6fa8','#f4a55a','#16a34a'
 const CL_COL={'Daltex UK':'#142850','Capespan':'#DC6428','ISEPPI Frutta SA':'#1a3668','Bama Gruppen AS':'#d46024','Dankers':'#3d6fa8','Pantera EUR':'#f4a55a','RGS':'#16a34a','Majed Alfuttaim':'#6b7280','Asia Fresh':'#5c8fc9','Karsten Marketing':'#d97706','Parallel':'#9ca3af','SEED':'#4b5563'};
 const VAR_COL={Flame:'#DC6428',Prime:'#142850','Arra 30':'#3d6fa8','Star Light':'#16a34a','Early Flame':'#e8872e','Early Pearl':'#6b7280'};
 
-let S={client:'',subclient:'',market:'',variety:'',week:'',fromDate:'2026-05-12',toDate:'2026-06-01',sortCol:'nw',sortDir:-1,mainMetric:'nw',weekView:'stacked',dim:'client'};
+let S={client:'',subclient:'',market:'',variety:'',week:'',fromDate:'2026-05-12',toDate:'2026-06-01',sortCol:'nw',sortDir:-1,mainMetric:'nw',weekView:'stacked',dim:'subclient'};
 function setDim(d,btn){S.dim=d;S.client='';if(btn&&btn.parentElement)btn.parentElement.querySelectorAll('.cc-btn').forEach(b=>b.classList.toggle('on',b===btn));render();}
 let WLBL='cur';
 let BLBL='cur';
