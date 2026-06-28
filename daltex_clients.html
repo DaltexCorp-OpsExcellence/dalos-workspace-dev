@@ -743,7 +743,7 @@ function renderKPIs(clients,total){
   const topYoy=top&&topPrior>0?((top.nw-topPrior)/topPrior*100):null;
   const cards=[
     {label:'Total Net Weight',icon:'ti-weight',val:total.toFixed(1)+' T',sub:'Prior: '+priorTotal.toFixed(0)+' T',yoy:yoyBadge(yoy),bar:Math.min(total/13,100)},
-    {label:'Active Clients',icon:'ti-users',val:clients.length,sub:clients.filter(r=>r.nw>=100).length+' major · '+clients.filter(r=>r.nw<100).length+' smaller',yoy:'',bar:clients.length*8},
+    {label:'Active Clients',icon:'ti-users',val:clients.length,sub:'',yoy:'',bar:clients.length*8},
     {label:'Top Client',icon:'ti-trophy',val:top?top.cl.split(' ')[0]:'--',sub:top?top.nw.toFixed(1)+'T · '+Math.round(top.nw/total*100)+'% share':'',yoy:yoyBadge(topYoy),bar:top?Math.round(top.nw/total*100):0},
     {label:'Class 1 NW',icon:'ti-award',val:total>0?Math.round(c1/total*100)+'%':'--',sub:c1.toFixed(1)+' T Class 1',yoy:'',bar:total>0?Math.round(c1/total*100):0},
     {label:'Avg T / Container',icon:'ti-package',val:avgCtr+' T',sub:ctrs+' containers total',yoy:'',bar:Math.min(parseFloat(avgCtr)||0,15)*6.5},
