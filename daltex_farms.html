@@ -333,6 +333,9 @@ input,select,button,textarea{font-family:var(--font)}
   <select class="fsel" id="f-farm" onchange="apply()"><option value="">All Farms</option><option>Hana</option><option>Salma</option><option>El khier</option><option>Menia</option><option>Dina Farms</option><option>Akram Shawky</option><option>Elmasa</option><option>Abu Dhabi</option></select>
   <select class="fsel" id="f-mkt" onchange="apply()"><option value="">All Markets</option><option>UK</option><option>Holland</option><option>South Africa</option><option>Switzerland</option><option>Slovenia</option><option>Lativia</option><option>Norway</option><option>Russia</option><option>Spain</option><option>UAE</option><option>Belarus</option><option>Poland</option></select>
   <select class="fsel" id="f-src" onchange="apply()"><option value="">All Sources</option><option>Daltex Farms</option><option>Out Source</option></select>
+  <select class="fsel" id="f-variety" onchange="apply()"><option value="">All Varieties</option><option>Flame</option><option>Prime</option><option>Arra 30</option><option>Star Light</option><option>Early Flame</option><option>Early Pearl</option></select>
+  <select class="fsel" id="f-color" onchange="apply()"><option value="">All Colors</option><option>Red</option><option>White</option><option>Black</option></select>
+  <select class="fsel" id="f-status" onchange="apply()"><option value="">All Statuses</option><option>Shipped</option><option>Delivered</option></select>
   <div class="factions">
     <button class="fbtn fbtn-reset" onclick="reset()"><i class="ti ti-refresh" style="font-size:11px"></i> Reset</button>
   </div>
@@ -474,6 +477,9 @@ function __farmFilteredRows(){
   if(S.mkt)  rows=rows.filter(r=>String(r.receiving_country||'')===S.mkt);
   if(S.src)  rows=rows.filter(r=>String(r.source_type||'')===S.src);
   if(S.week) rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===S.week);
+  if(S.variety) rows=rows.filter(r=>String(r.variety||'')===S.variety);
+  if(S.color) rows=rows.filter(r=>String(r.color||'')===S.color);
+  if(S.status) rows=rows.filter(r=>String(r.shipping_status||'')===S.status);
   if(S.fromDate&&S.toDate&&(S.fromDate!=='2026-05-12'||S.toDate!=='2026-06-01')) rows=rows.filter(r=>r.loading_date&&r.loading_date>=S.fromDate&&r.loading_date<=S.toDate);
   return rows;
 }
@@ -484,6 +490,9 @@ function __rowsExcept(skip){
   if(skip!=='mkt'&&S.mkt) rows=rows.filter(r=>String(r.receiving_country||'')===S.mkt);
   if(skip!=='src'&&S.src) rows=rows.filter(r=>String(r.source_type||'')===S.src);
   if(skip!=='week'&&S.week) rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===S.week);
+  if(skip!=='variety'&&S.variety) rows=rows.filter(r=>String(r.variety||'')===S.variety);
+  if(skip!=='color'&&S.color) rows=rows.filter(r=>String(r.color||'')===S.color);
+  if(skip!=='status'&&S.status) rows=rows.filter(r=>String(r.shipping_status||'')===S.status);
   if(S.fromDate&&S.toDate&&(S.fromDate!=='2026-05-12'||S.toDate!=='2026-06-01')) rows=rows.filter(r=>r.loading_date&&r.loading_date>=S.fromDate&&r.loading_date<=S.toDate);
   return rows;
 }
@@ -503,6 +512,9 @@ function refreshFilterOptions(){
   fill('f-farm','farm',[...new Set(__rowsExcept('farm').map(r=>String(r.farm_source||'').trim()).filter(Boolean))].sort().map(x=>({v:x,t:x})));
   fill('f-mkt','mkt',[...new Set(__rowsExcept('mkt').map(r=>String(r.receiving_country||'').trim()).filter(Boolean))].sort().map(x=>({v:x,t:x})));
   fill('f-src','src',[...new Set(__rowsExcept('src').map(r=>String(r.source_type||'').trim()).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  const fv=document.getElementById('f-variety');if(fv) fill('f-variety','variety',[...new Set(__rowsExcept('variety').map(r=>String(r.variety||'').trim()).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  const fcl=document.getElementById('f-color');if(fcl) fill('f-color','color',[...new Set(__rowsExcept('color').map(r=>String(r.color||'').trim()).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  const fst=document.getElementById('f-status');if(fst) fill('f-status','status',[...new Set(__rowsExcept('status').map(r=>String(r.shipping_status||'').trim()).filter(Boolean))].sort().map(x=>({v:x,t:x})));
 }
 
 function yoyBadge(pct){
@@ -939,8 +951,8 @@ function drillFarm(farm){
 
 function closeDrill(){document.getElementById('drill-panel').classList.remove('vis');}
 function sortT(c){if(S.sortCol===c)S.sortDir*=-1;else{S.sortCol=c;S.sortDir=-1;}render();}
-function apply(){S.week=document.getElementById('f-week').value;S.farm=document.getElementById('f-farm').value;S.mkt=document.getElementById('f-mkt').value;S.src=document.getElementById('f-src').value;var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');S.fromDate=ff?ff.value:'';S.toDate=ft?ft.value:'';refreshFilterOptions();chips();render();}
-function reset(){['f-week','f-farm','f-mkt','f-src'].forEach(id=>document.getElementById(id).value='');var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');if(ff)ff.value='2026-05-12';if(ft)ft.value='2026-06-01';S={...S,week:'',farm:'',mkt:'',src:'',fromDate:'2026-05-12',toDate:'2026-06-01'};refreshFilterOptions();chips();render();}
+function apply(){S.week=document.getElementById('f-week').value;S.farm=document.getElementById('f-farm').value;S.mkt=document.getElementById('f-mkt').value;S.src=document.getElementById('f-src').value;S.variety=document.getElementById('f-variety').value;S.color=document.getElementById('f-color').value;S.status=document.getElementById('f-status').value;var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');S.fromDate=ff?ff.value:'';S.toDate=ft?ft.value:'';refreshFilterOptions();chips();render();}
+function reset(){['f-week','f-farm','f-mkt','f-src','f-variety','f-color','f-status'].forEach(id=>document.getElementById(id).value='');var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');if(ff)ff.value='2026-05-12';if(ft)ft.value='2026-06-01';S={...S,week:'',farm:'',mkt:'',src:'',variety:'',color:'',status:'',fromDate:'2026-05-12',toDate:'2026-06-01'};refreshFilterOptions();chips();render();}
 function chips(){const L={week:'Wk',farm:'Farm',mkt:'Market',src:'Source'};document.getElementById('fctx').innerHTML=['week','farm','mkt','src'].filter(k=>S[k]).map(k=>`<div class="chip">${L[k]}: ${S[k]} <button onclick="removeChip('${k}')"><i class="ti ti-x" style="font-size:9px"></i></button></div>`).join('');}
 function removeChip(k){document.getElementById('f-'+k).value='';S[k]='';chips();render();}
 function doCSV(){const r=filt(),tot=r.reduce((s,x)=>s+x.nw,0);const hdr='Farm,Source,NW_T,Share_pct,Containers,Prior_T,YoY_pct'+String.fromCharCode(10);const rows=r.map(x=>{const p=PFARM[x.f]||0;const y=p>0?((x.nw-p)/p*100).toFixed(1):'N/A';return[x.f,x.src,x.nw.toFixed(2),(x.nw/tot*100).toFixed(1),x.containers,p||'N/A',y].join(',');}).join(String.fromCharCode(10));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([hdr+rows],{type:'text/csv'}));a.download='farms.csv';a.click();}

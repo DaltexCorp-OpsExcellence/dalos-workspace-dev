@@ -374,6 +374,10 @@ input,select,button{font-family:var(--font)}
       <input type="date" class="finput" id="f-to" value="2026-06-01" min="2026-05-12" max="2026-06-01" onchange="applyFilters()">
     </div>
     <div class="fbar-sep"></div>
+    <select class="fsel" id="f-status" onchange="applyFilters()">
+      <option value="">All Statuses</option>
+      <option>Shipped</option><option>Delivered</option>
+    </select>
     <select class="fsel" id="f-week" onchange="applyFilters()">
       <option value="">All Weeks</option>
       <option value="19">W19</option>
@@ -679,6 +683,7 @@ function __filteredRows(){
   if(S.color)           rows=rows.filter(r=>norm(r.color)===S.color);
   if(S.farm)            rows=rows.filter(r=>norm(r.farm_source)===S.farm);
   if(S.src)             rows=rows.filter(r=>norm(r.source_type)===S.src);
+  if(S.status)          rows=rows.filter(r=>norm(r.shipping_status)===S.status);
   return rows;
 }
 // Dynamic cascading filters: rows filtered by all filters EXCEPT the named one.
@@ -691,6 +696,7 @@ function __rowsExcept(skip){
   if(skip!=='color'&&S.color) rows=rows.filter(r=>norm(r.color)===S.color);
   if(skip!=='farm'&&S.farm) rows=rows.filter(r=>norm(r.farm_source)===S.farm);
   if(skip!=='src'&&S.src) rows=rows.filter(r=>norm(r.source_type)===S.src);
+  if(skip!=='status'&&S.status) rows=rows.filter(r=>norm(r.shipping_status)===S.status);
   return rows;
 }
 function refreshFilterOptions(){
@@ -715,6 +721,8 @@ function refreshFilterOptions(){
   if(ff) fill('f-farm','farm',[...new Set(__rowsExcept('farm').map(r=>norm(r.farm_source)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
   const fs=document.getElementById('f-src');
   if(fs) fill('f-src','src',[...new Set(__rowsExcept('src').map(r=>norm(r.source_type)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  const fst=document.getElementById('f-status');
+  if(fst) fill('f-status','status',[...new Set(__rowsExcept('status').map(r=>norm(r.shipping_status)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
 }
 let __LDF='2026-05-12',__LDT='2026-06-01';
 let barChart,donutChart,weeklyChart,classDonut;
@@ -1495,6 +1503,7 @@ document.getElementById('ai-q').addEventListener('keydown',e=>{if(e.key==='Enter
 /* ── FILTERS ── */
 function applyFilters(){
   S.market=document.getElementById('f-market').value;
+  S.status=document.getElementById('f-status').value;
   S.variety=document.getElementById('f-variety').value;
   S.color=document.getElementById('f-color').value;
   S.farm=document.getElementById('f-farm').value;
@@ -1506,10 +1515,10 @@ function applyFilters(){
   renderChips();render();
 }
 function resetFilters(){
-  ['f-market','f-variety','f-color','f-farm','f-src','f-week'].forEach(id=>{var e=document.getElementById(id);if(e)e.value='';});
+  ['f-market','f-variety','f-color','f-farm','f-src','f-status','f-week'].forEach(id=>{var e=document.getElementById(id);if(e)e.value='';});
   document.getElementById('f-from').value=__LDF;
   document.getElementById('f-to').value=__LDT;
-  S={...S,market:'',variety:'',color:'',farm:'',src:'',fromDate:__LDF,toDate:__LDT,week:''};
+  S={...S,market:'',variety:'',color:'',farm:'',src:'',status:'',fromDate:__LDF,toDate:__LDT,week:''};
   renderChips();render();
 }
 function renderChips(){
@@ -1519,6 +1528,7 @@ function renderChips(){
   if(S.color) chips.push({label:'Color: '+S.color,key:'color'});
   if(S.farm) chips.push({label:'Farm: '+S.farm,key:'farm'});
   if(S.src) chips.push({label:'Source: '+S.src,key:'src'});
+  if(S.status) chips.push({label:'Status: '+S.status,key:'status'});
   if(S.week) chips.push({label:'Week: '+S.week,key:'week'});
   if(S.fromDate!==__LDF||S.toDate!==__LDT) chips.push({label:`${S.fromDate} → ${S.toDate}`,key:'date'});
   document.getElementById('fctx').innerHTML=chips.map(c=>`<div class="fctx-chip">${c.label}<button onclick="removeChip('${c.key}')"><i class="ti ti-x" style="font-size:9px"></i></button></div>`).join('');
@@ -1529,6 +1539,7 @@ function removeChip(key){
   if(key==='color'){S.color='';document.getElementById('f-color').value='';}
   if(key==='farm'){S.farm='';var e=document.getElementById('f-farm');if(e)e.value='';}
   if(key==='src'){S.src='';var e2=document.getElementById('f-src');if(e2)e2.value='';}
+  if(key==='status'){S.status='';var e3=document.getElementById('f-status');if(e3)e3.value='';}
   if(key==='week'){S.week='';document.getElementById('f-week').value='';}
   if(key==='date'){S.fromDate=__LDF;S.toDate=__LDT;document.getElementById('f-from').value=__LDF;document.getElementById('f-to').value=__LDT;}
   refreshFilterOptions();

@@ -327,9 +327,17 @@ input,select,button,textarea{font-family:var(--font)}
 <div class="fbar"><div class="fbar-top">
   <span class="fbar-label"><i class="ti ti-sliders-horizontal"></i> Filters</span>
   <div class="fbar-sep"></div>
+  <div class="date-grp"><span class="date-lbl">From</span><input type="date" class="finput" id="f-from" value="2026-05-12" min="2026-05-12" max="2026-06-01" onchange="applyF()"></div>
+  <div class="date-grp"><span class="date-lbl">To</span><input type="date" class="finput" id="f-to" value="2026-06-01" min="2026-05-12" max="2026-06-01" onchange="applyF()"></div>
+  <div class="fbar-sep"></div>
   <select class="fsel" id="f-week" onchange="applyF()"><option value="">All Weeks</option><option value="19">W19</option><option value="20">W20</option><option value="21">W21</option><option value="22">W22</option></select>
   <select class="fsel" id="f-var" onchange="applyF()"><option value="">All Varieties</option><option>Flame</option><option>Prime</option><option>Arra 30</option><option>Star Light</option><option>Early Flame</option><option>Early Pearl</option></select>
+  <select class="fsel" id="f-color" onchange="applyF()"><option value="">All Colors</option><option>Red</option><option>White</option><option>Black</option></select>
   <select class="fsel" id="f-mkt" onchange="applyF()"><option value="">All Markets</option><option>UK</option><option>Holland</option><option>Switzerland</option><option>Slovenia</option><option>Norway</option><option>South Africa</option></select>
+  <select class="fsel" id="f-client" onchange="applyF()"><option value="">All Clients</option></select>
+  <select class="fsel" id="f-farm" onchange="applyF()"><option value="">All Farms</option></select>
+  <select class="fsel" id="f-src" onchange="applyF()"><option value="">All Sources</option><option>Daltex Farms</option><option>Out Source</option></select>
+  <select class="fsel" id="f-status" onchange="applyF()"><option value="">All Statuses</option><option>Shipped</option><option>Delivered</option></select>
   <div class="factions">
     <button class="fbtn fbtn-reset" onclick="resetF()"><i class="ti ti-refresh" style="font-size:11px"></i> Reset</button>
   </div>
@@ -467,7 +475,7 @@ const FARM_COL = {Menia:'#142850',Hana:'#DC6428',Salma:'#1a3668','El khier':'#d4
 const CT_COL   = {'Green 5.5 KG':'#16a34a','Black 5 KG':'#142850','Green 5 KG':'#22c55e','Green 9 KG':'#4ade80','Black 4 KG':'#1a3668','Black 9 KG':'#1e3a5f','Brown 9 KG':'#92400e','Green 4 KG':'#86efac','Brown 4 KG':'#d97706'};
 const PT_COL   = {'PUNNET K37':'#142850','PUNNET CLAMSHELL':'#DC6428','LOOSE':'#3d6fa8','PUNNET B40':'#16a34a','PUNNET K37 No Ventilation':'#d46024','PUNNET K30':'#f4a55a'};
 
-let SF={week:'',var:'',mkt:''};
+let SF={week:'',var:'',mkt:'',color:'',client:'',farm:'',src:'',status:'',fromDate:'2026-05-12',toDate:'2026-06-01'};
 let BLBL='cur';
 function setBarLbl(m,btn){BLBL=m;['ct','pt'].forEach(p=>{['cur','prior','both'].forEach(k=>{const el=document.getElementById(p+'blbl-'+k);if(el)el.classList.toggle('on',k===m);});});render();}
 let __ROWS=[];   // raw shipment rows kept so cross-tabs can be rebuilt against active filters
@@ -505,6 +513,12 @@ function __ctFilteredRows(){
   if(SF.var)  rows=rows.filter(r=>norm(r.variety)===SF.var);
   if(SF.mkt)  rows=rows.filter(r=>norm(r.receiving_country)===SF.mkt);
   if(SF.week) rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===SF.week);
+  if(SF.color) rows=rows.filter(r=>norm(r.color)===SF.color);
+  if(SF.client) rows=rows.filter(r=>norm(r.client)===SF.client);
+  if(SF.farm) rows=rows.filter(r=>norm(r.farm_source)===SF.farm);
+  if(SF.src) rows=rows.filter(r=>norm(r.source_type)===SF.src);
+  if(SF.status) rows=rows.filter(r=>norm(r.shipping_status)===SF.status);
+  if(SF.fromDate&&SF.toDate&&(SF.fromDate!=='2026-05-12'||SF.toDate!=='2026-06-01')) rows=rows.filter(r=>r.loading_date&&r.loading_date>=SF.fromDate&&r.loading_date<=SF.toDate);
   return rows;
 }
 // Dynamic cascading filters: rows filtered by all filters EXCEPT the named one.
@@ -514,6 +528,12 @@ function __rowsExcept(skip){
   if(skip!=='var'&&SF.var) rows=rows.filter(r=>norm(r.variety)===SF.var);
   if(skip!=='mkt'&&SF.mkt) rows=rows.filter(r=>norm(r.receiving_country)===SF.mkt);
   if(skip!=='week'&&SF.week) rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===SF.week);
+  if(skip!=='color'&&SF.color) rows=rows.filter(r=>norm(r.color)===SF.color);
+  if(skip!=='client'&&SF.client) rows=rows.filter(r=>norm(r.client)===SF.client);
+  if(skip!=='farm'&&SF.farm) rows=rows.filter(r=>norm(r.farm_source)===SF.farm);
+  if(skip!=='src'&&SF.src) rows=rows.filter(r=>norm(r.source_type)===SF.src);
+  if(skip!=='status'&&SF.status) rows=rows.filter(r=>norm(r.shipping_status)===SF.status);
+  if(SF.fromDate&&SF.toDate&&(SF.fromDate!=='2026-05-12'||SF.toDate!=='2026-06-01')) rows=rows.filter(r=>r.loading_date&&r.loading_date>=SF.fromDate&&r.loading_date<=SF.toDate);
   return rows;
 }
 function refreshFilterOptions(){
@@ -530,6 +550,11 @@ function refreshFilterOptions(){
   fill('f-week','week','All Weeks',[...new Set(__rowsExcept('week').map(r=>parseInt(r.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b).map(w=>({v:w,t:'W'+w})));
   fill('f-var','var','All Varieties',[...new Set(__rowsExcept('var').map(r=>norm(r.variety)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
   fill('f-mkt','mkt','All Markets',[...new Set(__rowsExcept('mkt').map(r=>norm(r.receiving_country)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  const fcl=document.getElementById('f-color');if(fcl) fill('f-color','color','All Colors',[...new Set(__rowsExcept('color').map(r=>norm(r.color)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  const fclient=document.getElementById('f-client');if(fclient) fill('f-client','client','All Clients',[...new Set(__rowsExcept('client').map(r=>norm(r.client)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  const ff=document.getElementById('f-farm');if(ff) fill('f-farm','farm','All Farms',[...new Set(__rowsExcept('farm').map(r=>norm(r.farm_source)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  const fs=document.getElementById('f-src');if(fs) fill('f-src','src','All Sources',[...new Set(__rowsExcept('src').map(r=>norm(r.source_type)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  const fst=document.getElementById('f-status');if(fst) fill('f-status','status','All Statuses',[...new Set(__rowsExcept('status').map(r=>norm(r.shipping_status)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
 }
 
 function filtCT(){
@@ -887,8 +912,8 @@ function showSeg(type,btn){
   document.getElementById('ct-section').style.display=type==='ct'?'':'none';
   document.getElementById('pt-section').style.display=type==='pt'?'':'none';
 }
-function applyF(){SF.week=document.getElementById('f-week').value;SF.var=document.getElementById('f-var').value;SF.mkt=document.getElementById('f-mkt').value;refreshFilterOptions();render();}
-function resetF(){['f-week','f-var','f-mkt'].forEach(id=>document.getElementById(id).value='');SF={week:'',var:'',mkt:''};render();}
+function applyF(){SF.week=document.getElementById('f-week').value;SF.var=document.getElementById('f-var').value;SF.mkt=document.getElementById('f-mkt').value;SF.color=document.getElementById('f-color').value;SF.client=document.getElementById('f-client').value;SF.farm=document.getElementById('f-farm').value;SF.src=document.getElementById('f-src').value;SF.status=document.getElementById('f-status').value;var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');SF.fromDate=ff?ff.value:'';SF.toDate=ft?ft.value:'';refreshFilterOptions();render();}
+function resetF(){['f-week','f-var','f-mkt','f-color','f-client','f-farm','f-src','f-status'].forEach(id=>{var e=document.getElementById(id);if(e)e.value='';});var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');if(ff)ff.value='2026-05-12';if(ft)ft.value='2026-06-01';SF={week:'',var:'',mkt:'',color:'',client:'',farm:'',src:'',status:'',fromDate:'2026-05-12',toDate:'2026-06-01'};refreshFilterOptions();render();}
 function doCSV(type){const items=type==='ct'?filtCT():filtPT();const tot=items.reduce((s,x)=>s+x.nw,0);const hdr='Name,NW_T,Share_pct,Cartons,Containers,Prior_T,YoY_pct'+String.fromCharCode(10);const rows=items.map(x=>{const p=type==='ct'?(PRIOR_CT[x.n]||0):(PRIOR_PT[x.n]||0);return[x.n,x.nw.toFixed(2),(x.nw/tot*100).toFixed(1),x.cartons,x.containers,p||'N/A',p>0?((x.nw-p)/p*100).toFixed(1):'N/A'].join(',');}).join(String.fromCharCode(10));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([hdr+rows],{type:'text/csv'}));a.download=type+'s.csv';a.click();}
 
 function renderInsights(){

@@ -381,6 +381,8 @@ input,select,button{font-family:var(--font)}
     <select class="fsel" id="f-color" onchange="applyFilters()"><option value="">All Colors</option><option>Red</option><option>White</option><option>Black</option></select>
     <select class="fsel" id="f-market" onchange="applyFilters()"><option value="">All Markets</option><option>UK</option><option>Holland</option><option>Switzerland</option><option>Slovenia</option><option>Norway</option><option>Lativia</option><option>South Africa</option><option>Russia</option><option>UAE</option><option>Spain</option></select>
     <select class="fsel" id="f-farm" onchange="applyFilters()"><option value="">All Farms</option><option>Hana</option><option>Salma</option><option>El khier</option><option>Menia</option><option>Dina Farms</option><option>Akram Shawky</option><option>Elmasa</option><option>Abu Dhabi</option></select>
+    <select class="fsel" id="f-src" onchange="applyFilters()"><option value="">All Sources</option><option>Daltex Farms</option><option>Out Source</option></select>
+    <select class="fsel" id="f-status" onchange="applyFilters()"><option value="">All Statuses</option><option>Shipped</option><option>Delivered</option></select>
     <div class="factions">
       <button class="fbtn fbtn-reset" onclick="resetFilters()"><i class="ti ti-refresh" style="font-size:11px"></i> Reset</button>
     </div>
@@ -663,6 +665,8 @@ function __vcFilteredRows(){
   let rows=__ROWS;
   if(S.market) rows=rows.filter(r=>norm(r.receiving_country)===S.market);
   if(S.farm)   rows=rows.filter(r=>norm(r.farm_source)===S.farm);
+  if(S.src)    rows=rows.filter(r=>norm(r.source_type)===S.src);
+  if(S.status) rows=rows.filter(r=>norm(r.shipping_status)===S.status);
   if(S.week)   rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===S.week);
   if(S.fromDate&&S.toDate&&(S.fromDate!=='2026-05-12'||S.toDate!=='2026-06-01')) rows=rows.filter(r=>r.loading_date&&r.loading_date>=S.fromDate&&r.loading_date<=S.toDate);
   return rows;
@@ -675,6 +679,9 @@ function __rowsExcept(skip){
   if(skip!=='color'&&S.color) rows=rows.filter(r=>norm(r.color)===S.color);
   if(skip!=='market'&&S.market) rows=rows.filter(r=>norm(r.receiving_country)===S.market);
   if(skip!=='week'&&S.week) rows=rows.filter(r=>String(parseInt(r.shipping_week)||0)===S.week);
+  if(skip!=='farm'&&S.farm) rows=rows.filter(r=>norm(r.farm_source)===S.farm);
+  if(skip!=='src'&&S.src) rows=rows.filter(r=>norm(r.source_type)===S.src);
+  if(skip!=='status'&&S.status) rows=rows.filter(r=>norm(r.shipping_status)===S.status);
   return rows;
 }
 function refreshFilterOptions(){
@@ -694,6 +701,9 @@ function refreshFilterOptions(){
   fill('f-variety','variety',[...new Set(__rowsExcept('variety').map(r=>norm(r.variety)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
   fill('f-color','color',[...new Set(__rowsExcept('color').map(r=>norm(r.color)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
   fill('f-market','market',[...new Set(__rowsExcept('market').map(r=>norm(r.receiving_country)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  const ff=document.getElementById('f-farm');if(ff) fill('f-farm','farm',[...new Set(__rowsExcept('farm').map(r=>norm(r.farm_source)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  const fs=document.getElementById('f-src');if(fs) fill('f-src','src',[...new Set(__rowsExcept('src').map(r=>norm(r.source_type)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
+  const fst=document.getElementById('f-status');if(fst) fill('f-status','status',[...new Set(__rowsExcept('status').map(r=>norm(r.shipping_status)).filter(Boolean))].sort().map(x=>({v:x,t:x})));
 }
 let barVarChart,barColChart,donutVarChart,donutColChart,varWkChart,colWkChart;
 
@@ -1561,15 +1571,15 @@ document.getElementById('ai-q').addEventListener('keydown',e=>{if(e.key==='Enter
 /* ── FILTERS ── */
 function applyFilters(){
   S.variety=document.getElementById('f-variety').value;S.color=document.getElementById('f-color').value;
-  S.market=document.getElementById('f-market').value;S.farm=document.getElementById('f-farm').value;
+  S.market=document.getElementById('f-market').value;S.farm=document.getElementById('f-farm').value;S.src=document.getElementById('f-src').value;S.status=document.getElementById('f-status').value;
   S.week=document.getElementById('f-week').value;S.fromDate=document.getElementById('f-from').value;S.toDate=document.getElementById('f-to').value;
   refreshFilterOptions();
   renderChips();render();
 }
 function resetFilters(){
-  ['f-variety','f-color','f-market','f-farm','f-week'].forEach(id=>document.getElementById(id).value='');
+  ['f-variety','f-color','f-market','f-farm','f-src','f-status','f-week'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-from').value='2026-05-12';document.getElementById('f-to').value='2026-06-01';
-  S={...S,variety:'',color:'',market:'',farm:'',week:'',fromDate:'2026-05-12',toDate:'2026-06-01'};
+  S={...S,variety:'',color:'',market:'',farm:'',src:'',status:'',week:'',fromDate:'2026-05-12',toDate:'2026-06-01'};
   renderChips();render();
 }
 function renderChips(){
