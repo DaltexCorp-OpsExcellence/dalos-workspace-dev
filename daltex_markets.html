@@ -446,8 +446,8 @@ input,select,button{font-family:var(--font)}
   </div>
 </div>
 
-<!-- ROW 2: Weekly + Variety mix -->
-<div class="grid2" style="margin-bottom:12px">
+<!-- ROW 2: Weekly -->
+<div style="margin-bottom:12px">
   <div class="cc">
     <div class="cc-header">
       <div>
@@ -465,15 +465,6 @@ input,select,button{font-family:var(--font)}
     </div>
     <div id="weekly-legend" class="chart-legend" style="margin-bottom:6px"></div>
     <div style="position:relative;height:220px"><canvas id="bar-weekly" role="img" aria-label="Stacked bar chart of weekly net weight by market">Weekly net weight.</canvas></div>
-  </div>
-  <div class="cc">
-    <div class="cc-header">
-      <div>
-        <div class="cc-title">Variety Mix by Market</div>
-        <div class="cc-sub">Net weight split per variety</div>
-      </div>
-    </div>
-    <div id="variety-bars" style="padding-top:2px"></div>
   </div>
 </div>
 
@@ -1005,6 +996,7 @@ function renderWeekly(){
 }
 
 function renderVarietyBars(){
+  if(!document.getElementById('variety-bars')) return;
   const varieties=['Prime','Flame','Early Flame','Star Light','Early Pearl','Arra 30'];
   const src=S.market?RAW.by_mkt_variety.filter(r=>r.c===S.market):RAW.by_mkt_variety;
   const totals={};
@@ -1310,7 +1302,7 @@ function drillMarket(country){
   const mkts=filteredMkts();
   const mkt=mkts.find(m=>m.c===country);
   if(!mkt) return;
-  document.getElementById('drill-title').textContent=`${flagImg(country)} ${country} — Deep Dive`;
+  document.getElementById('drill-title').innerHTML=`${flagImg(country)} ${country} — Deep Dive`;
   document.getElementById('drill-panel').classList.add('vis');
 
   const varieties=RAW.by_mkt_variety.filter(r=>r.c===country).sort((a,b)=>b.nw-a.nw);
