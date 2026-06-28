@@ -101,6 +101,14 @@
   if(window.Chart){
     Chart.defaults.plugins.tooltip.enabled=false;
     Chart.defaults.plugins.tooltip.external=window.__dalosExternalTip;
+    // Global pointer cursor: show a pointer only over charts that are clickable (have onClick)
+    Chart.defaults.onHover=function(evt,elements,chart){
+      const native=evt&&evt.native?evt.native:evt;
+      const tgt=native&&native.target?native.target:(chart&&chart.canvas);
+      if(!tgt) return;
+      const clickable=chart&&chart.options&&typeof chart.options.onClick==='function';
+      tgt.style.cursor=(clickable&&elements&&elements.length)?'pointer':'default';
+    };
   }
   window.__dalosTipReady=true;
 })();
@@ -914,9 +922,6 @@ function renderMainBar(clients,total){
       onClick:function(evt,elements){
         if(elements&&elements.length){const idx=elements[0].index;const cl=labels[idx];if(cl) drillClient(cl);}
       },
-      onHover:function(evt,elements){
-        evt.native.target.style.cursor=(elements&&elements.length)?'pointer':'default';
-      },
       plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){return ' '+ctx.dataset.label+': '+ctx.raw+(metric==='nw'?' T':'');}}}},
       scales:{
         x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:10},color:'#8a95b0'}},
@@ -980,20 +985,18 @@ function renderWeekly(clients){
         const MINGAP=13;
         weeks.forEach(function(_,wi){
           var cv=totals[wi]||0, pv=priorDs.data[wi]||0;
-          if(showCur&&cv>0){
-            var topY=chart.scales.y.getPixelForValue(cv);
-            var inside=(chart.scales.y.getPixelForValue(0)-topY)>=18;
-            ctx.font="600 10px 'IBM Plex Mono'";ctx.fillStyle=inside?'#ffffff':'#142850';
-            ctx.fillText(cv.toFixed(1)+'T',curMeta.data[wi].x,inside?topY+12:topY-5);
-          }
+          var curY=null;
+          if(showCur&&cv>0){ curY=chart.scales.y.getPixelForValue(cv)-5; }
           if(showPrior&&pv>0){
             var pbar=pm.data[wi];
-            var ptopY=chart.scales.y.getPixelForValue(pv);
-            var pInside=(chart.scales.y.getPixelForValue(0)-ptopY)>=18;
-            var py=pInside?ptopY+12:ptopY-5;
-            if(WLBL==='both'&&cv>0){var cTop=chart.scales.y.getPixelForValue(cv);var cInside=(chart.scales.y.getPixelForValue(0)-cTop)>=18;var cY=cInside?cTop+12:cTop-5;if(Math.abs(py-cY)<MINGAP) py=cY+MINGAP;}
-            ctx.font="600 10px 'IBM Plex Mono'";ctx.fillStyle=(pInside&&WLBL!=='both')?'#5a6b8a':'#6b7894';
+            var py=pbar.y-5;
+            if(WLBL==='both'&&curY!==null&&Math.abs(py-curY)<MINGAP) py=curY+MINGAP;
+            ctx.font="600 10px 'IBM Plex Mono'";ctx.fillStyle='#6b7894';
             ctx.fillText(pv.toFixed(0)+'T',pbar.x,py);
+          }
+          if(showCur&&cv>0){
+            ctx.font="600 10px 'IBM Plex Mono'";ctx.fillStyle='#142850';
+            ctx.fillText(cv.toFixed(1)+'T',curMeta.data[wi].x,curY);
           }
         });
         ctx.restore();

@@ -101,6 +101,14 @@
   if(window.Chart){
     Chart.defaults.plugins.tooltip.enabled=false;
     Chart.defaults.plugins.tooltip.external=window.__dalosExternalTip;
+    // Global pointer cursor: show a pointer only over charts that are clickable (have onClick)
+    Chart.defaults.onHover=function(evt,elements,chart){
+      const native=evt&&evt.native?evt.native:evt;
+      const tgt=native&&native.target?native.target:(chart&&chart.canvas);
+      if(!tgt) return;
+      const clickable=chart&&chart.options&&typeof chart.options.onClick==='function';
+      tgt.style.cursor=(clickable&&elements&&elements.length)?'pointer':'default';
+    };
   }
   window.__dalosTipReady=true;
 })();
@@ -1054,33 +1062,22 @@ function renderWeekly(){
         weeks.forEach((_,wi)=>{
           const cv=totals[wi]||0;
           const pv=PRIOR_WEEKLY[weeks[wi]]||0;
-          // CURRENT label: inside the top of the bar if it's tall enough, else above it
+          // CURRENT label: above the bar, dark navy (legible)
+          let curY=null;
           if(showCur && cv>0){
-            const cbar=curMeta.data[wi];
-            const topY=chart.scales.y.getPixelForValue(cv);
-            const barH=chart.scales.y.getPixelForValue(0)-topY;
-            const inside=barH>=18;
-            ctx.font="600 10px 'IBM Plex Mono'";
-            ctx.fillStyle=inside?'#ffffff':'#142850';
-            ctx.fillText(cv.toFixed(1)+'T',cbar.x,inside?topY+12:topY-5);
+            curY=chart.scales.y.getPixelForValue(cv)-5;
           }
-          // PRIOR label: same size/weight as current; inside ghost bar if tall enough, else above
+          // PRIOR label: above its bar, slate grey
           if(showPrior && pv>0){
             const pbar=priorMeta.data[wi];
-            const ptopY=chart.scales.y.getPixelForValue(pv);
-            const pbarH=chart.scales.y.getPixelForValue(0)-ptopY;
-            const pInside=pbarH>=18;
-            let py=pInside?ptopY+12:ptopY-5;
-            // avoid colliding with the current label in combined mode
-            if(WLBL==='both' && showCur && cv>0){
-              const cTop=chart.scales.y.getPixelForValue(cv);
-              const cInside=(chart.scales.y.getPixelForValue(0)-cTop)>=18;
-              const cY=cInside?cTop+12:cTop-5;
-              if(Math.abs(py-cY)<MINGAP) py=cY+MINGAP;
-            }
-            ctx.font="600 10px 'IBM Plex Mono'";
-            ctx.fillStyle=(pInside&&WLBL!=='both')?'#5a6b8a':'#6b7894';
+            let py=pbar.y-5;
+            if(WLBL==='both' && curY!==null && Math.abs(py-curY)<MINGAP) py=curY+MINGAP;
+            ctx.font="600 10px 'IBM Plex Mono'";ctx.fillStyle='#6b7894';
             ctx.fillText(pv.toFixed(0)+'T',pbar.x,py);
+          }
+          if(showCur && cv>0){
+            ctx.font="600 10px 'IBM Plex Mono'";ctx.fillStyle='#142850';
+            ctx.fillText(cv.toFixed(1)+'T',curMeta.data[wi].x,curY);
           }
         });
         ctx.restore();
