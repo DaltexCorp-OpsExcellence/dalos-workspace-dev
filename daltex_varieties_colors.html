@@ -1142,11 +1142,11 @@ function renderWeeklyVariety(vars){
   const weeks=__weekList();const shown=vars.map(r=>r.v);
   const curDs=shown.map(v=>({
     label:v,data:weeks.map(w=>{const r=VAR_WEEK.find(x=>x.v===v&&x.wk===w);return r?+r.nw.toFixed(2):0;}),
-    backgroundColor:VCOL[v]||'#8a95b0',borderRadius:S.varWeekView==='grouped'?3:0,
+    backgroundColor:(WLBL==='prior')?'rgba(180,190,210,0.25)':(VCOL[v]||'#8a95b0'),borderRadius:S.varWeekView==='grouped'?3:0,
     stack:S.varWeekView==='stacked'?'cur':v+'g',order:1
   }));
   const priorDs={label:'2024/25',data:weeks.map(w=>shown.reduce((s,v)=>{const r=PRIOR_VAR_WEEKLY[v];return s+(r?r[w]||0:0);},0)),
-    backgroundColor:'rgba(180,190,210,0.28)',borderColor:'rgba(180,190,210,0.65)',borderWidth:1,borderRadius:3,stack:'prior',order:2};
+    backgroundColor:(WLBL!=='cur')?'rgba(120,135,165,0.70)':'rgba(180,190,210,0.28)',borderColor:(WLBL!=='cur')?'rgba(90,107,138,0.95)':'rgba(180,190,210,0.65)',borderWidth:1,borderRadius:3,stack:'prior',order:2};
   const datasets=[...curDs,priorDs];
   if(varWkChart) varWkChart.destroy();
   varWkChart=new Chart(document.getElementById('bar-var-weekly'),{
@@ -1193,11 +1193,11 @@ function renderWeeklyColor(cols){
   const weeks=__weekList();const shown=cols.map(r=>r.c);
   const curDs=shown.map(c=>({
     label:c,data:weeks.map(w=>{const r=COL_WEEK.find(x=>x.c===c&&x.wk===w);return r?+r.nw.toFixed(2):0;}),
-    backgroundColor:CCOL[c]||'#8a95b0',borderRadius:S.colWeekView==='grouped'?3:0,
+    backgroundColor:(WLBL==='prior')?'rgba(180,190,210,0.25)':(CCOL[c]||'#8a95b0'),borderRadius:S.colWeekView==='grouped'?3:0,
     stack:S.colWeekView==='stacked'?'cur':c+'g',order:1
   }));
   const priorDs={label:'2024/25',data:weeks.map(w=>shown.reduce((s,c)=>{const r=PRIOR_COL_WEEKLY[c];return s+(r?r[w]||0:0);},0)),
-    backgroundColor:'rgba(180,190,210,0.28)',borderColor:'rgba(180,190,210,0.65)',borderWidth:1,borderRadius:3,stack:'prior',order:2};
+    backgroundColor:(WLBL!=='cur')?'rgba(120,135,165,0.70)':'rgba(180,190,210,0.28)',borderColor:(WLBL!=='cur')?'rgba(90,107,138,0.95)':'rgba(180,190,210,0.65)',borderWidth:1,borderRadius:3,stack:'prior',order:2};
   const datasets=[...curDs,priorDs];
   if(colWkChart) colWkChart.destroy();
   colWkChart=new Chart(document.getElementById('bar-col-weekly'),{

@@ -1010,10 +1010,12 @@ function renderWeekly(){
   if(weeks.length){const sub=document.querySelector('#bar-weekly')?.closest('.cc')?.querySelector('.cc-sub');if(sub)sub.textContent='Loading weeks '+weeks[0]+'\u2013'+weeks[weeks.length-1];}
   const all=[...new Set(RAW.by_mkt_week.map(r=>r.c))];
   const shown=S.market.length?all.filter(c=>inSel(S.market,c)):all;
+  const dimCur = WLBL==='prior';        // when viewing 2024/25, fade the current bars
+  const emphPrior = WLBL!=='cur';       // emphasize prior bars in prior/combined modes
   const currentDatasets=shown.map((m,i)=>({
     label:m,
     data:weeks.map(w=>{const r=RAW.by_mkt_week.find(x=>x.c===m&&x.wk===w);return r?+r.nw.toFixed(2):0;}),
-    backgroundColor:PAL[i]||'#8a95b0',
+    backgroundColor:dimCur?'rgba(180,190,210,0.25)':(PAL[i]||'#8a95b0'),
     borderRadius:S.weekView==='grouped'?4:0,
     stack:S.weekView==='stacked'?'cur':m+'g',
     order:1
@@ -1021,8 +1023,8 @@ function renderWeekly(){
   const priorDataset={
     label:'2024/25 prior',
     data:weeks.map(w=>PRIOR_WEEKLY[w]||0),
-    backgroundColor:'rgba(180,190,210,0.30)',
-    borderColor:'rgba(180,190,210,0.65)',
+    backgroundColor:emphPrior?'rgba(120,135,165,0.70)':'rgba(180,190,210,0.30)',
+    borderColor:emphPrior?'rgba(90,107,138,0.95)':'rgba(180,190,210,0.65)',
     borderWidth:1,
     borderRadius:4,
     stack:'prior',

@@ -959,8 +959,8 @@ function renderDonut(clients,total){
 
 function renderWeekly(clients){
   const weeks=__weekList();const shown=clients.map(r=>r.cl);
-  const curDs=shown.map(function(cl,i){return {label:cl,data:weeks.map(function(w){var r=CL_WEEK.find(x=>x.cl===cl&&x.wk===w);return r?+r.nw.toFixed(2):0;}),backgroundColor:CL_COL[cl]||PAL[i],borderRadius:S.weekView==='grouped'?3:0,stack:S.weekView==='stacked'?'cur':cl+'g',order:1};});
-  const priorDs={label:'2024/25',data:weeks.map(function(w){return shown.reduce(function(s,cl){var r=PRIOR_CL_WEEKLY[cl];return s+(r?r[w]||0:0);},0);}),backgroundColor:'rgba(180,190,210,0.28)',borderColor:'rgba(180,190,210,0.65)',borderWidth:1,borderRadius:3,stack:'prior',order:2};
+  const curDs=shown.map(function(cl,i){return {label:cl,data:weeks.map(function(w){var r=CL_WEEK.find(x=>x.cl===cl&&x.wk===w);return r?+r.nw.toFixed(2):0;}),backgroundColor:(WLBL==='prior')?'rgba(180,190,210,0.25)':(CL_COL[cl]||PAL[i]),borderRadius:S.weekView==='grouped'?3:0,stack:S.weekView==='stacked'?'cur':cl+'g',order:1};});
+  const priorDs={label:'2024/25',data:weeks.map(function(w){return shown.reduce(function(s,cl){var r=PRIOR_CL_WEEKLY[cl];return s+(r?r[w]||0:0);},0);}),backgroundColor:(WLBL!=='cur')?'rgba(120,135,165,0.70)':'rgba(180,190,210,0.28)',borderColor:(WLBL!=='cur')?'rgba(90,107,138,0.95)':'rgba(180,190,210,0.65)',borderWidth:1,borderRadius:3,stack:'prior',order:2};
   const datasets=curDs.concat([priorDs]);
   if(weeklyChart) weeklyChart.destroy();
   weeklyChart=new Chart(document.getElementById('bar-weekly'),{

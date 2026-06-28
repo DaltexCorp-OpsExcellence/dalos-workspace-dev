@@ -825,9 +825,10 @@ function renderWeekly(r){
   if(WEEKS&&WEEKS.length){const sub=document.querySelector('#bar-wk')?.closest('.cc')?.querySelector('.cc-sub');if(sub)sub.innerHTML='W'+WEEKS[0]+'&#8211;'+WEEKS[WEEKS.length-1]+' stacked by farm &#183; vs Season 24/25';}
   const shown=r.map(x=>x.f).slice(0,6);
   const priorTotals=WEEKS.map(w=>Object.values(PFWK).reduce((s,fw)=>s+(fw[w]||fw[String(w)]||0),0));
+  const dimCur=WLBL==='prior', emphPrior=WLBL!=='cur';
   const wkDs=[...shown.map((f,i)=>{
-    return{label:f,data:WEEKS.map(w=>{const rr=FWK.find(x=>x.f===f&&+x.wk===w);return rr?rr.nw:0;}),backgroundColor:PAL_FARM[f]||'#8a95b0',borderRadius:0,stack:'c',order:1};
-  }),{label:'Season 24/25',data:priorTotals,backgroundColor:'rgba(180,190,210,0.3)',borderColor:'rgba(180,190,210,.7)',borderWidth:1,borderRadius:3,stack:'p',order:2}];
+    return{label:f,data:WEEKS.map(w=>{const rr=FWK.find(x=>x.f===f&&+x.wk===w);return rr?rr.nw:0;}),backgroundColor:dimCur?'rgba(180,190,210,0.25)':(PAL_FARM[f]||'#8a95b0'),borderRadius:0,stack:'c',order:1};
+  }),{label:'Season 24/25',data:priorTotals,backgroundColor:emphPrior?'rgba(120,135,165,0.70)':'rgba(180,190,210,0.3)',borderColor:emphPrior?'rgba(90,107,138,0.95)':'rgba(180,190,210,.7)',borderWidth:1,borderRadius:3,stack:'p',order:2}];
   const ex=Chart.getChart('bar-wk');if(ex)ex.destroy();
   new Chart(document.getElementById('bar-wk'),{
     type:'bar',data:{labels:WEEKS.map(w=>'Wk '+w),datasets:wkDs},

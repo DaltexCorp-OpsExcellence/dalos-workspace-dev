@@ -1170,10 +1170,13 @@ function renderWeeklyChart(data, s) {
     const pbH = pv/maxV*(H-top);
     const y   = H - bH;
     const py  = H - pbH;
-    const col = v > 500 ? 'var(--navy)' : v > 200 ? 'var(--navy2)' : '#5a7cc2';
+    let col = v > 500 ? 'var(--navy)' : v > 200 ? 'var(--navy2)' : '#5a7cc2';
+    if (WLBL==='prior') col = 'rgba(180,190,210,0.55)';   // dim current when viewing 2024/25
+    const priorFill = (WLBL!=='cur') ? 'rgba(120,135,165,0.55)' : 'var(--bg2)';
+    const priorStroke = (WLBL!=='cur') ? 'rgba(90,107,138,0.9)' : 'var(--border)';
 
     // prior ghost bar (always drawn as visual reference)
-    svg += `<rect x="${x}" y="${py}" width="${bW}" height="${pbH}" rx="3" fill="var(--bg2)" stroke="var(--border)" stroke-width="1"/>`;
+    svg += `<rect x="${x}" y="${py}" width="${bW}" height="${pbH}" rx="3" fill="${priorFill}" stroke="${priorStroke}" stroke-width="1"/>`;
     // prior-season number label (shown in 'prior' and 'both' modes)
     if (pv > 0 && (WLBL==='prior' || WLBL==='both')) {
       // current label sits at y-5 (or y+12 for very short bars); in 'both' mode,
