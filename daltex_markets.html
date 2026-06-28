@@ -632,7 +632,7 @@ function buildRAW(rows){
   const norm=s=>s==null?'':String(s).trim();
   const sum2N=(rows,fa,fb)=>{const m={};rows.forEach(r=>{const a=fa(r),b=fb(r);if((!a&&a!==0)||(b===''||b==null))return;const key=a+'\u0001'+b;if(!m[key])m[key]={a,b,nw:0};m[key].nw+=num(r.net_weight);});return Object.values(m);};
   const mm={};
-  rows.forEach(r=>{const c=norm(r.receiving_country);if(!c)return;if(!mm[c])mm[c]={c,nw:0,pallets:0,ctr:{}};mm[c].nw+=num(r.net_weight);mm[c].pallets+=num(r.pallet_qty)||num(r.pallet_count);if(r.container_number)__ctAdd(mm[c],r);});
+  rows.forEach(r=>{const c=norm(r.receiving_country);if(!c)return;if(!mm[c])mm[c]={c,nw:0,pallets:0,ctr:{}};mm[c].nw+=num(r.net_weight);mm[c].pallets+=num(r.pallet_count);if(r.container_number)__ctAdd(mm[c],r);});
   const by_mkt=Object.values(mm).map(o=>({c:o.c,nw:r2(o.nw),pallets:r2(o.pallets),containers:__ctClusters(o.ctr)})).sort((a,b)=>b.nw-a.nw);
   const by_mkt_variety=sum2N(rows,r=>norm(r.receiving_country),r=>norm(r.variety)).map(o=>({c:o.a,v:o.b,nw:r2(o.nw)}));
   const by_mkt_color  =sum2N(rows,r=>norm(r.receiving_country),r=>norm(r.color)).map(o=>({c:o.a,col:o.b,nw:r2(o.nw)}));
