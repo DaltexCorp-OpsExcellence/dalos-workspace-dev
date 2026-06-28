@@ -575,7 +575,16 @@ let PRIOR_CL_WEEKLY={
   'Parallel':{21:12.4},'SEED':{20:11.2},
 };
 const PAL=['#142850','#DC6428','#1a3668','#d46024','#3d6fa8','#f4a55a','#16a34a','#6b7280','#5c8fc9','#d97706','#9ca3af','#4b5563'];
-const CL_COL={'Daltex UK':'#142850','Capespan':'#DC6428','ISEPPI Frutta SA':'#1a3668','Bama Gruppen AS':'#d46024','Dankers':'#3d6fa8','Pantera EUR':'#f4a55a','RGS':'#16a34a','Majed Alfuttaim':'#6b7280','Asia Fresh':'#5c8fc9','Karsten Marketing':'#d97706','Parallel':'#9ca3af','SEED':'#4b5563'};
+// Brand-style palette; colors are assigned to whatever client names exist in the data
+// (by descending size) so every client gets a distinct, stable color regardless of name.
+const CL_PALETTE=['#142850','#DC6428','#1a3668','#d46024','#3d6fa8','#f4a55a','#16a34a','#5c8fc9','#d97706','#9333ea','#0891b2','#b45309','#4b6cb7','#c2410c','#2f8f5b','#7c5cbf','#b91c1c','#475569','#0e7490','#a16207'];
+let CL_COL={};
+let __clColorN=0;
+function assignClientColors(names){
+  // append-only: keep colors already assigned, give new client names the next palette color
+  (names||[]).forEach(nm=>{ if(nm && !CL_COL[nm]){ CL_COL[nm]=CL_PALETTE[__clColorN%CL_PALETTE.length]; __clColorN++; } });
+}
+function clColor(name){ return CL_COL[name]||'#8a95b0'; }
 const VAR_COL={Flame:'#DC6428',Prime:'#142850','Arra 30':'#3d6fa8','Star Light':'#16a34a','Early Flame':'#e8872e','Early Pearl':'#6b7280'};
 
 let S={client:[],subclient:[],market:[],variety:[],color:[],farm:[],src:[],status:[],mix:[],week:[],fromDate:'2026-05-12',toDate:'2026-06-01',sortCol:'nw',sortDir:-1,mainMetric:'nw',weekView:'stacked',dim:'subclient'};
@@ -765,6 +774,7 @@ async function loadLiveData(){
       acc(o.mkt,r.receiving_country);acc(o.port,r.receiving_port);acc(o.agent,r.agent);acc(o.line,r.shipping_line);
     });
     CLIENTS=Object.values(cm).map(o=>({cl:o.cl,nw:r2(o.nw),pallets:r2(o.pallets),containers:__ctClusters(o.ctr),shipments:o.sc.size,mkt:mode(o.mkt)||'',port:mode(o.port)||'',agent:mode(o.agent)||'',line:mode(o.line)||''})).sort((a,b)=>b.nw-a.nw);
+    assignClientColors(CLIENTS.map(c=>c.cl));
 
     CL_VARIETY=sum2N(cur,r=>norm(r.client),r=>norm(r.variety)).map(o=>({cl:o.a,v:o.b,nw:r2(o.nw)}));
     CL_FARM   =sum2N(cur,r=>norm(r.client),r=>norm(r.farm_source)).map(o=>({cl:o.a,f:o.b,nw:r2(o.nw)}));
@@ -818,6 +828,7 @@ function render(){
   // Rebuild client cross-tabs from rows matching market/variety/week/date so every chart reflects filters. Guarded.
   try{ if(__ROWS&&__ROWS.length){ const d=buildClientData(__clFilteredRows()); CLIENTS=d.CLIENTS;CL_VARIETY=d.CL_VARIETY;CL_FARM=d.CL_FARM;CL_WEEK=d.CL_WEEK;CL_CLS=d.CL_CLS;CL_LD=d.CL_LD;CL_AGENTS=d.CL_AGENTS;CL_LINES=d.CL_LINES; } }
   catch(err){ console.warn('Clients: filter rebuild failed, showing unfiltered:',err); }
+  assignClientColors(CLIENTS.map(c=>c.cl));
   const clients=filteredClients();
   const total=clients.reduce((s,r)=>s+r.nw,0);
   // Dynamic subtitle: season + distinct client/subclient counts + total from filtered data
