@@ -480,7 +480,7 @@ function __farmFilteredRows(){
   if(S.variety) rows=rows.filter(r=>String(r.variety||'')===S.variety);
   if(S.color) rows=rows.filter(r=>String(r.color||'')===S.color);
   if(S.status) rows=rows.filter(r=>String(r.shipping_status||'')===S.status);
-  if(S.fromDate&&S.toDate&&(S.fromDate!=='2026-05-12'||S.toDate!=='2026-06-01')) rows=rows.filter(r=>r.loading_date&&r.loading_date>=S.fromDate&&r.loading_date<=S.toDate);
+  if(S.fromDate&&S.toDate&&(S.fromDate!==__LDF||S.toDate!==__LDT)) rows=rows.filter(r=>r.loading_date&&r.loading_date>=S.fromDate&&r.loading_date<=S.toDate);
   return rows;
 }
 // Dynamic cascading filters: rows filtered by all filters EXCEPT the named one.
@@ -493,7 +493,7 @@ function __rowsExcept(skip){
   if(skip!=='variety'&&S.variety) rows=rows.filter(r=>String(r.variety||'')===S.variety);
   if(skip!=='color'&&S.color) rows=rows.filter(r=>String(r.color||'')===S.color);
   if(skip!=='status'&&S.status) rows=rows.filter(r=>String(r.shipping_status||'')===S.status);
-  if(S.fromDate&&S.toDate&&(S.fromDate!=='2026-05-12'||S.toDate!=='2026-06-01')) rows=rows.filter(r=>r.loading_date&&r.loading_date>=S.fromDate&&r.loading_date<=S.toDate);
+  if(S.fromDate&&S.toDate&&(S.fromDate!==__LDF||S.toDate!==__LDT)) rows=rows.filter(r=>r.loading_date&&r.loading_date>=S.fromDate&&r.loading_date<=S.toDate);
   return rows;
 }
 function refreshFilterOptions(){
@@ -529,6 +529,7 @@ function __ctWS(s){return (s||'').replace(/\s+/g,' ').trim();}
 function __ctAdd(o,r){const cn=__ctWS(r.container_number); if(!cn)return; if(!o.ctr||o.ctr.add)o.ctr={}; (o.ctr[cn]=o.ctr[cn]||[]).push(r.loading_date);}
 function __ctClusters(m){let t=0;for(const cn in m){const ds=m[cn].filter(Boolean).map(d=>+new Date(d+'T00:00:00')).sort((a,b)=>a-b);if(!ds.length){t++;continue;}let c=1,p=ds[0];for(let i=1;i<ds.length;i++){if((ds[i]-p)/86400000>7)c++;p=ds[i];}t+=c;}return t;}
 let __ROWS=[];
+let __LDF='2026-05-12',__LDT='2026-06-01';  // actual data date range (set on load)
     async function loadLiveData(){
   const SB_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
   const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
@@ -557,6 +558,7 @@ let __ROWS=[];
     TOTAL_NW=r2(cur.reduce((s,r)=>s+num(r.net_weight),0));
 
     fillSel('f-week',WEEKS.map(w=>({v:w,t:'W'+w})));
+    (function(){const lds=cur.map(r=>r.loading_date).filter(Boolean).sort();if(lds.length){__LDF=lds[0];__LDT=lds[lds.length-1];S.fromDate=__LDF;S.toDate=__LDT;const ff=document.getElementById('f-from'),ft=document.getElementById('f-to');if(ff){ff.value=__LDF;ff.min=__LDF;ff.max=__LDT;}if(ft){ft.value=__LDT;ft.min=__LDF;ft.max=__LDT;}}})();
     fillSel('f-farm',FARMS_ALL.map(x=>x.f).sort().map(x=>({v:x,t:x})));
     fillSel('f-mkt',[...new Set(cur.map(r=>r.receiving_country).filter(Boolean))].sort().map(x=>({v:x,t:x})));
     fillSel('f-src',[...new Set(cur.map(r=>r.source_type).filter(Boolean))].sort().map(x=>({v:x,t:x})));
@@ -952,7 +954,7 @@ function drillFarm(farm){
 function closeDrill(){document.getElementById('drill-panel').classList.remove('vis');}
 function sortT(c){if(S.sortCol===c)S.sortDir*=-1;else{S.sortCol=c;S.sortDir=-1;}render();}
 function apply(){S.week=document.getElementById('f-week').value;S.farm=document.getElementById('f-farm').value;S.mkt=document.getElementById('f-mkt').value;S.src=document.getElementById('f-src').value;S.variety=document.getElementById('f-variety').value;S.color=document.getElementById('f-color').value;S.status=document.getElementById('f-status').value;var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');S.fromDate=ff?ff.value:'';S.toDate=ft?ft.value:'';refreshFilterOptions();chips();render();}
-function reset(){['f-week','f-farm','f-mkt','f-src','f-variety','f-color','f-status'].forEach(id=>document.getElementById(id).value='');var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');if(ff)ff.value='2026-05-12';if(ft)ft.value='2026-06-01';S={...S,week:'',farm:'',mkt:'',src:'',variety:'',color:'',status:'',fromDate:'2026-05-12',toDate:'2026-06-01'};refreshFilterOptions();chips();render();}
+function reset(){['f-week','f-farm','f-mkt','f-src','f-variety','f-color','f-status'].forEach(id=>document.getElementById(id).value='');var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');if(ff)ff.value=__LDF;if(ft)ft.value=__LDT;S={...S,week:'',farm:'',mkt:'',src:'',variety:'',color:'',status:'',fromDate:__LDF,toDate:__LDT};refreshFilterOptions();chips();render();}
 function chips(){const L={week:'Wk',farm:'Farm',mkt:'Market',src:'Source'};document.getElementById('fctx').innerHTML=['week','farm','mkt','src'].filter(k=>S[k]).map(k=>`<div class="chip">${L[k]}: ${S[k]} <button onclick="removeChip('${k}')"><i class="ti ti-x" style="font-size:9px"></i></button></div>`).join('');}
 function removeChip(k){document.getElementById('f-'+k).value='';S[k]='';chips();render();}
 function doCSV(){const r=filt(),tot=r.reduce((s,x)=>s+x.nw,0);const hdr='Farm,Source,NW_T,Share_pct,Containers,Prior_T,YoY_pct'+String.fromCharCode(10);const rows=r.map(x=>{const p=PFARM[x.f]||0;const y=p>0?((x.nw-p)/p*100).toFixed(1):'N/A';return[x.f,x.src,x.nw.toFixed(2),(x.nw/tot*100).toFixed(1),x.containers,p||'N/A',y].join(',');}).join(String.fromCharCode(10));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([hdr+rows],{type:'text/csv'}));a.download='farms.csv';a.click();}

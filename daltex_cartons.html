@@ -479,6 +479,7 @@ let SF={week:'',var:'',mkt:'',color:'',client:'',farm:'',src:'',status:'',fromDa
 let BLBL='cur';
 function setBarLbl(m,btn){BLBL=m;['ct','pt'].forEach(p=>{['cur','prior','both'].forEach(k=>{const el=document.getElementById(p+'blbl-'+k);if(el)el.classList.toggle('on',k===m);});});render();}
 let __ROWS=[];   // raw shipment rows kept so cross-tabs can be rebuilt against active filters
+let __LDF='2026-05-12',__LDT='2026-06-01';  // actual data date range (set on load)
 
 // Rebuild the filterable carton/punnet cross-tabs from a set of rows (self-contained).
 function buildCartonData(rows){
@@ -518,7 +519,7 @@ function __ctFilteredRows(){
   if(SF.farm) rows=rows.filter(r=>norm(r.farm_source)===SF.farm);
   if(SF.src) rows=rows.filter(r=>norm(r.source_type)===SF.src);
   if(SF.status) rows=rows.filter(r=>norm(r.shipping_status)===SF.status);
-  if(SF.fromDate&&SF.toDate&&(SF.fromDate!=='2026-05-12'||SF.toDate!=='2026-06-01')) rows=rows.filter(r=>r.loading_date&&r.loading_date>=SF.fromDate&&r.loading_date<=SF.toDate);
+  if(SF.fromDate&&SF.toDate&&(SF.fromDate!==__LDF||SF.toDate!==__LDT)) rows=rows.filter(r=>r.loading_date&&r.loading_date>=SF.fromDate&&r.loading_date<=SF.toDate);
   return rows;
 }
 // Dynamic cascading filters: rows filtered by all filters EXCEPT the named one.
@@ -533,7 +534,7 @@ function __rowsExcept(skip){
   if(skip!=='farm'&&SF.farm) rows=rows.filter(r=>norm(r.farm_source)===SF.farm);
   if(skip!=='src'&&SF.src) rows=rows.filter(r=>norm(r.source_type)===SF.src);
   if(skip!=='status'&&SF.status) rows=rows.filter(r=>norm(r.shipping_status)===SF.status);
-  if(SF.fromDate&&SF.toDate&&(SF.fromDate!=='2026-05-12'||SF.toDate!=='2026-06-01')) rows=rows.filter(r=>r.loading_date&&r.loading_date>=SF.fromDate&&r.loading_date<=SF.toDate);
+  if(SF.fromDate&&SF.toDate&&(SF.fromDate!==__LDF||SF.toDate!==__LDT)) rows=rows.filter(r=>r.loading_date&&r.loading_date>=SF.fromDate&&r.loading_date<=SF.toDate);
   return rows;
 }
 function refreshFilterOptions(){
@@ -651,6 +652,7 @@ async function loadLiveData(){
     const varsL=[...new Set(cur.map(r=>r.variety).filter(Boolean))].sort();
     const mktsL=[...new Set(cur.map(r=>r.receiving_country).filter(Boolean))].sort();
     fillSel('f-week','All Weeks',_WEEKS.map(w=>({v:w,t:'W'+w})));
+    (function(){const lds=cur.map(r=>r.loading_date).filter(Boolean).sort();if(lds.length){__LDF=lds[0];__LDT=lds[lds.length-1];SF.fromDate=__LDF;SF.toDate=__LDT;const ff=document.getElementById('f-from'),ft=document.getElementById('f-to');if(ff){ff.value=__LDF;ff.min=__LDF;ff.max=__LDT;}if(ft){ft.value=__LDT;ft.min=__LDF;ft.max=__LDT;}}})();
     fillSel('f-var','All Varieties',varsL.map(v=>({v:v,t:v})));
     fillSel('f-mkt','All Markets',mktsL.map(m=>({v:m,t:m})));
 
@@ -913,7 +915,7 @@ function showSeg(type,btn){
   document.getElementById('pt-section').style.display=type==='pt'?'':'none';
 }
 function applyF(){SF.week=document.getElementById('f-week').value;SF.var=document.getElementById('f-var').value;SF.mkt=document.getElementById('f-mkt').value;SF.color=document.getElementById('f-color').value;SF.client=document.getElementById('f-client').value;SF.farm=document.getElementById('f-farm').value;SF.src=document.getElementById('f-src').value;SF.status=document.getElementById('f-status').value;var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');SF.fromDate=ff?ff.value:'';SF.toDate=ft?ft.value:'';refreshFilterOptions();render();}
-function resetF(){['f-week','f-var','f-mkt','f-color','f-client','f-farm','f-src','f-status'].forEach(id=>{var e=document.getElementById(id);if(e)e.value='';});var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');if(ff)ff.value='2026-05-12';if(ft)ft.value='2026-06-01';SF={week:'',var:'',mkt:'',color:'',client:'',farm:'',src:'',status:'',fromDate:'2026-05-12',toDate:'2026-06-01'};refreshFilterOptions();render();}
+function resetF(){['f-week','f-var','f-mkt','f-color','f-client','f-farm','f-src','f-status'].forEach(id=>{var e=document.getElementById(id);if(e)e.value='';});var ff=document.getElementById('f-from'),ft=document.getElementById('f-to');if(ff)ff.value=__LDF;if(ft)ft.value=__LDT;SF={week:'',var:'',mkt:'',color:'',client:'',farm:'',src:'',status:'',fromDate:__LDF,toDate:__LDT};refreshFilterOptions();render();}
 function doCSV(type){const items=type==='ct'?filtCT():filtPT();const tot=items.reduce((s,x)=>s+x.nw,0);const hdr='Name,NW_T,Share_pct,Cartons,Containers,Prior_T,YoY_pct'+String.fromCharCode(10);const rows=items.map(x=>{const p=type==='ct'?(PRIOR_CT[x.n]||0):(PRIOR_PT[x.n]||0);return[x.n,x.nw.toFixed(2),(x.nw/tot*100).toFixed(1),x.cartons,x.containers,p||'N/A',p>0?((x.nw-p)/p*100).toFixed(1):'N/A'].join(',');}).join(String.fromCharCode(10));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([hdr+rows],{type:'text/csv'}));a.download=type+'s.csv';a.click();}
 
 function renderInsights(){
