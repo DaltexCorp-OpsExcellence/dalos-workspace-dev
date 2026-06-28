@@ -564,6 +564,9 @@ let PRIOR_CL={
   'RGS':18.99,'Majed Alfuttaim':8.97,'Asia Fresh':11.17,
   'Karsten Marketing':10.55,'Parallel':12.41,'SEED':11.17,
 };
+let PRIOR_SUBCL={};
+// prior-season total for a given client OR subclient, depending on the active dimension
+function priorOf(name){ return (S.dim==='subclient'?PRIOR_SUBCL[name]:PRIOR_CL[name])||0; }
 let PRIOR_CL_WEEKLY={
   'Daltex UK':{19:11.1,20:399.9,21:278.1,22:62.0},
   'Capespan':{20:72.3,21:18.1},
@@ -795,6 +798,7 @@ async function loadLiveData(){
     if(subArr.length) SUBCLIENTS=subArr;
 
     PRIOR_CL=sumByN(prior,r=>norm(r.client)); Object.keys(PRIOR_CL).forEach(k=>PRIOR_CL[k]=r2(PRIOR_CL[k]));
+    PRIOR_SUBCL=sumByN(prior,r=>norm(r.subclient)); Object.keys(PRIOR_SUBCL).forEach(k=>PRIOR_SUBCL[k]=r2(PRIOR_SUBCL[k]));
     PRIOR_CL_WEEKLY=nestWkN(prior,r=>norm(r.client));
 
     // market -> clients map for the market filter (live)
@@ -876,7 +880,7 @@ function renderKPIs(clients,total){
   const top=clients[0];
   const c1=CL_CLS.filter(r=>r.cls===1&&clients.find(c=>c.cl===r.cl)).reduce((s,r)=>s+r.nw,0);
   const avgCtr=ctrs>0?(total/ctrs).toFixed(2):'--';
-  const topPrior=top?PRIOR_CL[top.cl]||0:0;
+  const topPrior=top?priorOf(top.cl):0;
   const topYoy=top&&topPrior>0?((top.nw-topPrior)/topPrior*100):null;
   const cards=[
     {label:'Total Net Weight',icon:'ti-weight',val:total.toFixed(1)+' T',sub:'Prior: '+priorTotal.toFixed(0)+' T',yoy:yoyBadge(yoy),bar:Math.min(total/13,100)},
@@ -893,7 +897,7 @@ function renderClientCards(clients,total){
   const showSub=!!clients.find(r=>r.cl==='Daltex UK');
   document.getElementById('subclient-section').style.display=showSub?'block':'none';
   document.getElementById('client-cards').innerHTML=clients.map((r,i)=>{
-    const prior=PRIOR_CL[r.cl]||0;
+    const prior=priorOf(r.cl);
     const yp=prior>0?((r.nw-prior)/prior*100):null;
     const ypStr=yp!==null?(yp>=0?'▲ +':'▼ ')+Math.abs(yp).toFixed(1)+'% YoY':'--';
     const ypCol=yp===null?'var(--text3)':yp>=0?'var(--green)':'var(--red)';
@@ -923,7 +927,7 @@ function renderMainBar(clients,total){
   const labels=clients.map(r=>r.cl);
   try{document.getElementById('bar-client').parentElement.style.height=Math.max(280,labels.length*30)+'px';}catch(e){}
   const vals=clients.map(r=>metric==='nw'?+r.nw.toFixed(2):metric==='containers'?r.containers:+r.pallets.toFixed(2));
-  const priorVals=clients.map(r=>metric==='nw'?+(PRIOR_CL[r.cl]||0).toFixed(2):0);
+  const priorVals=clients.map(r=>metric==='nw'?+(priorOf(r.cl)).toFixed(2):0);
   const lbl={nw:'Net Weight (T)',containers:'Containers',pallets:'Pallets'}[metric];
   document.getElementById('main-chart-title').textContent=lbl+' by Client';
   if(barChart) barChart.destroy();
@@ -1093,7 +1097,7 @@ function renderTable(clients,total){
   });
   document.getElementById('cl-tbody').innerHTML=sorted.map(function(r){
     const pct=total>0?(r.nw/total*100).toFixed(1):0;
-    const prior=PRIOR_CL[r.cl]||0;const yp=prior>0?((r.nw-prior)/prior*100):null;
+    const prior=priorOf(r.cl);const yp=prior>0?((r.nw-prior)/prior*100):null;
     const ypCell=yp!==null?'<span class="'+(yp>=0?'tbl-yoy-up':'tbl-yoy-dn')+'">'+(yp>=0?'▲ +':'▼ ')+Math.abs(yp).toFixed(1)+'%</span><br><span style="font-size:9px;color:var(--text3);font-family:var(--mono)">'+prior.toFixed(1)+'T</span>':'--';
     const c1=CL_CLS.find(x=>x.cl===r.cl&&x.cls===1);const c2=CL_CLS.find(x=>x.cl===r.cl&&x.cls===2);
     const c1nw=c1?c1.nw:0;const c2nw=c2?c2.nw:0;const c1pct=c1nw+c2nw>0?Math.round(c1nw/(c1nw+c2nw)*100):100;
@@ -1113,7 +1117,7 @@ function renderTable(clients,total){
   }).join('');
   const totNw=clients.reduce((s,r)=>s+r.nw,0);
   const totC=clients.reduce((s,r)=>s+r.containers,0);
-  const totPrior=clients.reduce((s,r)=>s+(PRIOR_CL[r.cl]||0),0);
+  const totPrior=clients.reduce((s,r)=>s+priorOf(r.cl),0);
   const totYoy=totPrior>0?((totNw-totPrior)/totPrior*100):null;
   document.getElementById('cl-tbody').innerHTML+='<tr class="total-row"><td>Total ('+clients.length+')</td><td><span class="mono">'+totNw.toFixed(2)+'</span></td><td><span class="mono">100%</span></td><td>'+(totYoy!==null?'<span class="'+(totYoy>=0?'tbl-yoy-up':'tbl-yoy-dn')+'">'+(totYoy>=0?'▲ +':'▼ ')+Math.abs(totYoy).toFixed(1)+'%</span>':'--')+'</td><td><span class="mono">'+totC+'</span></td><td><span class="mono">'+(totC>0?(totNw/totC).toFixed(2)+' T':'--')+'</span></td><td colspan="3"></td></tr>';
 }
@@ -1335,10 +1339,10 @@ function renderInsights(clients,total){
   const yoy=priorTotal>0?((total-priorTotal)/priorTotal*100):null;
   if(yoy!==null) ins.push({type:yoy>=0?'up':'warn',text:'<strong>Season '+(yoy>=0?'+':'')+yoy.toFixed(1)+'% YoY</strong> -- '+total.toFixed(1)+' T across '+clients.length+' clients vs '+priorTotal.toFixed(0)+' T in 2024/25.'});
   const top=clients[0];
-  const topPrior=PRIOR_CL[top.cl]||0;const topYoy=topPrior>0?((top.nw-topPrior)/topPrior*100):null;
+  const topPrior=priorOf(top.cl);const topYoy=topPrior>0?((top.nw-topPrior)/topPrior*100):null;
   ins.push({type:'flag',text:'<strong>'+top.cl+'</strong> is the dominant client at <strong>'+top.nw.toFixed(1)+' T</strong> ('+Math.round(top.nw/total*100)+'% of NW)'+(topYoy!==null?', '+(topYoy>=0?'up':'down')+' '+Math.abs(topYoy).toFixed(1)+'% vs prior':'')+'. Split across 5 UK retail subclients.'});
   if(clients.find(r=>r.cl==='Daltex UK')) ins.push({type:'info',text:'<strong>Daltex UK</strong> is split across 5 retail accounts: TESCO UK ('+Math.round(464/921*100)+'%), Parallel ('+Math.round(251/921*100)+'%), IPL ('+Math.round(143/921*100)+'%), COOP ('+Math.round(50/921*100)+'%), and Waitrose ('+Math.round(12.5/921*100)+'%).'});
-  const withYoy=clients.filter(r=>PRIOR_CL[r.cl]>0).map(r=>({cl:r.cl,nw:r.nw,yoy:(r.nw-PRIOR_CL[r.cl])/PRIOR_CL[r.cl]*100})).sort((a,b)=>b.yoy-a.yoy);
+  const withYoy=clients.filter(r=>priorOf(r.cl)>0).map(r=>({cl:r.cl,nw:r.nw,yoy:(r.nw-priorOf(r.cl))/priorOf(r.cl)*100})).sort((a,b)=>b.yoy-a.yoy);
   if(withYoy.length) ins.push({type:'ok',text:'<strong>'+withYoy[0].cl+'</strong> is the fastest-growing account at <strong>+'+withYoy[0].yoy.toFixed(1)+'% YoY</strong> -- from '+(PRIOR_CL[withYoy[0].cl]||0).toFixed(1)+' T to '+withYoy[0].nw.toFixed(1)+' T.'});
   const declining=withYoy.filter(r=>r.yoy<0);
   if(declining.length) ins.push({type:'warn',text:'<strong>'+declining.map(r=>r.cl).join(', ')+'</strong> '+(declining.length>1?'are':'is')+' below prior season: '+declining.map(r=>r.cl+' '+r.yoy.toFixed(1)+'%').join(', ')+'. Worth reviewing account strategy.'});
@@ -1396,7 +1400,7 @@ function setWeekView(v,btn){S.weekView=v;document.getElementById('btn-stacked').
 function exportCSV(){
   const clients=filteredClients();const total=clients.reduce((s,r)=>s+r.nw,0);
   const hdr='Client,Market,Net Weight (T),NW Share %,Containers,Avg T/Container,Prior Season (T),YoY %,Top Variety\n';
-  const rows=clients.map(function(r){const p=PRIOR_CL[r.cl]||0;const y=p>0?((r.nw-p)/p*100).toFixed(1):'--';const tv=CL_VARIETY.filter(x=>x.cl===r.cl).sort((a,b)=>b.nw-a.nw)[0];return r.cl+','+r.mkt+','+r.nw.toFixed(2)+','+(r.nw/total*100).toFixed(1)+','+r.containers+','+(r.nw/r.containers).toFixed(2)+','+(p>0?p.toFixed(2):'--')+','+y+','+(tv?tv.v:'--');}).join('\n');
+  const rows=clients.map(function(r){const p=priorOf(r.cl);const y=p>0?((r.nw-p)/p*100).toFixed(1):'--';const tv=CL_VARIETY.filter(x=>x.cl===r.cl).sort((a,b)=>b.nw-a.nw)[0];return r.cl+','+r.mkt+','+r.nw.toFixed(2)+','+(r.nw/total*100).toFixed(1)+','+r.containers+','+(r.nw/r.containers).toFixed(2)+','+(p>0?p.toFixed(2):'--')+','+y+','+(tv?tv.v:'--');}).join('\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([hdr+rows],{type:'text/csv'}));a.download='daltex_clients_nw.csv';a.click();
 }
 
