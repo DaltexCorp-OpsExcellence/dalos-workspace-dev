@@ -338,7 +338,7 @@ tbody td{padding:8px 10px;color:var(--text);vertical-align:middle}
   <select class="fsel" id="f-src"><option value="">All Sources</option><option>Daltex Farms</option><option>Out Source</option></select>
   <select class="fsel" id="f-cls"><option value="">All Classes</option><option>1</option><option>2</option></select>
   <select class="fsel" id="f-st"><option value="">All Status</option><option>Delivered</option><option>Shipped</option></select>
-  <select class="fsel" id="f-ctr"><option value="">All Containers</option></select>
+  <input class="fsel" id="f-ctr" list="ctr-list" placeholder="All Containers" autocomplete="off" style="width:150px"><datalist id="ctr-list"></datalist>
   <div class="factions">
     <button class="fbtn fbtn-reset" onclick="resetF()"><i class="ti ti-refresh" style="font-size:11px"></i> Reset</button>
     <button class="fbtn fbtn-apply" onclick="applyF()"><i class="ti ti-check" style="font-size:11px"></i> Apply</button>
@@ -428,7 +428,7 @@ function filt(){
     if(SF.src  && r.src  !== SF.src)  return false;
     if(SF.cls  && String(r.cls) !== SF.cls) return false;
     if(SF.st   && r.st   !== SF.st)   return false;
-    if(SF.ctr  && r.ctr !== SF.ctr) return false;
+    if(SF.ctr  && !r.ctr.toLowerCase().includes(SF.ctr.toLowerCase())) return false;
     if(SF.ldFrom && r.ld !== '—' && r.ld < SF.ldFrom) return false;
     if(SF.ldTo   && r.ld !== '—' && r.ld > SF.ldTo)   return false;
     if(SF.arrFrom && r.eta !== '—' && r.eta < SF.arrFrom) return false;
@@ -483,7 +483,7 @@ async function loadLiveData(){
     [['f-mkt','mkt'],['f-cl','cl'],['f-var','var'],['f-col','col'],['f-farm','farm'],['f-src','src'],['f-st','st']]
       .forEach(([id,k])=>fillSel(id,distinct(mapped,k).sort().map(x=>({v:x,t:x}))));
     fillSel('f-cls',[...new Set(mapped.map(r=>r.cls).filter(x=>x!=='—'))].sort().map(x=>({v:x,t:'Class '+x})));
-    fillSel('f-ctr',distinct(mapped,'ctr').sort().map(x=>({v:x,t:x})));
+    (function(){const dl=document.getElementById('ctr-list');if(dl){dl.innerHTML=distinct(mapped,'ctr').sort().map(x=>'<option value="'+esc(x)+'">').join('');}})();
 
     // default date window spans all live data (was hardcoded to Jun 1)
     const __lds=mapped.map(r=>r.ld).filter(x=>x&&x!=='\u2014').sort();
