@@ -899,7 +899,11 @@ function renderClientCards(clients,total){
 
 function renderSubclients(){
   const max=SUBCLIENTS[0].nw;
-  document.getElementById('subclient-cards').innerHTML=SUBCLIENTS.map((s,i)=>'<div class="sub-card fade-in" style="animation-delay:'+i*.04+'s"><div class="sub-card-name">'+s.sub+'</div><div class="sub-card-nw">'+s.nw.toFixed(1)+' T</div><div class="sub-card-meta">'+s.containers+' containers · '+s.shipments+' shipments</div><div class="sub-card-bar"><div class="sub-card-fill" style="width:'+Math.round(s.nw/max*100)+'%"></div></div></div>').join('');
+  const SUBPAL=['#142850','#DC6428','#1a3668','#d46024','#3d6fa8','#f4a55a','#5c8fc9','#d97706','#2f5596','#e07b3a','#4b6cb7','#c96a2e'];
+  document.getElementById('subclient-cards').innerHTML=SUBCLIENTS.map((s,i)=>{
+    const col=SUBPAL[i%SUBPAL.length];
+    return '<div class="sub-card fade-in" style="animation-delay:'+i*.04+'s"><div class="sub-card-name">'+s.sub+'</div><div class="sub-card-nw">'+s.nw.toFixed(1)+' T</div><div class="sub-card-meta">'+s.containers+' containers · '+s.shipments+' shipments</div><div class="sub-card-bar"><div class="sub-card-fill" style="width:'+Math.round(s.nw/max*100)+'%;background:'+col+'"></div></div></div>';
+  }).join('');
 }
 
 function renderMainBar(clients,total){
@@ -919,8 +923,14 @@ function renderMainBar(clients,total){
     ]},
     options:{
       indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      onClick:function(evt,elements){
-        if(elements&&elements.length){const idx=elements[0].index;const cl=labels[idx];if(cl) drillClient(cl);}
+      onClick:function(evt,elements,chart){
+        const hit=chart.getElementsAtEventForMode(evt,'nearest',{intersect:true},false);
+        if(hit&&hit.length){const cl=labels[hit[0].index];if(cl) drillClient(cl);}
+      },
+      onHover:function(evt,elements,chart){
+        const hit=chart.getElementsAtEventForMode(evt,'nearest',{intersect:true},false);
+        const tgt=evt&&evt.native?evt.native.target:chart.canvas;
+        if(tgt) tgt.style.cursor=(hit&&hit.length)?'pointer':'default';
       },
       plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){return ' '+ctx.dataset.label+': '+ctx.raw+(metric==='nw'?' T':'');}}}},
       scales:{

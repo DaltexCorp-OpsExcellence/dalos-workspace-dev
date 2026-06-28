@@ -794,7 +794,8 @@ function renderBar(r,tot){
     ]},
     options:{
       indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      onClick:(evt,el)=>{if(el.length)drillFarm(labels[el[0].index]);},
+      onClick:(evt,el,chart)=>{const hit=chart.getElementsAtEventForMode(evt,'nearest',{intersect:true},false);if(hit&&hit.length)drillFarm(labels[hit[0].index]);},
+      onHover:(evt,el,chart)=>{const hit=chart.getElementsAtEventForMode(evt,'nearest',{intersect:true},false);const t=evt&&evt.native?evt.native.target:chart.canvas;if(t)t.style.cursor=(hit&&hit.length)?'pointer':'default';},
       plugins:{
         legend:{display:false},
         tooltip:{mode:'index',intersect:false},
