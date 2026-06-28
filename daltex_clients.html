@@ -917,9 +917,20 @@ function renderWeekly(clients){
       animation:{onComplete:function(){
         const chart=this;const ctx=chart.ctx;ctx.save();ctx.textAlign='center';
         const totals=weeks.map(function(_,wi){return curDs.reduce(function(s,ds){return s+(ds.data[wi]||0);},0);});
-        if((WLBL==='cur'||WLBL==='both')&&chart.getDatasetMeta(0).data.length){ctx.font="500 10px 'IBM Plex Mono'";ctx.fillStyle='#142850';chart.getDatasetMeta(0).data.forEach(function(bar,wi){if(totals[wi]>0) ctx.fillText(totals[wi].toFixed(1)+'T',bar.x,chart.scales.y.getPixelForValue(totals[wi])-5);});}
+        const curMeta=chart.getDatasetMeta(0);
         const pm=chart.getDatasetMeta(datasets.length-1);
-        if((WLBL==='prior'||WLBL==='both')&&pm.data.length){ctx.font="400 9px 'IBM Plex Mono'";ctx.fillStyle='#8a95b0';pm.data.forEach(function(bar,wi){var pv=priorDs.data[wi];if(pv>0) ctx.fillText(pv.toFixed(0)+'T',bar.x,WLBL==='both'?bar.y+11:bar.y-4);});}
+        const showCur=(WLBL==='cur'||WLBL==='both')&&curMeta.data.length;
+        const showPrior=(WLBL==='prior'||WLBL==='both')&&pm.data.length;
+        const MINGAP=12;
+        weeks.forEach(function(_,wi){
+          var cv=totals[wi]||0, pv=priorDs.data[wi]||0;
+          var curY=showCur?chart.scales.y.getPixelForValue(cv)-5:null;
+          var pbar=showPrior?pm.data[wi]:null;
+          var priorY=(showPrior&&pbar)?(WLBL==='both'?pbar.y+11:pbar.y-4):null;
+          if(WLBL==='both'&&showCur&&showPrior&&pbar&&cv>0&&pv>0&&Math.abs(curY-priorY)<MINGAP) priorY=curY+MINGAP;
+          if(showCur&&cv>0){ctx.font="500 10px 'IBM Plex Mono'";ctx.fillStyle='#142850';ctx.fillText(cv.toFixed(1)+'T',curMeta.data[wi].x,curY);}
+          if(showPrior&&pbar&&pv>0){ctx.font="400 9px 'IBM Plex Mono'";ctx.fillStyle='#8a95b0';ctx.fillText(pv.toFixed(0)+'T',pbar.x,priorY);}
+        });
         ctx.restore();
       }}
     }

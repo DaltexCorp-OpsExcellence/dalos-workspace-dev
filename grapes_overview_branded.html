@@ -1176,7 +1176,11 @@ function renderWeeklyChart(data, s) {
     svg += `<rect x="${x}" y="${py}" width="${bW}" height="${pbH}" rx="3" fill="var(--bg2)" stroke="var(--border)" stroke-width="1"/>`;
     // prior-season number label (shown in 'prior' and 'both' modes)
     if (pv > 0 && (WLBL==='prior' || WLBL==='both')) {
-      const py2 = WLBL==='both' ? py-4 : py-4;
+      // current label sits at y-5 (or y+12 for very short bars); in 'both' mode,
+      // if the prior label (py-4) would collide with it, push the prior label down.
+      const curLabelY = (WLBL==='cur'||WLBL==='both') && v>0 ? (y>14?y-5:y+12) : null;
+      let py2 = py-4;
+      if (WLBL==='both' && curLabelY!==null && Math.abs(py2-curLabelY)<11) py2 = curLabelY + 11;
       svg += `<text x="${x+bW/2}" y="${py2}" font-size="${WLBL==='both'?8:9}" fill="var(--text3)" text-anchor="middle" font-weight="${WLBL==='both'?'400':'600'}" font-family="'IBM Plex Mono',monospace">${pv.toFixed(WLBL==='both'?0:1)}</text>`;
     }
 

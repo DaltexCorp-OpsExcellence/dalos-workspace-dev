@@ -783,15 +783,20 @@ function renderWeekly(r){
       animation:{onComplete:function(){
         const chart=this;const ctx=chart.ctx;ctx.save();ctx.textAlign='center';
         const curTotals=WEEKS.map((w)=>shown.reduce((s,f)=>{const rr=FWK.find(x=>x.f===f&&+x.wk===w);return s+(rr?rr.nw:0);},0));
-        if(WLBL==='cur'||WLBL==='both'){
-          ctx.font="600 9px 'IBM Plex Mono'";ctx.fillStyle='#142850';
-          chart.getDatasetMeta(0).data.forEach((bar,wi)=>{if(curTotals[wi]>0)ctx.fillText(curTotals[wi].toFixed(1)+'T',bar.x,chart.scales.y.getPixelForValue(curTotals[wi])-5);});
-        }
-        if(WLBL==='prior'||WLBL==='both'){
-          const pm=chart.getDatasetMeta(chart.data.datasets.length-1);
-          ctx.font="400 9px 'IBM Plex Mono'";ctx.fillStyle='#8a95b0';
-          pm.data.forEach((bar,wi)=>{const pv=priorTotals[wi]||0;if(pv>0)ctx.fillText(pv.toFixed(0)+'T',bar.x,WLBL==='both'?bar.y+11:bar.y-4);});
-        }
+        const curMeta=chart.getDatasetMeta(0);
+        const pm=chart.getDatasetMeta(chart.data.datasets.length-1);
+        const showCur=(WLBL==='cur'||WLBL==='both');
+        const showPrior=(WLBL==='prior'||WLBL==='both');
+        const MINGAP=12;
+        WEEKS.forEach((w,wi)=>{
+          const cv=curTotals[wi]||0, pv=priorTotals[wi]||0;
+          let curY = showCur ? chart.scales.y.getPixelForValue(cv)-5 : null;
+          const pbar = showPrior ? pm.data[wi] : null;
+          let priorY = (showPrior&&pbar) ? (WLBL==='both'?pbar.y+11:pbar.y-4) : null;
+          if(WLBL==='both' && showCur && showPrior && pbar && cv>0 && pv>0 && Math.abs(curY-priorY)<MINGAP) priorY=curY+MINGAP;
+          if(showCur && cv>0){ctx.font="600 9px 'IBM Plex Mono'";ctx.fillStyle='#142850';ctx.fillText(cv.toFixed(1)+'T',curMeta.data[wi].x,curY);}
+          if(showPrior && pbar && pv>0){ctx.font="400 9px 'IBM Plex Mono'";ctx.fillStyle='#8a95b0';ctx.fillText(pv.toFixed(0)+'T',pbar.x,priorY);}
+        });
         ctx.restore();
       }}
     }
