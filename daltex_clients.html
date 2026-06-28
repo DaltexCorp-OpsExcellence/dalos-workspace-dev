@@ -552,7 +552,7 @@ function buildClientData(rows){
   const cm={};
   rows.forEach(r=>{const cl=GF(r);if(!cl)return;
     if(!cm[cl])cm[cl]={cl,nw:0,pallets:0,ctr:{},sc:new Set(),mkt:{},port:{},agent:{},line:{}};
-    const o=cm[cl];o.nw+=num(r.net_weight);o.pallets+=num(r.pallet_count);
+    const o=cm[cl];o.nw+=num(r.net_weight);o.pallets+=num(r.pallet_qty)||num(r.pallet_count);
     if(r.container_number)__ctAdd(o,r);
     o.sc.add((r.container_number||'')+'\u0001'+(r.carta||''));
     const acc=(obj,v)=>{v=norm(v);if(v)obj[v]=(obj[v]||0)+num(r.net_weight);};
@@ -700,7 +700,7 @@ async function loadLiveData(){
     const cm={};
     cur.forEach(r=>{const cl=norm(r.client);if(!cl)return;
       if(!cm[cl])cm[cl]={cl,nw:0,pallets:0,ctr:{},sc:new Set(),mkt:{},port:{},agent:{},line:{}};
-      const o=cm[cl];o.nw+=num(r.net_weight);o.pallets+=num(r.pallet_count);
+      const o=cm[cl];o.nw+=num(r.net_weight);o.pallets+=num(r.pallet_qty)||num(r.pallet_count);
       if(r.container_number)__ctAdd(o,r);
       o.sc.add((r.container_number||'')+'\u0001'+(r.carta||''));
       const acc=(obj,v)=>{v=norm(v);if(v)obj[v]=(obj[v]||0)+num(r.net_weight);};
