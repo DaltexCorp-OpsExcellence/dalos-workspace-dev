@@ -709,6 +709,26 @@ function killChip(f){
 function killCharts(){Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}});charts={};}
 if(window.ChartDataLabels){Chart.register(window.ChartDataLabels);Chart.defaults.set('plugins.datalabels',{color:'#334155',font:{family:"'IBM Plex Mono', monospace",size:9,weight:'600'},anchor:'end',align:'end',offset:1,clamp:true,clip:false,formatter:function(v){if(v==null||v==='')return '';var n=+v;if(isNaN(n))return v;if(n===0)return '';return (Math.round(n*100)/100)+'%';},display:function(c){var v=c.dataset.data[c.dataIndex];return v!=null&&+v>0;}});}
 function mkChart(id,cfg){const el=document.getElementById(id);if(!el)return;var ex=Chart.getChart(el);if(ex)ex.destroy();charts[id]=new Chart(el,cfg);}
+// ── Pareto severity toggle (Total / Major / Minor) ──
+var PARETO_MODE={'ch-pareto':'total','ch-dim-pareto':'total'};
+function paretoDefs(mode){return mode==='major'?MAJ.map(d=>[d[0],d[1],'maj']):mode==='minor'?MIN.map(d=>[d[0],d[1],'min']):ALLDEF;}
+function buildPareto(id,rows){
+  var mode=PARETO_MODE[id]||'total';
+  var defs=paretoDefs(mode);
+  var par=defs.map(d=>({n:d[1],sev:d[2],v:cavg(rows,r=>num(r[d[0]]))})).filter(p=>p.v>0).sort((a,b)=>b.v-a.v);
+  if(!par.length)par=defs.map(d=>({n:d[1],sev:d[2],v:0}));
+  var tot=par.reduce((s,p)=>s+p.v,0)||1;var cum=0;var cumArr=par.map(p=>{cum+=p.v;return r2(cum/tot*100);});
+  // dynamic top padding + rotation scale with label count to avoid clipping/overlap
+  var n=par.length;var rot=n>6?45:(n>4?30:0);
+  mkChart(id,{data:{labels:par.map(p=>p.n),datasets:[
+    {type:'bar',data:par.map(p=>r2(p.v)),backgroundColor:par.map(p=>p.sev==='maj'?MAJC:MINC),borderRadius:3,yAxisID:'y',order:2,maxBarThickness:54},
+    {type:'line',data:cumArr,borderColor:'#142850',backgroundColor:'#142850',borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#142850',tension:.3,yAxisID:'y1',order:0,z:10}]},
+   options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:22,right:8,left:2}},plugins:{legend:{display:false},datalabels:{display:c=>+c.dataset.data[c.dataIndex]>0,clip:false,clamp:true,anchor:c=>c.dataset.type==='line'?'center':'end',align:c=>c.dataset.type==='line'?'top':'end',offset:c=>c.dataset.type==='line'?10:4,font:c=>({family:"'IBM Plex Mono'",size:c.dataset.type==='line'?9:8,weight:'700'}),color:c=>c.dataset.type==='line'?'#142850':'#475569',backgroundColor:c=>c.dataset.type==='line'?'rgba(255,255,255,0.85)':null,borderRadius:3,padding:c=>c.dataset.type==='line'?{top:1,bottom:1,left:3,right:3}:0,formatter:(v,c)=>c.dataset.type==='line'?(Math.round(v)+'%'):(Math.round(v*100)/100)+'%'},tooltip:{callbacks:{label:c=>c.dataset.type==='line'?(' cumulative '+c.raw+'%'):(' avg '+c.raw+'%')}}},
+    scales:{x:{ticks:{font:{size:9},maxRotation:rot,minRotation:rot,autoSkip:false},grid:{display:false}},y:{title:{display:true,text:'avg %',font:{size:9}},grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:9}},grace:'8%'},y1:{position:'right',min:0,max:100,grid:{display:false},ticks:{callback:v=>v+'%',font:{family:"'IBM Plex Mono'",size:9}}}}}});
+}
+function paretoToggle(id){return '<span class="seg" style="display:inline-flex;gap:0">'+[['total','Total'],['major','Major'],['minor','Minor']].map(o=>'<button class="cc-btn'+((PARETO_MODE[id]||'total')===o[0]?' on':'')+'" onclick="setPareto(\''+id+'\',\''+o[0]+'\',this)">'+o[1]+'</button>').join('')+'</span>';}
+function setPareto(id,mode,btn){PARETO_MODE[id]=mode;if(btn){var sib=btn.parentElement.querySelectorAll('.cc-btn');sib.forEach(b=>b.classList.remove('on'));btn.classList.add('on');}buildPareto(id,PARETO_ROWS[id]||[]);}
+var PARETO_ROWS={};
 function cc(title,sub,body,actions){return '<div class="cc"><div class="cc-header"><div><div class="cc-title">'+title+'</div><div class="cc-sub">'+sub+'</div></div>'+(actions||'')+'</div>'+body+'</div>';}
 function kcard(label,icon,val,sub,extra,bar){return '<div class="kcard fade-in"><div class="kcard-label"><i class="ti '+icon+'"></i>'+label+'</div><div class="kcard-val">'+val+'</div><div class="kcard-sub">'+sub+'</div>'+(extra||'')+'<div class="kcard-bar"><div class="kcard-bar-fill" style="width:'+Math.max(0,Math.min(100,bar||0))+'%"></div></div></div>';}
 function deltaBadge(d,inverse){if(d===null)return '<span style="font-size:10px;color:#8a95b0">--</span>';const good=inverse?d<=0:d>=0;return '<span style="font-size:11px;font-weight:700;font-family:var(--mono);color:'+(good?'#16a34a':'#dc2626')+'">'+(d>=0?'▲ +':'▼ ')+Math.abs(d).toFixed(2)+' pp</span>';}
@@ -936,7 +956,7 @@ function renderOverview(rows){
    +cc('Minor Defects Breakdown','avg % per container by reason · Total Minor '+fmt(am)+'%','<div style="position:relative;height:240px"><canvas id="ch-min"></canvas></div>')
    +'</div>'
    +'<div style="display:grid;grid-template-columns:3fr 2fr;gap:12px;margin-bottom:12px">'
-   +cc('Pareto — Defect Contribution','bars = avg % · line = cumulative share of total defects','<div style="position:relative;height:260px"><canvas id="ch-pareto"></canvas></div>')
+   +cc('Pareto — Defect Contribution','bars = avg % · line = cumulative share of total defects','<div style="position:relative;height:260px"><canvas id="ch-pareto"></canvas></div>','<div class="cc-actions">'+paretoToggle('ch-pareto')+'</div>')
    +cc('Score Distribution','sample QC scores','<div style="position:relative;height:220px"><canvas id="ch-score"></canvas></div><div id="score-leg" class="chart-legend" style="margin-top:8px"></div>')
    +'</div>'
    +cc('Defect Heatmap','avg defect % per cell · container-level','<div id="hm-wrap" style="overflow:auto"></div>',
@@ -949,13 +969,8 @@ function renderOverview(rows){
   mkChart('ch-maj',{type:'bar',data:{labels:MAJ.map(d=>d[1]),datasets:[{data:majAvgs,backgroundColor:MAJC,borderRadius:4,barThickness:18}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{family:"'IBM Plex Mono'",size:10}},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{autoSkip:false,font:{size:10.5,weight:'500'}},grid:{display:false}}}}});
   mkChart('ch-min',{type:'bar',data:{labels:MIN.map(d=>d[1]),datasets:[{data:minAvgs,backgroundColor:MINC,borderRadius:4,barThickness:18}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{family:"'IBM Plex Mono'",size:10}},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{autoSkip:false,font:{size:10.5,weight:'500'}},grid:{display:false}}}}});
   // pareto
-  const par=ALLDEF.map(d=>({n:d[1],sev:d[2],v:cavg(rows,r=>num(r[d[0]]))})).sort((a,b)=>b.v-a.v);
-  const tot=par.reduce((s,p)=>s+p.v,0)||1;let cum=0;const cumArr=par.map(p=>{cum+=p.v;return r2(cum/tot*100);});
-  mkChart('ch-pareto',{data:{labels:par.map(p=>p.n),datasets:[
-    {type:'bar',data:par.map(p=>r2(p.v)),backgroundColor:par.map(p=>p.sev==='maj'?MAJC:MINC),borderRadius:3,yAxisID:'y',order:2},
-    {type:'line',data:cumArr,borderColor:'#142850',backgroundColor:'#142850',borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#142850',tension:.3,yAxisID:'y1',order:0,z:10}]},
-   options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:18}},plugins:{legend:{display:false},datalabels:{display:c=>+c.dataset.data[c.dataIndex]>0,anchor:c=>c.dataset.type==='line'?'center':'end',align:c=>c.dataset.type==='line'?'top':'end',offset:c=>c.dataset.type==='line'?10:4,font:c=>({family:"'IBM Plex Mono'",size:c.dataset.type==='line'?9:8,weight:'700'}),color:c=>c.dataset.type==='line'?'#142850':'#475569',backgroundColor:c=>c.dataset.type==='line'?'rgba(255,255,255,0.85)':null,borderRadius:3,padding:c=>c.dataset.type==='line'?{top:1,bottom:1,left:3,right:3}:0,formatter:(v,c)=>c.dataset.type==='line'?(Math.round(v)+'%'):(Math.round(v*100)/100)+'%'},tooltip:{callbacks:{label:c=>c.dataset.type==='line'?(' cumulative '+c.raw+'%'):(' avg '+c.raw+'%')}}},
-    scales:{x:{ticks:{font:{size:9},maxRotation:45,minRotation:45},grid:{display:false}},y:{title:{display:true,text:'avg %',font:{size:9}},grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:9}}},y1:{position:'right',min:0,max:100,grid:{display:false},ticks:{callback:v=>v+'%',font:{family:"'IBM Plex Mono'",size:9}}}}}});
+  PARETO_ROWS['ch-pareto']=rows;
+  buildPareto('ch-pareto',rows);
   // score donut
   const sg=groupBy(rows,r=>norm(r.sample_score)||'(none)');const sk=Object.keys(sg).sort((a,b)=>sg[b].length-sg[a].length);
   mkChart('ch-score',{type:'doughnut',data:{labels:sk,datasets:[{data:sk.map(k=>sg[k].length),backgroundColor:sk.map((k,i)=>({GREEN:'#16a34a',AMBER:'#d97706',PASS:'#2563eb',WHITE:'#94a3b8',BLUE:'#0891b2'})[k]||PAL[i%PAL.length]),borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false},datalabels:{color:'#fff',textStrokeColor:'rgba(0,0,0,.4)',textStrokeWidth:2,anchor:'center',align:'center',font:{family:"'IBM Plex Mono'",size:11,weight:'700'},formatter:v=>(+v>0?v:''),display:c=>+c.dataset.data[c.dataIndex]>=3}}}});
@@ -1055,7 +1070,7 @@ function renderDim(rows,field,label){
    +cc('Trend by '+({daily:'Day',weekly:'Week',monthly:'Month',seasonal:'Season'})[S.gran],'avg total defect % · top 5 '+label.toLowerCase()+'s','<div style="position:relative;height:240px"><canvas id="ch-trend"></canvas></div>',
      '<div class="cc-actions"><span class="seg" style="display:inline-flex;gap:0">'+[['daily','Daily'],['weekly','Weekly'],['monthly','Monthly'],['seasonal','Season']].map(function(o){return '<button class="cc-btn'+(S.gran===o[0]?' on':'')+'" onclick="setGran(\''+o[0]+'\',this)">'+o[1]+'</button>';}).join('')+'</span></div>')
    +'<div style="height:12px"></div>'
-   +cc('Pareto — Defect Contribution','bars = avg % · line = cumulative share of total defects','<div style="position:relative;height:260px"><canvas id="ch-dim-pareto"></canvas></div>')
+   +cc('Pareto — Defect Contribution','bars = avg % · line = cumulative share of total defects','<div style="position:relative;height:260px"><canvas id="ch-dim-pareto"></canvas></div>','<div class="cc-actions">'+paretoToggle('ch-dim-pareto')+'</div>')
    +'<div style="height:12px"></div>'
    +cc(label+' Heatmap','avg % per cell · tap a row label to filter','<div id="dimhm-wrap" style="overflow:auto"></div>','<div class="cc-actions" style="flex-wrap:wrap;gap:8px;align-items:center"><span style="font-size:10px;color:#8a95b0">Columns</span><span class="seg" style="display:inline-flex;gap:0">'+bOpts.map((o,i)=>'<button class="cc-btn'+(i===0?' on':'')+'" onclick="setDHMb(\''+o[0]+'\',this)">'+o[1]+'</button>').join('')+'</span><span style="font-size:10px;color:#8a95b0;margin-left:6px">Metric</span><select id="dhm-metric" onchange="setDHMmSel(this.value)" style="font-family:var(--font);font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text);cursor:pointer"><option value="total">Total</option><option value="major">Major</option><option value="minor">Minor</option><optgroup label="Major reasons">'+MAJ.map(function(d){return '<option value="r:'+d[0]+'">'+d[1]+'</option>';}).join('')+'</optgroup><optgroup label="Minor reasons">'+MIN.map(function(d){return '<option value="r:'+d[0]+'">'+d[1]+'</option>';}).join('')+'</optgroup></select></div>')
    +'<div style="height:12px"></div>'
@@ -1312,13 +1327,8 @@ function renderDim(rows,field,label){
   renderDimHM();
   var dhmSel=document.getElementById('dhm-metric');if(dhmSel)dhmSel.value=DHMm;
   // Pareto for this dimension selection — defect reasons ranked + cumulative line on top
-  var dpar=ALLDEF.map(d=>({n:d[1],sev:d[2],v:cavg(rows,r=>num(r[d[0]]))})).sort((a,b)=>b.v-a.v);
-  var dtot=dpar.reduce((s,p)=>s+p.v,0)||1;var dcum=0;var dcumArr=dpar.map(p=>{dcum+=p.v;return r2(dcum/dtot*100);});
-  mkChart('ch-dim-pareto',{data:{labels:dpar.map(p=>p.n),datasets:[
-    {type:'bar',data:dpar.map(p=>r2(p.v)),backgroundColor:dpar.map(p=>p.sev==='maj'?MAJC:MINC),borderRadius:3,yAxisID:'y',order:2},
-    {type:'line',data:dcumArr,borderColor:'#142850',backgroundColor:'#142850',borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#142850',tension:.3,yAxisID:'y1',order:0}]},
-   options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:18}},plugins:{legend:{display:false},datalabels:{display:c=>+c.dataset.data[c.dataIndex]>0,anchor:c=>c.dataset.type==='line'?'center':'end',align:c=>c.dataset.type==='line'?'top':'end',offset:c=>c.dataset.type==='line'?10:4,font:c=>({family:"'IBM Plex Mono'",size:c.dataset.type==='line'?9:8,weight:'700'}),color:c=>c.dataset.type==='line'?'#142850':'#475569',backgroundColor:c=>c.dataset.type==='line'?'rgba(255,255,255,0.85)':null,borderRadius:3,padding:c=>c.dataset.type==='line'?{top:1,bottom:1,left:3,right:3}:0,formatter:(v,c)=>c.dataset.type==='line'?(Math.round(v)+'%'):(Math.round(v*100)/100)+'%'},tooltip:{callbacks:{label:c=>c.dataset.type==='line'?(' cumulative '+c.raw+'%'):(' avg '+c.raw+'%')}}},
-    scales:{x:{ticks:{font:{size:9},maxRotation:45,minRotation:45},grid:{display:false}},y:{title:{display:true,text:'avg %',font:{size:9}},grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:9}}},y1:{position:'right',min:0,max:100,grid:{display:false},ticks:{callback:v=>v+'%',font:{family:"'IBM Plex Mono'",size:9}}}}}});
+  PARETO_ROWS['ch-dim-pareto']=rows;
+  buildPareto('ch-dim-pareto',rows);
   }));
 
   // ── AUTO INSIGHTS + AI ──
