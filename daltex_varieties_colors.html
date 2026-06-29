@@ -494,14 +494,14 @@ input,select,button{font-family:var(--font)}
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
   <div class="cc">
     <div class="cc-header">
-      <div><div class="cc-title">Color Share of Total NW</div><div class="cc-sub">% of 1,285.85 T season total</div></div>
+      <div><div class="cc-title">Color Share of Total NW</div><div class="cc-sub" id="col-share-sub">% of season total</div></div>
     </div>
     <div style="position:relative;height:180px"><canvas id="donut-color" role="img" aria-label="Donut chart of color share">Color share.</canvas></div>
     <div id="donut-col-legend" class="chart-legend" style="margin-top:8px"></div>
   </div>
   <div class="cc">
     <div class="cc-header">
-      <div><div class="cc-title">Variety Share of Total NW</div><div class="cc-sub">% of 1,285.85 T season total</div></div>
+      <div><div class="cc-title">Variety Share of Total NW</div><div class="cc-sub" id="var-share-sub">% of season total</div></div>
     </div>
     <div style="position:relative;height:180px"><canvas id="donut-variety" role="img" aria-label="Donut chart of variety share">Variety share.</canvas></div>
     <div id="donut-var-legend" class="chart-legend" style="margin-top:8px"></div>
@@ -941,6 +941,7 @@ function render(){
   renderBarColor(cols);
   renderDonutVariety(vars,vTotal);
   renderDonutColor(cols,cTotal);
+  (function(){const fmt=n=>n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});const cs=document.getElementById('col-share-sub');if(cs)cs.textContent='% of '+fmt(cTotal)+' T total';const vs=document.getElementById('var-share-sub');if(vs)vs.textContent='% of '+fmt(vTotal)+' T total';})();
   renderWeeklyVariety(vars);
   renderWeeklyColor(cols);
   renderHeatVarMkt(vars);
