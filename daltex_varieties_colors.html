@@ -542,16 +542,14 @@ input,select,button{font-family:var(--font)}
   </div>
 </div>
 
-<!-- ROW 4: Color×Market LEFT, Variety×Market RIGHT -->
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-  <div class="cc">
-    <div class="cc-header"><div><div class="cc-title">Color × Market</div><div class="cc-sub">Net weight per cell</div></div><select onchange="setHeatMode('cm',this.value)" style="height:28px;border:1px solid #e2e6f0;border-radius:6px;background:#fff;color:#142850;font-size:11px;font-weight:600;padding:0 6px;cursor:pointer;font-family:inherit"><option value="t">Tonnes (T)</option><option value="row">% of row</option><option value="col">% of column</option><option value="grand">% of grand total</option></select></div>
-    <div class="heat-wrap" id="heat-col-mkt"></div>
-  </div>
-  <div class="cc">
-    <div class="cc-header"><div><div class="cc-title">Variety × Market</div><div class="cc-sub">Net weight per cell</div></div><select onchange="setHeatMode('vm',this.value)" style="height:28px;border:1px solid #e2e6f0;border-radius:6px;background:#fff;color:#142850;font-size:11px;font-weight:600;padding:0 6px;cursor:pointer;font-family:inherit"><option value="t">Tonnes (T)</option><option value="row">% of row</option><option value="col">% of column</option><option value="grand">% of grand total</option></select></div>
-    <div class="heat-wrap" id="heat-var-mkt"></div>
-  </div>
+<!-- ROW 4: Color×Market full-width, Variety×Market full-width below -->
+<div class="cc" style="margin-bottom:12px">
+  <div class="cc-header"><div><div class="cc-title">Color × Market</div><div class="cc-sub">Net weight per cell</div></div><select onchange="setHeatMode('cm',this.value)" style="height:28px;border:1px solid #e2e6f0;border-radius:6px;background:#fff;color:#142850;font-size:11px;font-weight:600;padding:0 6px;cursor:pointer;font-family:inherit"><option value="t">Tonnes (T)</option><option value="row">% of row</option><option value="col">% of column</option><option value="grand">% of grand total</option></select></div>
+  <div class="heat-wrap" id="heat-col-mkt"></div>
+</div>
+<div class="cc" style="margin-bottom:12px">
+  <div class="cc-header"><div><div class="cc-title">Variety × Market</div><div class="cc-sub">Net weight per cell</div></div><select onchange="setHeatMode('vm',this.value)" style="height:28px;border:1px solid #e2e6f0;border-radius:6px;background:#fff;color:#142850;font-size:11px;font-weight:600;padding:0 6px;cursor:pointer;font-family:inherit"><option value="t">Tonnes (T)</option><option value="row">% of row</option><option value="col">% of column</option><option value="grand">% of grand total</option></select></div>
+  <div class="heat-wrap" id="heat-var-mkt"></div>
 </div>
 
 <!-- ROW 5: Color×Farm LEFT, Variety×Farm RIGHT -->
