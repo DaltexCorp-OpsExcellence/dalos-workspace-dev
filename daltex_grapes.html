@@ -197,8 +197,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div class="hero-stats">
         <div class="hstat"><div class="hstat-val">2</div><div class="hstat-lbl">Live</div></div>
         <div class="hstat"><div class="hstat-val">2</div><div class="hstat-lbl">Coming Soon</div></div>
-        <div class="hstat"><div class="hstat-val">15+</div><div class="hstat-lbl">Tabs</div></div>
-        <div class="hstat"><div class="hstat-val" id="g-records">162</div><div class="hstat-lbl">Records</div></div>
+        <div class="hstat"><div class="hstat-val" id="g-updated" style="font-size:18px">—</div><div class="hstat-lbl">Last Updated</div></div>
       </div>
     </div>
     <div class="hero-season">
@@ -355,6 +354,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     if(tm[0])set('g-topmkt',tm[0]+' '+Math.round(tm[1]/total*100)+'%');
     if(tv[0])set('g-topvar',tv[0]+' '+Math.round(tv[1]/total*100)+'%');
     set('g-weeks',wk.length?('W'+wk[0]+' \u2013 W'+wk[wk.length-1]):'\u2014');
+    const lds=rows.map(x=>x.loading_date).filter(Boolean).map(d=>new Date(d+'T00:00:00')).filter(d=>!isNaN(d)).sort((a,b)=>b-a);
+    if(lds.length)set('g-updated',lds[0].toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}));
   }catch(e){console.warn('Grapes landing: live unavailable',e.message);}
 
   // ── Fetch QC data ──
