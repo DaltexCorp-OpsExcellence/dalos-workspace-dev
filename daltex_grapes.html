@@ -247,7 +247,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         </div>
       </div>
       <div class="dc-footer">
-        <div class="dc-footer-left"><strong>7 tabs</strong> · 162 records · 2,314.14 T</div>
+        <div class="dc-footer-left"><strong>7 tabs</strong> · <span id="g-records-f">162</span> records · <span id="g-nw-f">2,314.14 T</span></div>
         <div class="dc-open">Open <i class="ti ti-arrow-right"></i></div>
       </div>
     </a>
@@ -347,7 +347,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     const tm=top(mkts),tv=top(vars);
     const wk=[...new Set(rows.map(x=>parseInt(x.shipping_week)||0).filter(Boolean))].sort((a,b)=>a-b);
     set('g-records',rows.length);
+    set('g-records-f',rows.length);
     set('g-nw',total.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' T');
+    set('g-nw-f',total.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' T');
     set('g-ctr',ctr);
     set('g-mkt',Object.keys(mkts).length);
     if(tm[0])set('g-topmkt',tm[0]+' '+Math.round(tm[1]/total*100)+'%');
