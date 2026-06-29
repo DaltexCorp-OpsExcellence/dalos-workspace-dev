@@ -512,7 +512,7 @@ input,select,button{font-family:var(--font)}
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
   <div class="cc">
     <div class="cc-header">
-      <div><div class="cc-title">Weekly NW by Color (T)</div><div class="cc-sub">Wk 19–22 · ghost = 2024/25 prior</div></div>
+      <div><div class="cc-title">Weekly NW by Color (T)</div><div class="cc-sub" id="cwk-sub">ghost = 2024/25 prior</div></div>
       <div class="cc-actions">
         <button class="cc-btn on" id="cwlbl-cur" onclick="setWeeklyLbl('cur',this)">2025/26</button>
         <button class="cc-btn" id="cwlbl-prior" onclick="setWeeklyLbl('prior',this)">2024/25</button>
@@ -527,7 +527,7 @@ input,select,button{font-family:var(--font)}
   </div>
   <div class="cc">
     <div class="cc-header">
-      <div><div class="cc-title">Weekly NW by Variety (T)</div><div class="cc-sub">Wk 19–22 · ghost = 2024/25 prior</div></div>
+      <div><div class="cc-title">Weekly NW by Variety (T)</div><div class="cc-sub" id="vwk-sub">ghost = 2024/25 prior</div></div>
       <div class="cc-actions">
         <button class="cc-btn on" id="vwlbl-cur" onclick="setWeeklyLbl('cur',this)">2025/26</button>
         <button class="cc-btn" id="vwlbl-prior" onclick="setWeeklyLbl('prior',this)">2024/25</button>
@@ -1141,6 +1141,7 @@ function renderDonutColor(cols,total){
 
 function renderWeeklyVariety(vars){
   const weeks=__weekList();const shown=vars.map(r=>r.v);
+  {const _s=document.getElementById('vwk-sub');if(_s){const _r=weeks.length?(weeks.length>1?'Wk '+weeks[0]+'\u2013'+weeks[weeks.length-1]:'Wk '+weeks[0]):'';_s.textContent=(_r?_r+' \u00b7 ':'')+'ghost = 2024/25 prior';}}
   const curDs=shown.map(v=>({
     label:v,data:weeks.map(w=>{const r=VAR_WEEK.find(x=>x.v===v&&x.wk===w);return r?+r.nw.toFixed(2):0;}),
     backgroundColor:(WLBL==='prior')?'rgba(180,190,210,0.25)':(VCOL[v]||'#8a95b0'),borderRadius:S.varWeekView==='grouped'?3:0,
@@ -1190,6 +1191,7 @@ function renderWeeklyVariety(vars){
 
 function renderWeeklyColor(cols){
   const weeks=__weekList();const shown=cols.map(r=>r.c);
+  {const _s=document.getElementById('cwk-sub');if(_s){const _r=weeks.length?(weeks.length>1?'Wk '+weeks[0]+'\u2013'+weeks[weeks.length-1]:'Wk '+weeks[0]):'';_s.textContent=(_r?_r+' \u00b7 ':'')+'ghost = 2024/25 prior';}}
   const curDs=shown.map(c=>({
     label:c,data:weeks.map(w=>{const r=COL_WEEK.find(x=>x.c===c&&x.wk===w);return r?+r.nw.toFixed(2):0;}),
     backgroundColor:(WLBL==='prior')?'rgba(180,190,210,0.25)':(CCOL[c]||'#8a95b0'),borderRadius:S.colWeekView==='grouped'?3:0,
