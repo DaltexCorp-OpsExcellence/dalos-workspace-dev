@@ -355,7 +355,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     if(tv[0])set('g-topvar',tv[0]+' '+Math.round(tv[1]/total*100)+'%');
     set('g-weeks',wk.length?('W'+wk[0]+' \u2013 W'+wk[wk.length-1]):'\u2014');
     const lds=rows.map(x=>x.loading_date).filter(Boolean).map(d=>new Date(d+'T00:00:00')).filter(d=>!isNaN(d)).sort((a,b)=>b-a);
-    if(lds.length)set('g-updated',lds[0].toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}));
+    if(lds.length){const d=lds[0],p=n=>String(n).padStart(2,'0');set('g-updated',p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear());}
   }catch(e){console.warn('Grapes landing: live unavailable',e.message);}
 
   // ── Fetch QC data ──
