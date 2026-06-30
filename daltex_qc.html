@@ -518,6 +518,7 @@ input,select,button{font-family:var(--font)}
 <button class="mob-ftog" id="mob-ftog" onclick="document.getElementById('fbar').classList.toggle('open')"><i class="ti ti-adjustments-horizontal"></i> Filters <span class="cnt" id="mob-fcnt" style="display:none"></span><i class="ti ti-chevron-down" style="margin-left:auto"></i></button>
 <div class="fbar" id="fbar">
   <div class="fgrp"><div class="flab">Season</div><div class="ms" data-f="season"></div></div>
+  <div class="fgrp"><div class="flab">Date basis</div><select class="fdate" id="f-basis" onchange="setDateBasis(this.value)" style="cursor:pointer"><option value="load_date">Load date</option><option value="arrival_date" disabled>Arrival date (pending shipments link)</option><option value="pack_date">Pack date</option><option value="created_date">Created date</option></select></div>
   <div class="fgrp"><div class="flab">From</div><input type="date" class="fdate" id="f-from" onchange="setDate()"></div>
   <div class="fgrp"><div class="flab">To</div><input type="date" class="fdate" id="f-to" onchange="setDate()"></div>
   <div class="fgrp"><div class="flab">Week</div><div class="ms" data-f="wk"></div></div>
@@ -553,7 +554,10 @@ const MAJC='#dc2626', MINC='#d97706';
 const DIMS={farm:['sample_farm','Farm'],country:['country','Country'],variety:['variety','Variety'],color:['color','Color'],client:['client','Client'],sub_client:['sub_client','Sub Client'],packhouse:['packhouse','Packhouse']};
 const MSF=['season','wk','sample_farm','country','variety','color','client','sub_client','packhouse','container_number','sample_score'];
 
-let ROWS=[],S={tab:'ov',gran:'weekly',from:'',to:''},charts={},dataPage=0;
+let ROWS=[],S={tab:'ov',gran:'weekly',from:'',to:'',dateBasis:'load_date'},charts={},dataPage=0;
+// Active date column resolver. Falls back to created_date when the chosen basis is empty for a row.
+const DATE_BASES={load_date:'Load date',pack_date:'Pack date',created_date:'Created date',arrival_date:'Arrival date'};
+function dcol(r){return (r[S.dateBasis]||r.created_date||'');}
 MSF.forEach(f=>S[f]=[]);
 const num=v=>{const n=parseFloat(v);return isNaN(n)?0:n;};
 const r2=v=>Math.round(v*100)/100;
@@ -578,7 +582,7 @@ const fmt=(v,d)=>v.toLocaleString('en-US',{minimumFractionDigits:d===undefined?2
 const esc=v=>String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
 function isoWk(ds){const t=new Date(ds+'T00:00:00');t.setDate(t.getDate()+3-((t.getDay()+6)%7));const w1=new Date(t.getFullYear(),0,4);return 1+Math.round(((t-w1)/864e5-3+((w1.getDay()+6)%7))/7);}
-function perKey(r){return S.gran==='daily'?r.created_date:S.gran==='weekly'?'W'+String(r.wk).padStart(2,'0'):S.gran==='monthly'?r.created_date.slice(0,7):r.season;}
+function perKey(r){return S.gran==='daily'?dcol(r):S.gran==='weekly'?'W'+String(r.wk).padStart(2,'0'):S.gran==='monthly'?dcol(r).slice(0,7):r.season;}
 
 async function fetchAll(){
   let out=[],from=0,page=1000;
@@ -594,8 +598,8 @@ async function fetchAll(){
 function F(){
   return ROWS.filter(r=>{
     for(const f of MSF){if(S[f].length&&!S[f].includes(f==='wk'?String(r.wk):norm(r[f])))return false;}
-    if(S.from&&r.created_date<S.from)return false;
-    if(S.to&&r.created_date>S.to)return false;
+    if(S.from&&dcol(r)<S.from)return false;
+    if(S.to&&dcol(r)>S.to)return false;
     return true;
   });
 }
@@ -662,8 +666,8 @@ function rowsExcept(skip){
       if(f===skip) continue;
       if(S[f].length&&!S[f].includes(f==='wk'?String(r.wk):norm(r[f]))) return false;
     }
-    if(S.from&&r.created_date<S.from) return false;
-    if(S.to&&r.created_date>S.to) return false;
+    if(S.from&&dcol(r)<S.from) return false;
+    if(S.to&&dcol(r)>S.to) return false;
     return true;
   });
 }
@@ -685,6 +689,20 @@ function refreshFilterOptions(){
 }
 
 function setDate(){S.from=document.getElementById('f-from').value;S.to=document.getElementById('f-to').value;apply();}
+function recalcDates(){
+  ROWS.forEach(r=>{const d=dcol(r);r.wk=d?isoWk(d):0;});
+  const ds=ROWS.map(r=>dcol(r)).filter(Boolean).sort();
+  LDF=ds[0]||'';LDT=ds[ds.length-1]||'';
+}
+function setDateBasis(v){
+  S.dateBasis=v;
+  recalcDates();
+  S.from=LDF;S.to=LDT;
+  const ff=document.getElementById('f-from'),ft=document.getElementById('f-to');
+  if(ff){ff.min=LDF;ff.max=LDT;ff.value=LDF;}
+  if(ft){ft.min=LDF;ft.max=LDT;ft.value=LDT;}
+  apply();
+}
 function setGran(g,btn){S.gran=g;apply();}
 function resetF(){
   MSF.forEach(f=>S[f]=[]);S.from=LDF;S.to=LDT;
@@ -936,7 +954,7 @@ function renderOverview(rows){
   const cls=new Set(rows.map(r=>norm(r.client)).filter(Boolean)).size;
   const amber=rows.length?rows.filter(r=>norm(r.sample_score)==='AMBER').length/rows.length*100:0;
   const wow=fixedDelta(rows,'major_total',r=>'W'+String(r.wk).padStart(2,'0'));
-  const mom=fixedDelta(rows,'major_total',r=>r.created_date.slice(0,7));
+  const mom=fixedDelta(rows,'major_total',r=>dcol(r).slice(0,7));
   c.innerHTML=
    '<div class="kgrid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px">'
    +kcard('Overall Major Defects','ti-alert-triangle','<span class="sev-maj">'+fmt(aM)+'%</span>','avg per container · zeros included','',aM*10)
@@ -1470,9 +1488,8 @@ let LDF='',LDT='';
   })();
   try{
     ROWS=await fetchAll();
-    ROWS.forEach(r=>{r.wk=r.created_date?isoWk(r.created_date):0;});
-    const ds=ROWS.map(r=>r.created_date).filter(Boolean).sort();
-    LDF=ds[0]||'';LDT=ds[ds.length-1]||'';S.from=LDF;S.to=LDT;
+    recalcDates();
+    S.from=LDF;S.to=LDT;
     const ff=document.getElementById('f-from'),ft=document.getElementById('f-to');
     ff.min=LDF;ff.max=LDT;ff.value=LDF;ft.min=LDF;ft.max=LDT;ft.value=LDT;
     buildMS();
