@@ -1511,6 +1511,7 @@ let LDF='',LDT='';
   })();
   try{
     ROWS=await fetchAll();
+    {const canonColor=v=>{if(v==null)return v;const p=String(v).split('+').map(s=>s.trim()).filter(Boolean);if(p.length<2)return String(v).trim();return Array.from(new Set(p)).sort((a,b)=>a.localeCompare(b)).join(' + ');};ROWS.forEach(r=>{r.color=canonColor(r.color);});}
     try{
       const amap=await fetchArrivalMap();
       let hit=0;
