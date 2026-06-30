@@ -262,7 +262,7 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
 var DALOS_SUPABASE_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
 var DALOS_SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
 var VISION_URL='https://daltexcorp-opsexcellence.github.io/dalos-vision-dev/';
-var ANALYTICS_URL='daltex_home.html';
+var ANALYTICS_URL='https://daltexcorp-opsexcellence.github.io/dalos-analytics-dev/';
 var DALOS_LINK=(function(){
   var out={type:null,access_token:null,refresh_token:null,error:null};
   try{
@@ -365,7 +365,7 @@ function nextTarget(){
 }
 function openNext(target,animate){
   var beat={accent:'#6aa8ff',crest:BEAT_EMB_A,line:'Opening DalOS Analytics',sub:'Loading\u2026',subColor:'#6aa8ff',bg:'radial-gradient(circle at 50% 46%, #6aa8ff22 0%, #0b1510 55%, #0a120c 100%)'};
-  function fire(d){beat.duration=d;beat.then=function(){window.location.replace(target);};$('loginStage').style.display='none';showBeat(beat);}
+  function fire(d){beat.duration=d;beat.then=function(){window.location.replace(new URL(target,ANALYTICS_URL).href);};$('loginStage').style.display='none';showBeat(beat);}
   if(animate){
     var lc=$('lcard');if(lc){lc.classList.remove('dlogin-card-in');lc.classList.add('dlogin-card-exit');}
     setTimeout(function(){fire(1100);},420);
