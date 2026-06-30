@@ -984,7 +984,7 @@ function renderOverview(rows){
    '<div class="kgrid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px">'
    +kcard('Overall Major Defects','ti-alert-triangle','<span class="sev-maj">'+fmt(aM)+'%</span>','avg per container · zeros included','',aM*10)
    +kcard('Overall Minor Defects','ti-alert-circle','<span class="sev-min">'+fmt(am)+'%</span>','avg per container · zeros included','',am*10)
-   +kcard('Inspections','ti-clipboard-check',reps,rows.length+' samples','',reps*4)
+   +kcard('Cqc','ti-clipboard-check',reps,rows.length+' samples','',reps*4)
    +kcard('Shipments Inspected','ti-ship',ctrs,'unique containers','',ctrs*4)
    +kcard('Farms / Clients','ti-building',farms+' / '+cls,'farms · clients inspected','',(farms+cls)*5)
    +'</div>'
