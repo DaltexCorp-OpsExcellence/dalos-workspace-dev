@@ -978,8 +978,8 @@ function renderOverview(rows){
   const farms=new Set(rows.map(r=>norm(r.sample_farm)).filter(Boolean)).size;
   const cls=new Set(rows.map(r=>norm(r.client)).filter(Boolean)).size;
   const amber=rows.length?rows.filter(r=>norm(r.sample_score)==='AMBER').length/rows.length*100:0;
-  const wow=fixedDelta(rows,'major_total',r=>'W'+String(r.wk).padStart(2,'0'));
-  const mom=fixedDelta(rows,'major_total',r=>dcol(r).slice(0,7));
+  const top3=ALLDEF.map(d=>({n:d[1],sev:d[2],v:cavg(rows,r=>num(r[d[0]]))})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v).slice(0,3);
+  const top3html=top3.length?top3.map((x,i)=>'<div style="display:flex;align-items:center;gap:6px;font-size:11px;margin-top:'+(i?3:0)+'px"><span style="font-family:var(--mono);color:#8a95b0;min-width:14px">'+(i+1)+'.</span><span class="'+(x.sev==='maj'?'sev-maj':'sev-min')+'" style="width:7px;height:7px;border-radius:50%;display:inline-block;background:currentColor"></span><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#142850;font-weight:600">'+esc(x.n)+'</span><span style="font-family:var(--mono);font-weight:700;color:#142850">'+fmt(x.v)+'%</span></div>').join(''):'<span style="font-size:11px;color:#8a95b0">No defects in scope</span>';
   c.innerHTML=
    '<div class="kgrid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px">'
    +kcard('Overall Major Defects','ti-alert-triangle','<span class="sev-maj">'+fmt(aM)+'%</span>','avg per container · zeros included','',aM*10)
@@ -988,11 +988,10 @@ function renderOverview(rows){
    +kcard('Shipments Inspected','ti-ship',ctrs,'unique containers','',ctrs*4)
    +kcard('Farms / Clients','ti-building',farms+' / '+cls,'farms · clients inspected','',(farms+cls)*5)
    +'</div>'
-   +'<div class="kgrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">'
+   +'<div class="kgrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px">'
    +kcard('Amber Score Rate','ti-flag',fmt(amber,1)+'%','samples scored AMBER','',amber)
    +kcard('Avg Total Defects','ti-sum',fmt(cavg(rows,r=>num(r.grand_total)))+'%','major + minor','',cavg(rows,r=>num(r.grand_total))*8)
-   +kcard('Week-over-Week','ti-trending-up',deltaBadge(wow,true),'Δ avg major vs prior week','',50)
-   +kcard('Month-over-Month','ti-calendar-stats',deltaBadge(mom,true),'Δ avg major vs prior month','',50)
+   +kcard('Top 3 Defects','ti-list-numbers','<div style="margin:2px 0 4px">'+top3html+'</div>','by avg % per container','',0)
    +'</div>'
    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'
    +cc('Major Defects Breakdown','avg % per container by reason · Total Major '+fmt(aM)+'%','<div style="position:relative;height:240px"><canvas id="ch-maj"></canvas></div>')
