@@ -462,12 +462,13 @@ async function loadLiveData(){
   }
   try{
     const rows=await sbFetch(SID_CUR);
+    const __canonCol=v=>{if(v==null)return v;const p=String(v).split('+').map(s=>s.trim()).filter(Boolean);if(p.length<2)return String(v).trim();return Array.from(new Set(p)).sort((a,b)=>a.localeCompare(b)).join(' + ');};
     const mapped=rows.map(r=>{
       const c=parseInt(r.daltex_class);
       return {
         ld:r.loading_date||'—', wk:parseInt(r.shipping_week)||0, st:r.shipping_status||'—',
         mkt:r.receiving_country||'—', port:r.receiving_port||'—', cl:r.client||'—', sub:r.subclient||'—',
-        var:r.variety||'—', col:r.color||'—', src:r.source_type||'—', farm:r.farm_source||'—',
+        var:r.variety||'—', col:__canonCol(r.color)||'—', src:r.source_type||'—', farm:r.farm_source||'—',
         ctr:r.container_number||'—', line:r.shipping_line||'—', agent:r.agent||'—',
         ctype:r.carton_type||'—', ptype:r.punnet_type||'—', cls:isNaN(c)?'—':c,
         nw:num(r.net_weight), ctns:num(r.carton_count), pal:num(r.pallet_count),

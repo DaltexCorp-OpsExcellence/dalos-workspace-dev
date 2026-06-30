@@ -852,6 +852,11 @@ async function loadLiveData(){
   try{
     const [cur,prior0]=await Promise.all([sbFetch(SID_CUR),sbFetch(SID_PRIOR)]);const __cmd=cur.reduce((m,r)=>(r.loading_date&&r.loading_date>m)?r.loading_date:m,'');const __pc=__cmd?((parseInt(__cmd.slice(0,4))-1)+__cmd.slice(4)):'';const prior=prior0.filter(r=>r.loading_date&&__pc&&r.loading_date<=__pc);/* YoY: prior season up to the same calendar date one year earlier *//* YoY = season-to-date vs prior season through same shipping week */
 
+    // Canonicalize multi-color combos so "White + Red" === "Red + White"
+    const canonColor=v=>{if(v==null)return v;const parts=String(v).split('+').map(s=>s.trim()).filter(Boolean);if(parts.length<2)return String(v).trim();return Array.from(new Set(parts)).sort((a,b)=>a.localeCompare(b)).join(' + ');};
+    cur.forEach(r=>{r.color=canonColor(r.color);});
+    prior.forEach(r=>{r.color=canonColor(r.color);});
+
     __ROWS=cur;
 
     const vm=dimAgg(cur,r=>norm(r.variety),true);

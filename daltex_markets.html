@@ -827,6 +827,7 @@ async function loadLiveData(){
   async function sbFetch(sid){const r=await fetch(`${SB_URL}/rest/v1/grapes_shipments_view?season_id=eq.${sid}&select=*`,{headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Range':'0-99999'}});if(!r.ok)throw new Error('SB '+r.status);return r.json();}
   try{
     const [cur,prior0]=await Promise.all([sbFetch(SID_CUR),sbFetch(SID_PRIOR)]);const __cmd=cur.reduce((m,r)=>(r.loading_date&&r.loading_date>m)?r.loading_date:m,'');const __pc=__cmd?((parseInt(__cmd.slice(0,4))-1)+__cmd.slice(4)):'';const prior=prior0.filter(r=>r.loading_date&&__pc&&r.loading_date<=__pc);/* YoY: prior season up to the same calendar date one year earlier *//* YoY = season-to-date vs prior season through same shipping week */
+    {const canonColor=v=>{if(v==null)return v;const p=String(v).split('+').map(s=>s.trim()).filter(Boolean);if(p.length<2)return String(v).trim();return Array.from(new Set(p)).sort((a,b)=>a.localeCompare(b)).join(' + ');};cur.forEach(r=>{r.color=canonColor(r.color);});prior.forEach(r=>{r.color=canonColor(r.color);});}
 
     __ALLROWS=cur;            // keep raw rows so RAW can be rebuilt against active filters
     RAW=buildRAW(cur);        // initial full-season cross-tabs

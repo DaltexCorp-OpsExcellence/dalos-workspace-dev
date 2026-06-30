@@ -740,6 +740,7 @@ async function loadLiveData() {
 
   try {
     const [curRows, allPrior] = await Promise.all([sbFetch(SID_CUR), sbFetch(SID_PRIOR)]);
+    {const __canonCol=v=>{if(v==null)return v;const p=String(v).split('+').map(s=>s.trim()).filter(Boolean);if(p.length<2)return String(v).trim();return Array.from(new Set(p)).sort((a,b)=>a.localeCompare(b)).join(' + ');};curRows.forEach(r=>{r.color=__canonCol(r.color);});allPrior.forEach(r=>{r.color=__canonCol(r.color);});}
 
     // Build DAILY from curRows (group by loading_date)
     const byDate = {};
