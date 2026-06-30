@@ -79,13 +79,13 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
 .dh-menu-item:hover{background:rgba(255,255,255,.07)}
 .dh-menu-danger{color:#f0a89a}
 .dh-menu-danger:hover{background:rgba(255,106,82,.12)}
-.dh-body{flex:1;position:relative;z-index:5;overflow:hidden;padding:40px 56px 90px;display:flex;flex-direction:column;justify-content:center}
+.dh-body{flex:1;position:relative;z-index:5;overflow-y:auto;overflow-x:hidden;padding:28px 56px 104px;display:flex;flex-direction:column;justify-content:flex-start}
 .dh-crest{position:absolute;right:-40px;top:50%;transform:translateY(-50%);width:min(46vw,560px);height:min(46vw,560px);z-index:0;animation:dh-breathe 14s ease-in-out infinite}
 .dh-fruit{position:absolute;z-index:1;animation:dh-drift 10s ease-in-out infinite;filter:drop-shadow(0 6px 14px rgba(0,0,0,.3))}
-.dh-hero{position:relative;z-index:6;margin-bottom:32px;animation:dh-rise .6s cubic-bezier(.2,.8,.2,1) both}
+.dh-hero{position:relative;z-index:6;margin-top:auto;margin-bottom:24px;flex-shrink:0;animation:dh-rise .6s cubic-bezier(.2,.8,.2,1) both}
 .dh-eyebrow{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#caa86a;margin-bottom:11px;display:flex;align-items:center;gap:10px}
 .dh-eyebrow-line{height:1px;width:38px;background:linear-gradient(90deg,#caa86a,transparent);display:inline-block}
-.dh-headline{font-family:var(--font-display);font-size:44px;line-height:1.05;color:#f4f1e8;letter-spacing:-.5px;text-shadow:0 2px 30px rgba(0,0,0,.4)}
+.dh-headline{font-family:var(--font-display);font-size:clamp(30px,3.6vw,44px);line-height:1.06;color:#f4f1e8;letter-spacing:-.5px;text-shadow:0 2px 30px rgba(0,0,0,.4)}
 .dh-accent{background:linear-gradient(120deg,#8fe0ad,#b18cf0);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-style:italic}
 .dh-bento{position:relative;z-index:6;display:grid;grid-template-columns:1.5fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:14px;width:100%;max-width:940px;height:min(46vh,420px);min-height:320px}
 .dh-tile{border-radius:20px;padding:22px;cursor:pointer;position:relative;overflow:hidden;transition:transform .25s cubic-bezier(.3,1.4,.5,1),box-shadow .25s,border-color .25s;display:flex;flex-direction:column;justify-content:space-between;background:rgba(255,255,255,.045);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1)}
@@ -132,8 +132,8 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
 .dh-bento-2 .dh-primary{grid-row:auto;grid-column:auto}
 @media(max-width:760px){.dh-bento-2{grid-template-columns:1fr;grid-template-rows:auto;height:auto;min-height:0}}
 /* ── god-mode app cards (two distinct apps inside DalOS) ── */
-.app-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;width:100%;max-width:920px;position:relative;z-index:6}
-.app-card{position:relative;overflow:hidden;border-radius:24px;padding:26px 28px 22px;min-height:380px;cursor:pointer;display:flex;flex-direction:column;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1);transition:transform .3s cubic-bezier(.3,1.25,.5,1),box-shadow .3s,border-color .3s;animation:dh-rise .6s ease both;opacity:0}
+.app-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;width:100%;max-width:920px;position:relative;z-index:6;margin-bottom:auto;flex-shrink:0}
+.app-card{position:relative;overflow:hidden;border-radius:24px;padding:24px 28px 22px;min-height:clamp(280px,46vh,380px);cursor:pointer;display:flex;flex-direction:column;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1);transition:transform .3s cubic-bezier(.3,1.25,.5,1),box-shadow .3s,border-color .3s;animation:dh-rise .6s ease both;opacity:0}
 .app-card:hover{transform:translateY(-6px);box-shadow:0 30px 70px rgba(0,0,0,.5);border-color:color-mix(in srgb,var(--ac) 55%,transparent)}
 .app-card:active{transform:translateY(-3px) scale(.992)}
 .app-vision{--ac:#6fc191;background:linear-gradient(162deg,rgba(60,122,85,.34),rgba(10,24,15,.55));border-color:rgba(111,193,145,.28);animation-delay:.10s}
@@ -146,7 +146,7 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
 .app-head{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:2}
 .app-eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ac)}
 .app-status{font-size:9px;font-weight:700;letter-spacing:.06em;padding:3px 9px;border-radius:20px;background:color-mix(in srgb,var(--ac) 18%,transparent);color:var(--ac);border:1px solid color-mix(in srgb,var(--ac) 30%,transparent)}
-.app-emblem{width:56px;height:56px;margin:24px 0 15px;position:relative;z-index:2;color:var(--ac);filter:drop-shadow(0 0 16px color-mix(in srgb,var(--ac) 40%,transparent))}
+.app-emblem{width:56px;height:56px;margin:16px 0 13px;position:relative;z-index:2;color:var(--ac);filter:drop-shadow(0 0 16px color-mix(in srgb,var(--ac) 40%,transparent))}
 .app-name{font-family:var(--font-display);font-size:30px;color:#f4f1e8;position:relative;z-index:2;line-height:1.05}
 .app-tag{font-size:13px;color:rgba(244,241,232,.6);margin-top:8px;position:relative;z-index:2;max-width:300px;line-height:1.45}
 .app-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px;position:relative;z-index:2}
