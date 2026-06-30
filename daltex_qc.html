@@ -595,6 +595,20 @@ async function fetchAll(){
   return out;
 }
 
+// Pull arrival date (eta) per container from the shipments view, keyed by container number.
+// Uses the user JWT injected by the session gate (RLS-protected view).
+async function fetchArrivalMap(){
+  const SID='19482d39-6074-4c60-b772-ced5df1ffdcb';
+  const map={};
+  try{
+    const res=await fetch(SB+'/rest/v1/grapes_shipments_view?season_id=eq.'+SID+'&select=container_number,eta',{headers:{apikey:AK}});
+    if(!res.ok) return map;
+    const js=await res.json();
+    js.forEach(r=>{const c=norm(r.container_number);const e=r.eta;if(c&&e&&!map[c])map[c]=String(e).slice(0,10);});
+  }catch(e){/* shipments unavailable — arrival stays disabled */}
+  return map;
+}
+
 function F(){
   return ROWS.filter(r=>{
     for(const f of MSF){if(S[f].length&&!S[f].includes(f==='wk'?String(r.wk):norm(r[f])))return false;}
@@ -1488,6 +1502,12 @@ let LDF='',LDT='';
   })();
   try{
     ROWS=await fetchAll();
+    try{
+      const amap=await fetchArrivalMap();
+      let hit=0;
+      ROWS.forEach(r=>{const a=amap[norm(r.container_number)];if(a){r.arrival_date=a;hit++;}});
+      if(hit>0){const opt=document.querySelector('#f-basis option[value="arrival_date"]');if(opt){opt.disabled=false;opt.textContent='Arrival date';}}
+    }catch(e){/* leave arrival disabled */}
     recalcDates();
     S.from=LDF;S.to=LDT;
     const ff=document.getElementById('f-from'),ft=document.getElementById('f-to');
