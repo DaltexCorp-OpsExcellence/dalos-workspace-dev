@@ -82,7 +82,7 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
 .dh-body{flex:1;position:relative;z-index:5;overflow-y:auto;overflow-x:hidden;padding:28px 56px 104px;display:flex;flex-direction:column;justify-content:flex-start}
 .dh-crest{position:absolute;right:-40px;top:50%;transform:translateY(-50%);width:min(46vw,560px);height:min(46vw,560px);z-index:0;animation:dh-breathe 14s ease-in-out infinite}
 .dh-fruit{position:absolute;z-index:1;animation:dh-drift 10s ease-in-out infinite;filter:drop-shadow(0 6px 14px rgba(0,0,0,.3))}
-.dh-hero{position:relative;z-index:6;margin-top:auto;margin-bottom:24px;flex-shrink:0;animation:dh-rise .6s cubic-bezier(.2,.8,.2,1) both}
+.dh-hero{position:relative;z-index:6;margin-top:auto;margin-bottom:20px;flex-shrink:0;animation:dh-rise .6s cubic-bezier(.2,.8,.2,1) both}
 .dh-eyebrow{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#caa86a;margin-bottom:11px;display:flex;align-items:center;gap:10px}
 .dh-eyebrow-line{height:1px;width:38px;background:linear-gradient(90deg,#caa86a,transparent);display:inline-block}
 .dh-headline{font-family:var(--font-display);font-size:clamp(30px,3.6vw,44px);line-height:1.06;color:#f4f1e8;letter-spacing:-.5px;text-shadow:0 2px 30px rgba(0,0,0,.4)}
@@ -108,7 +108,7 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
 .dh-badge{position:absolute;top:14px;right:14px;font-size:9px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:.05em;z-index:3;background:rgba(111,193,145,.2);color:#8fe0ad;border:1px solid rgba(111,193,145,.3)}
 .dh-pulse{position:absolute;top:16px;right:16px;width:9px;height:9px;border-radius:50%;background:#ff6a52;z-index:3;box-shadow:0 0 12px rgba(255,106,82,.7)}
 .dh-pulse::after{content:"";position:absolute;inset:0;border-radius:50%;background:#ff6a52;animation:dh-pulseRing 1.7s ease-in-out infinite}
-.dh-ribbon{position:absolute;left:0;right:0;bottom:0;z-index:6;display:flex;align-items:center;padding:15px 36px;background:linear-gradient(0deg,rgba(8,14,10,.85),transparent);backdrop-filter:blur(6px);animation:dh-rise .6s .36s ease both;opacity:0}
+.dh-ribbon{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;align-items:center;padding:15px 36px;background:linear-gradient(0deg,rgba(8,14,10,.92),rgba(8,14,10,.6) 60%,transparent);backdrop-filter:blur(6px);animation:dh-rise .6s .36s ease both;opacity:0}
 .dh-ri{display:flex;align-items:baseline;gap:7px;padding-right:24px;margin-right:24px;border-right:1px solid rgba(255,255,255,.1)}
 .dh-rv{font-family:var(--font-display);font-size:21px;color:#f4f1e8}
 .dh-gold{color:#e0bd7a}
@@ -133,7 +133,7 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
 @media(max-width:760px){.dh-bento-2{grid-template-columns:1fr;grid-template-rows:auto;height:auto;min-height:0}}
 /* ── god-mode app cards (two distinct apps inside DalOS) ── */
 .app-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;width:100%;max-width:920px;position:relative;z-index:6;margin-bottom:auto;flex-shrink:0}
-.app-card{position:relative;overflow:hidden;border-radius:24px;padding:24px 28px 22px;min-height:clamp(280px,46vh,380px);cursor:pointer;display:flex;flex-direction:column;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1);transition:transform .3s cubic-bezier(.3,1.25,.5,1),box-shadow .3s,border-color .3s;animation:dh-rise .6s ease both;opacity:0}
+.app-card{position:relative;overflow:hidden;border-radius:24px;padding:24px 28px 22px;min-height:clamp(258px,42vh,380px);cursor:pointer;display:flex;flex-direction:column;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1);transition:transform .3s cubic-bezier(.3,1.25,.5,1),box-shadow .3s,border-color .3s;animation:dh-rise .6s ease both;opacity:0}
 .app-card:hover{transform:translateY(-6px);box-shadow:0 30px 70px rgba(0,0,0,.5);border-color:color-mix(in srgb,var(--ac) 55%,transparent)}
 .app-card:active{transform:translateY(-3px) scale(.992)}
 .app-vision{--ac:#6fc191;background:linear-gradient(162deg,rgba(60,122,85,.34),rgba(10,24,15,.55));border-color:rgba(111,193,145,.28);animation-delay:.10s}
