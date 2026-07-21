@@ -5,7 +5,8 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
 // FROM uses the verified daltexcorp.com domain so Resend delivers to any recipient
 // (admin + users), not just the account owner. Can be overridden via RESEND_FROM secret.
 const FROM = Deno.env.get("RESEND_FROM") || "DALos Analytics <noreply@daltexcorp.com>";
-const APP_URL = "https://daltexcorp-opsexcellence.github.io/dalos-workspace-dev/daltex_home.html";
+// Analytics app home (post repo-cutover). Was dalos-workspace-dev/daltex_home.html -> 404. Env-overridable.
+const APP_URL = Deno.env.get("APP_URL") || "https://daltexcorp-opsexcellence.github.io/dalos-analytics/";
 const REVIEW_URL = APP_URL + "?panel=access";
 
 const corsHeaders = {
