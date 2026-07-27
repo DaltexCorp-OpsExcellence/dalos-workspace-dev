@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.8"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#f0ede6;--red:#b03030;--red-bg:#faeaea;--red-border:#e8a0a0;--green:#1e6b3a;--green-bg:#e8f5ec;--green-border:#8ecba4;--text:#1a1a17;--text3:#7a7668;--border:#d0cbbe;--border2:#bcb8ae;--card:#ffffff;--font-display:'DM Serif Display',serif;--font-body:'Instrument Sans',sans-serif;--font-mono:'DM Mono',monospace;--r:8px;--r2:12px}
@@ -278,6 +278,29 @@ var DALOS_LINK=(function(){
   return out;
 })();
 var sb=window.supabase.createClient(DALOS_SUPABASE_URL,DALOS_SUPABASE_ANON);
+
+/* ── Shared idle heartbeat ────────────────────────────────────────────────
+   All DalOS apps share one GitHub Pages origin, so they share localStorage and
+   one Supabase auth token. Vision's inactivity timer polls this key and signs
+   out only when nobody has been active in ANY app. Writing it here means time
+   spent on the Workspace chooser counts as activity. Key must stay identical to
+   DALOS_ACTIVITY_KEY in Vision and gate.js — scripts/check-auth-invariants.sh
+   enforces that. */
+var DALOS_ACTIVITY_KEY='dalos_last_activity';
+(function(){
+  var last=0;
+  function mark(){
+    var now=Date.now();
+    if(now-last<30000) return;   /* one write per 30s */
+    last=now;
+    try{ localStorage.setItem(DALOS_ACTIVITY_KEY,String(now)); }catch(e){}
+  }
+  ['mousemove','mousedown','keydown','scroll','touchstart','click'].forEach(function(e){
+    window.addEventListener(e,mark,{passive:true});
+  });
+  mark();
+})();
+
 function $(id){return document.getElementById(id);}
 function setBusy(btn,on,b,i){btn.disabled=on;btn.style.opacity=on?'.7':'1';btn.textContent=on?b:i;}
 function showErr(m){var e=$('err');e.textContent=m;e.style.display=m?'block':'none';}
