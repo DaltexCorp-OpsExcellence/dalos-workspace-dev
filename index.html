@@ -6,7 +6,7 @@
 <title>DalOS Workspace</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.8"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -70,6 +70,21 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
 @keyframes lc-core{0%,100%{opacity:.72;transform:scale(.9)}50%{opacity:1;transform:scale(1.07)}}
 @keyframes lc-twinkle{0%,100%{opacity:.35}50%{opacity:1}}
 @media(prefers-reduced-motion:reduce){.lcx .lc-ring,.lcx .lc-core,.lcx .lc-node{animation:none;stroke-dashoffset:0;opacity:1;transform:none}}
+/* Analytics "opening" splash — pixel-matches the Analytics app's loading splash
+   (navy #142850, animated Signature-bars mark) so its redirect reads as ONE loading page. */
+.anx{position:fixed;inset:0;z-index:10000;background:#142850;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;animation:dh-veil-in .4s ease both}
+.anx-mark{width:60px;height:60px;filter:drop-shadow(0 8px 22px rgba(220,100,40,.35))}
+.anx-mark svg{width:100%;height:100%;display:block}
+.anx-word{font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-weight:700;font-size:22px;letter-spacing:-.3px;color:#fff}
+.anx-word .os{color:#DC6428}
+.anx-sub{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#7f8db0;font-family:'Plus Jakarta Sans',system-ui,sans-serif}
+.an-anim .an-bar{transform-box:fill-box;transform-origin:center bottom;animation:an-bar 1.8s ease-in-out infinite}
+.an-anim .an-bar:nth-of-type(2){animation-delay:.14s}
+.an-anim .an-bar:nth-of-type(3){animation-delay:.28s}
+.an-anim .an-dot{transform-box:fill-box;transform-origin:center;animation:an-dot 1.8s ease-in-out infinite;animation-delay:.28s}
+@keyframes an-bar{0%{transform:scaleY(.16)}45%{transform:scaleY(1)}75%{transform:scaleY(1)}100%{transform:scaleY(.16)}}
+@keyframes an-dot{0%,100%{opacity:.4;transform:scale(.7)}45%,75%{opacity:1;transform:scale(1.16)}}
+@media(prefers-reduced-motion:reduce){.anx .an-bar,.anx .an-dot{animation:none;transform:none;opacity:1}}
 .staging-badge{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(135deg,#ff6b35 0%,#f7c948 100%);color:#fff;padding:5px 14px 5px 10px;border-radius:20px;box-shadow:0 3px 14px rgba(255,107,53,.45);font-size:10px;font-family:'Courier New',monospace;font-weight:700;letter-spacing:.2em;text-transform:uppercase}
 .staging-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.9);display:inline-block;flex-shrink:0;animation:pulse 1.4s ease-in-out infinite}
 @keyframes dbd-aurora{0%{transform:translate(0,0) scale(1)}33%{transform:translate(4%,-3%) scale(1.08)}66%{transform:translate(-3%,4%) scale(.96)}100%{transform:translate(0,0) scale(1)}}
@@ -508,9 +523,22 @@ function showLandCloudSplash(){
   document.body.appendChild(o);
   setTimeout(function(){ window.location.href=LANDCLOUD_URL; },1000);
 }
+/* Same animated Signature-bars mark used by the Analytics app splash. */
+var AN_SPLASH_MARK='<svg class="an-anim" width="100%" height="100%" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect class="an-bar" x="14" y="32" width="8.5" height="18" rx="4" fill="#f08a4b"/><rect class="an-bar" x="27.75" y="24" width="8.5" height="26" rx="4" fill="#DC6428"/><rect class="an-bar" x="41.5" y="15" width="8.5" height="35" rx="4" fill="#DC6428"/><circle class="an-dot" cx="45.75" cy="15" r="4.3" fill="#f7c948"/></svg>';
+function showAnalyticsSplash(){
+  $('loginStage').style.display='none';
+  var cs=$('chooserStage'); if(cs) cs.style.display='none';
+  var o=document.createElement('div'); o.className='anx';
+  o.innerHTML='<div class="anx-mark">'+AN_SPLASH_MARK+'</div>'+
+    '<div class="anx-word">Dal<span class="os">OS</span> Analytics</div>'+
+    '<div class="anx-sub">Loading…</div>';
+  document.body.appendChild(o);
+  setTimeout(function(){ window.location.href=ANALYTICS_URL; },1000);
+}
 function openProduct(which){
   if(which==='commercial'){ showCommercialSplash(); return; }
   if(which==='landcloud'){ showLandCloudSplash(); return; }
+  if(which==='analytics'){ showAnalyticsSplash(); return; }
   var c=which==='vision'
     ?{accent:'#6fc191',label:'DalOS Vision',url:VISION_URL,emb:BEAT_EMB_V}
     :which==='commercial'
