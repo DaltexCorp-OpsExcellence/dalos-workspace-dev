@@ -590,6 +590,8 @@ function showAnalyticsSplash(){
   setTimeout(function(){ window.location.href=ANALYTICS_URL; },1000);
 }
 function openProduct(which){
+  /* page-view capture — record which app the user launches from Workspace */
+  try{ sb.rpc('log_page_view',{p_app:'workspace',p_page:'open:'+which}).then(function(){},function(){}); }catch(e){}
   if(which==='commercial'){ showCommercialSplash(); return; }
   if(which==='landcloud'){ showLandCloudSplash(); return; }
   if(which==='analytics'){ showAnalyticsSplash(); return; }
@@ -623,6 +625,8 @@ function resolveUser(au){
     if(pr.error||!pr.data) return {err:'Account not found. Contact your administrator.'};
     if(!pr.data.active) return {err:'Account deactivated. Contact your administrator.'};
     sb.from('users').update({last_login:new Date().toISOString()}).eq('id',pr.data.id).then(function(){});
+    /* page-view capture (platform report) — fire-and-forget; .then() required (lazy builder) */
+    try{ sb.rpc('log_page_view',{p_app:'workspace',p_page:'launcher'}).then(function(){},function(){}); }catch(e){}
     return {user:{id:pr.data.id,name:pr.data.full_name,email:pr.data.email,role:pr.data.role,active:pr.data.active}};
   });
 }
