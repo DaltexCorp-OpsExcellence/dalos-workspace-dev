@@ -260,6 +260,60 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
 .app-landcloud .app-emblem svg path:nth-of-type(2){transform-box:fill-box;transform-origin:center;animation:cardl-breathe 3.2s ease-in-out infinite}
 @media(prefers-reduced-motion:reduce){.app-card .app-emblem svg *{animation:none!important}}.app-analytics.is-locked .lock-badge{border-color:rgba(106,168,255,.55);color:#6aa8ff}.app-analytics.is-locked .app-go{background:#6aa8ff;color:#0a120c;border:1px solid #6aa8ff}.app-analytics.is-locked:hover .app-go{background:#83b8ff;border-color:#83b8ff;box-shadow:0 8px 24px rgba(106,168,255,.4)}.app-analytics.is-pending .app-status{background:rgba(216,180,106,.16);color:#d8b46a;border-color:rgba(216,180,106,.34)}.app-analytics.is-pending .lock-badge{border-color:rgba(216,180,106,.5);color:#d8b46a}.app-analytics.is-pending .pend-note{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#d8b46a;padding:9px 2px}
 @media(max-width:760px){.app-grid{grid-template-columns:1fr;gap:14px}.app-card{min-height:0;padding:20px}}
+/* ── Dal — DalOS assistant (phase 1) ── */
+.dal{position:fixed;right:22px;bottom:68px;z-index:60;display:flex;align-items:flex-end;gap:10px;font-family:var(--font-body);transition:opacity .4s}
+.dal.is-hidden{opacity:0;pointer-events:none}
+.dal-bubble{width:360px;background:rgba(16,28,20,.94);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(143,224,173,.3);border-radius:20px 20px 6px 20px;padding:14px 16px 12px;box-shadow:0 24px 60px rgba(0,0,0,.55);transform-origin:100% 100%;transition:opacity .25s,transform .35s cubic-bezier(.3,1.3,.5,1);margin-bottom:30px;color:#dbe6de}
+.dal.is-min .dal-bubble{opacity:0;transform:scale(.6) translate(20px,20px);pointer-events:none;visibility:hidden}
+.dal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.dal-head b{font-family:var(--font-display);font-weight:400;font-size:20px;color:#f4f1e8;margin-right:8px}
+.dal-head span{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#caa86a;font-weight:600}
+.dal-x{background:none;border:none;color:#7c9785;font-size:20px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:6px}
+.dal-x:hover{color:#f4f1e8;background:rgba(255,255,255,.08)}
+.dal-msg{font-size:14px;line-height:1.5;min-height:21px}
+.dal-msg b{color:#8fe0ad;font-weight:600}
+.dal-dim{color:#7c9785}
+.dal-act:not(:empty){margin-top:10px}
+.dal-pri{font-family:var(--font-body);font-size:12.5px;font-weight:700;border-radius:9px;padding:8px 13px;cursor:pointer;border:1px solid #6fc191;background:#6fc191;color:#0a120c}
+.dal-pri:hover{background:#8fe0ad;border-color:#8fe0ad}
+.dal-sugg{margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)}
+.dal-sugg>span{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#7c9785;font-weight:700;margin-bottom:6px}
+.dal-sugg-list{display:flex;flex-direction:column;gap:5px}
+.dal-sugg-list button{font-family:var(--font-body);font-size:12.5px;text-align:left;color:#cde0d3;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:9px;padding:7px 10px;cursor:pointer}
+.dal-sugg-list button:hover{border-color:rgba(143,224,173,.5);color:#fff}
+.dal-ask{display:flex;align-items:center;gap:6px;margin-top:10px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:0 6px 0 10px}
+.dal-ask:focus-within{border-color:#6fc191}
+.dal-in{flex:1;min-width:0;background:none;border:none;outline:none;color:#f4f1e8;font-family:var(--font-body);font-size:13px;padding:9px 0}
+.dal-in::placeholder{color:#7c9785}
+.dal-ask button{background:none;border:none;color:#8fe0ad;font-size:15px;cursor:pointer;padding:4px 6px}
+.dal-foot{margin-top:8px;font-size:10.5px;color:#6b8573}
+.dal-char{position:relative;width:88px;height:84px;background:none;border:none;padding:0;cursor:pointer;flex-shrink:0;filter:drop-shadow(0 10px 18px rgba(0,0,0,.45)) drop-shadow(0 0 16px rgba(111,193,145,.22))}
+.dal-char:focus-visible,.dal-x:focus-visible,.dal-pri:focus-visible,.dal-sugg-list button:focus-visible{outline:2px solid #8fe0ad;outline-offset:3px;border-radius:10px}
+.dal-char-svg,.dal-char-svg .dal-svg{display:block;width:100%;height:100%;overflow:visible}
+.dal-tag{position:absolute;left:50%;bottom:-10px;transform:translateX(-50%);font-size:10.5px;font-weight:700;color:#0a120c;background:#8fe0ad;padding:2px 8px;border-radius:10px;white-space:nowrap;opacity:0;transition:opacity .3s}
+.dal.is-min .dal-tag{opacity:1}
+.dal-typing{display:inline-flex;gap:4px;padding:6px 0}.dal-typing i{width:6px;height:6px;border-radius:50%;background:#8fe0ad;animation:dal-dot 1s infinite}.dal-typing i:nth-child(2){animation-delay:.15s}.dal-typing i:nth-child(3){animation-delay:.3s}
+.dal-body{transform-box:view-box;transform-origin:80px 140px;animation:dal-breathe 3.6s ease-in-out infinite}
+.dal-leaf{transform-box:view-box;transform-origin:86px 20px;animation:dal-leaf 4s ease-in-out infinite}
+.dal-lid{transform-box:fill-box;transform-origin:center top;transform:scaleY(0);animation:dal-blink 5s infinite}
+.dal-arm-wave{transform-box:view-box;transform-origin:48px 82px;animation:dal-wave 1.8s ease-in-out infinite}
+.dal-arm-point{animation:dal-point 1.3s ease-in-out infinite}
+.dal-bang,.dal-q{transform-box:fill-box;transform-origin:center;animation:dal-pop 1.4s ease-in-out infinite}
+.dal-dots circle{animation:dal-dot 1.2s infinite}.dal-dots circle:nth-child(2){animation-delay:.2s}.dal-dots circle:nth-child(3){animation-delay:.4s}
+.dal-z text{animation:dal-z 2.6s infinite}.dal-z text:nth-child(2){animation-delay:1.3s}
+.dal-char:hover .dal-body{animation:dal-squish .5s ease}
+@keyframes dal-breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.015,.985)}}
+@keyframes dal-leaf{0%,100%{transform:rotate(0)}50%{transform:rotate(-10deg)}}
+@keyframes dal-blink{0%,94%,100%{transform:scaleY(0)}96%{transform:scaleY(1)}}
+@keyframes dal-wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-16deg)}}
+@keyframes dal-point{0%,100%{transform:translate(0,0)}50%{transform:translate(-3px,-2px)}}
+@keyframes dal-pop{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+@keyframes dal-dot{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes dal-z{0%{transform:translateY(4px);opacity:0}40%{opacity:1}100%{transform:translateY(-8px);opacity:0}}
+@keyframes dal-squish{0%,100%{transform:scale(1,1)}40%{transform:scale(1.07,.92)}70%{transform:scale(.97,1.04)}}
+@media(prefers-reduced-motion:reduce){.dal *{animation:none!important;transition:none!important}}
+@media(max-width:760px){.dal{right:12px;bottom:12px}.dal-bubble{width:min(340px,calc(100vw - 100px))}.dal-char{width:66px;height:64px}}
+@media(max-width:430px){.dal{flex-direction:column;align-items:flex-end}.dal-bubble{width:calc(100vw - 24px);margin-bottom:0}}
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiMwYjE1MTAiLz48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSg3LjAwMCwzOC42MjEpIHNjYWxlKDAuMDE4OTE4LC0wLjAxODkxOCkiPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsMCkiIGQ9Ik0yMiAwVjEwTDQzIDE4UTc1IDMxIDc1IDY5VjU5MVE3NSA2MzEgNDMgNjQyTDIyIDY1MFY2NjBIMjg2UTM5MiA2NjAgNDY4LjUgNjIwLjVRNTQ1IDU4MSA1ODYuNSA1MDcuNVE2MjggNDM0IDYyOCAzMzFRNjI4IDIyNiA1ODMuMCAxNTIuMFE1MzggNzggNDU3LjUgMzkuMFEzNzcgMCAyNjggMFpNMjI1IDIwSDI2OFEzNDAgMjAgMzg0LjAgNDguNVE0MjggNzcgNDQ4LjUgMTQ0LjVRNDY5IDIxMiA0NjkgMzMwUTQ2OSA0NDggNDQ4LjUgNTE1LjVRNDI4IDU4MyAzODUuMCA2MTEuNVEzNDIgNjQwIDI3MiA2NDBIMjI1WiIgZmlsbD0iI2ZmZmZmZiIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDY0OCwwKSIgZD0iTTE2NiAtMTVRMTA4IC0xNSA2OC41IDE4LjBRMjkgNTEgMjkgMTEzUTI5IDE2MCA3Ny4wIDE5OS41UTEyNSAyMzkgMjI4IDI1OVEyNDQgMjYyIDI2NC4wIDI2NS41UTI4NCAyNjkgMzA2IDI3M1YzNTJRMzA2IDQyMCAyODkuNSA0NDcuNVEyNzMgNDc1IDIzOCA0NzVRMjE0IDQ3NSAyMDAuMCA0NTkuNVExODYgNDQ0IDE4MiA0MDZMMTgwIDM5NVExNzggMzUyIDE1OS4wIDMzMi4wUTE0MCAzMTIgMTEyIDMxMlE4NiAzMTIgNjkuMCAzMjguMFE1MiAzNDQgNTIgMzcxUTUyIDQxMiA4MC41IDQ0MC4wUTEwOSA0NjggMTU2LjAgNDgyLjBRMjAzIDQ5NiAyNTggNDk2UTM0NyA0OTYgMzk1LjUgNDUyLjVRNDQ0IDQwOSA0NDQgMzExVjkwUTQ0NCA0NSA0ODYgNDVINTA4TDUxNyAzN1E0OTggMTMgNDc1LjUgMC4wUTQ1MyAtMTMgNDEyIC0xM1EzNjggLTEzIDM0Mi41IDcuNVEzMTcgMjggMzA5IDYyUTI3OSAzMCAyNDcuNSA3LjVRMjE2IC0xNSAxNjYgLTE1Wk0yMjcgNDZRMjQ3IDQ2IDI2NC41IDU1LjVRMjgyIDY1IDMwNiA4NVYyNTNRMjk2IDI1MSAyODYuMCAyNDkuMFEyNzYgMjQ3IDI2MyAyNDVRMjE3IDIzMyAxODkuNSAyMDQuNVExNjIgMTc2IDE2MiAxMjhRMTYyIDg3IDE4MS4wIDY2LjVRMjAwIDQ2IDIyNyA0NloiIGZpbGw9IiNmZmZmZmYiLz48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMTY2LDApIiBkPSJNMjMgMFYxMEwzNSAxNFE3MSAyNiA3MSA2NFY1OTlRNzEgNjE5IDYzLjAgNjI5LjVRNTUgNjQwIDM1IDY0NUwyMiA2NDhWNjU4TDIwNSA3MDFMMjE3IDY5MkwyMTMgNTUyVjIxMFEyMTMgMTczIDIxMy41IDEzNi41UTIxNCAxMDAgMjE0IDY0UTIxNCA0NCAyMjIuMCAzMS41UTIzMCAxOSAyNDkgMTNMMjYyIDEwVjBaIiBmaWxsPSIjZmZmZmZmIi8+PHBhdGggdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTQ1MiwwKSIgZD0iTTMzNSAtMThRMjc0IC0xOCAyMTcuNSA0LjBRMTYxIDI2IDExNi41IDY5LjVRNzIgMTEzIDQ2LjAgMTc4LjBRMjAgMjQzIDIwIDMzMFEyMCA0MTYgNDYuMCA0ODEuMFE3MiA1NDYgMTE3LjAgNTg5LjVRMTYyIDYzMyAyMTguNSA2NTUuNVEyNzUgNjc4IDMzNSA2NzhRMzk2IDY3OCA0NTIuNSA2NTYuNVE1MDkgNjM1IDU1My41IDU5MS41UTU5OCA1NDggNjI0LjAgNDgyLjVRNjUwIDQxNyA2NTAgMzMwUTY1MCAyNDUgNjI0LjAgMTc5LjVRNTk4IDExNCA1NTMuNSA3MC41UTUwOSAyNyA0NTIuNSA0LjVRMzk2IC0xOCAzMzUgLTE4Wk0zMzUgM1EzOTAgMyA0MjQuMCAzMi41UTQ1OCA2MiA0NzMuNSAxMzMuNVE0ODkgMjA1IDQ4OSAzMzBRNDg5IDQ1NiA0NzMuNSA1MjcuNVE0NTggNTk5IDQyNC4wIDYyOC41UTM5MCA2NTggMzM1IDY1OFEyODEgNjU4IDI0Ny4wIDYyOC41UTIxMyA1OTkgMTk3LjUgNTI3LjVRMTgyIDQ1NiAxODIgMzMwUTE4MiAyMDUgMTk3LjUgMTMzLjVRMjEzIDYyIDI0Ny4wIDMyLjVRMjgxIDMgMzM1IDNaIiBmaWxsPSIjNmZjMTkxIi8+PHBhdGggdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjEyMiwwKSIgZD0iTTIzNyAtMThRMTgyIC0xOCAxMjUuMCAtNC41UTY4IDkgMzAgMzFMMzUgMTY3SDQ1TDc2IDEwMlE5MCA3NCAxMDYuMCA1Mi41UTEyMiAzMSAxNTAgMTlRMTcwIDkgMTg4LjUgNS41UTIwNyAyIDIzMCAyUTI5MSAyIDMyNi41IDM1LjBRMzYyIDY4IDM2MiAxMjBRMzYyIDE2OSAzMzguMCAxOTYuNVEzMTQgMjI0IDI2MSAyNTBMMjIwIDI2OFExMzQgMzA2IDg1LjUgMzU1LjVRMzcgNDA1IDM3IDQ4N1EzNyA1NDYgNjcuNSA1ODkuMFE5OCA2MzIgMTUyLjUgNjU1LjBRMjA3IDY3OCAyODAgNjc4UTMzMyA2NzggMzgwLjUgNjY0LjBRNDI4IDY1MCA0NjMgNjI2TDQ1NyA1MDZINDQ3TDQwNiA1ODFRMzg5IDYxNiAzNzIuMCA2MzAuNVEzNTUgNjQ1IDMzMyA2NTFRMzIwIDY1NSAzMDkuMCA2NTYuNVEyOTggNjU4IDI4MSA2NThRMjMwIDY1OCAxOTUuMCA2MjguNVExNjAgNTk5IDE2MCA1NDlRMTYwIDQ5OCAxODcuMCA0NjcuNVEyMTQgNDM3IDI2NiA0MTNMMzEyIDM5M1E0MDggMzUxIDQ1MC4wIDMwMy41UTQ5MiAyNTYgNDkyIDE4MVE0OTIgOTMgNDI1LjUgMzcuNVEzNTkgLTE4IDIzNyAtMThaIiBmaWxsPSIjNmZjMTkxIi8+PC9nPjwvc3ZnPg=="/>
 </head>
@@ -521,6 +575,7 @@ function openNext(target,animate){
 }
 function showChooser(u,animate){
   fillChooser(u);applyAnalyticsState();applyCommercialState(u);applyLandCloudState(u);
+  try{dalBoot(u,animate);}catch(e){}
   if(animate){
     $('lcard').classList.remove('dlogin-card-in');$('lcard').classList.add('dlogin-card-exit');
     var first=((u.name||u.full_name||'').trim().split(' ')[0])||'';
@@ -650,6 +705,151 @@ function tryReset(){
 }
 $('resetBtn').onclick=tryReset;
 $('resetEmail').addEventListener('keydown',function(e){if(e.key==='Enter')tryReset();});
+/* ── Dal — DalOS assistant, phase 1 (scripted help + role nudges, no AI) ──
+   Every count below is a head-only query made with the signed-in user's own session,
+   so row-level security decides what Dal can see — it never shows more than the apps do.
+   Kill switch: DAL_ENABLED. Hidden for roles in DAL_OFF_ROLES. */
+var DAL_ENABLED=true;
+var DAL_OFF_ROLES={client_qc:1};
+var dalState={u:null,role:'',el:null,nudge:null,booted:false};
+function dalSvg(expr){
+  var d='#2e6446',m='#74c795',lid='#6cbb8c',ink='#10160f',ch='#f39a8b';
+  var FR=[[70,50,15],[92,50,15],[57,74,16],[80,72,16.5],[103,74,16],[68,98,15],[92,98,15],[80,120,13]],BK=[[60,40,12],[102,40,12],[46,92,12],[114,92,12],[80,108,13]];
+  var b='<g>';BK.forEach(function(c){b+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+c[2]+'" fill="#1f4a33"/>';});
+  FR.forEach(function(c){var hx=c[0]-c[2]*.38,hy=c[1]-c[2]*.42;b+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+c[2]+'" fill="url(#dalg)"/><circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+(c[2]-.6)+'" fill="none" stroke="'+d+'" stroke-width="1.1" opacity=".35"/><ellipse cx="'+hx+'" cy="'+hy+'" rx="'+(c[2]*.26)+'" ry="'+(c[2]*.16)+'" transform="rotate(-30 '+hx+' '+hy+')" fill="#fff" opacity=".55"/>';});b+='</g>';
+  function eyes(dx,dy,r,pr){r=r||9.5;pr=pr||4.2;dx=dx||0;dy=dy||0;return [[70,70],[92,70]].map(function(c){return '<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+r+'" fill="#fff"/><g class="dal-pupil" data-cx="'+c[0]+'" data-cy="'+c[1]+'"><circle cx="'+(c[0]+dx)+'" cy="'+(c[1]+dy)+'" r="'+pr+'" fill="'+ink+'"/><circle cx="'+(c[0]+dx+1.6)+'" cy="'+(c[1]+dy-1.7)+'" r="1.4" fill="#fff"/></g><rect class="dal-lid" x="'+(c[0]-r-1)+'" y="'+(c[1]-r-1)+'" width="'+(2*r+2)+'" height="'+(2*r+2)+'" rx="'+(r+1)+'" fill="'+lid+'"/>';}).join('');}
+  function brows(a,c){return '<path d="'+a+'" stroke="'+ink+'" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="'+c+'" stroke="'+ink+'" stroke-width="2.6" fill="none" stroke-linecap="round"/>';}
+  function arm(p){
+    if(p==='point')return '<g class="dal-arm-point"><path d="M48 84 C34 82 24 72 18 60" stroke="'+d+'" stroke-width="4.2" fill="none" stroke-linecap="round"/><circle cx="16" cy="58" r="4.6" fill="'+m+'" stroke="'+d+'" stroke-width="1.4"/></g>';
+    if(p==='wave')return '<g class="dal-arm-wave"><path d="M48 82 C38 78 32 66 34 54" stroke="'+d+'" stroke-width="4.2" fill="none" stroke-linecap="round"/><circle cx="34" cy="51" r="4.6" fill="'+m+'" stroke="'+d+'" stroke-width="1.4"/></g>';
+    if(p==='up')return '<g class="dal-arm-wave"><path d="M48 80 C36 72 32 58 36 46" stroke="'+d+'" stroke-width="4.2" fill="none" stroke-linecap="round"/><circle cx="37" cy="43" r="4.6" fill="'+m+'" stroke="'+d+'" stroke-width="1.4"/></g>';
+    if(p==='chin')return '<path d="M50 96 C44 100 50 106 60 98" stroke="'+d+'" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="62" cy="96" r="4.2" fill="'+m+'" stroke="'+d+'" stroke-width="1.4"/>';
+    return '<path d="M46 90 C38 94 36 102 40 108 C43 112 48 110 46 106" stroke="'+d+'" stroke-width="3.4" fill="none" stroke-linecap="round"/>';
+  }
+  var face,pose='rest',extra='';
+  if(expr==='happy'){pose='wave';face='<path d="M62 72 Q70 61 78 72" stroke="'+ink+'" stroke-width="3.4" fill="none" stroke-linecap="round"/><path d="M84 72 Q92 61 100 72" stroke="'+ink+'" stroke-width="3.4" fill="none" stroke-linecap="round"/><ellipse cx="59" cy="84" rx="5.5" ry="3.2" fill="'+ch+'" opacity=".6"/><ellipse cx="103" cy="84" rx="5.5" ry="3.2" fill="'+ch+'" opacity=".6"/><path d="M70 86 Q81 101 92 86 Z" fill="'+ink+'"/>';}
+  else if(expr==='alert'){pose='up';face=eyes(0,0,10.5,3.8)+brows('M60 55 Q69 49 78 54','M84 54 Q93 49 102 55')+'<ellipse cx="81" cy="90" rx="4.5" ry="5.5" fill="'+ink+'"/>';extra='<g class="dal-bang"><circle cx="130" cy="30" r="13" fill="#e0bd7a"/><rect x="128" y="21" width="4" height="11" rx="2" fill="'+ink+'"/><circle cx="130" cy="37" r="2.3" fill="'+ink+'"/></g>';}
+  else if(expr==='pointing'){pose='point';face=eyes(-3,-2.5)+brows('M61 57 Q69 53 77 56','M85 56 Q93 53 101 57')+'<path d="M72 87 Q80 94 90 86" stroke="'+ink+'" stroke-width="3" fill="none" stroke-linecap="round"/>';}
+  else if(expr==='thinking'){pose='chin';face=eyes(2.8,-3.4)+brows('M62 58 Q70 56 78 58','M84 55 Q93 49 101 54')+'<path d="M74 90 L88 88" stroke="'+ink+'" stroke-width="3" stroke-linecap="round"/>';extra='<g class="dal-dots"><circle cx="122" cy="44" r="4" fill="#8fe0ad"/><circle cx="134" cy="32" r="5" fill="#8fe0ad"/><circle cx="146" cy="18" r="6.5" fill="#8fe0ad"/></g>';}
+  else if(expr==='sleepy'){face='<path d="M61 71 Q70 76 79 71" stroke="'+ink+'" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M83 71 Q92 76 101 71" stroke="'+ink+'" stroke-width="3" fill="none" stroke-linecap="round"/><ellipse cx="81" cy="90" rx="3.2" ry="2.4" fill="'+ink+'"/>';extra='<g class="dal-z" fill="#bcd6c4" font-family="DM Serif Display,Georgia,serif"><text x="118" y="46" font-size="17">z</text><text x="132" y="30" font-size="23">z</text></g>';}
+  else if(expr==='puzzled'){pose='chin';face='<circle cx="70" cy="70" r="8.5" fill="#fff"/><circle cx="92" cy="70" r="11" fill="#fff"/><circle cx="71" cy="71" r="4" fill="'+ink+'"/><circle cx="91" cy="69" r="4.8" fill="'+ink+'"/>'+brows('M60 57 L78 60','M84 53 Q93 48 102 54')+'<path d="M72 90 q4 -4 8 0 t8 0" stroke="'+ink+'" stroke-width="3" fill="none" stroke-linecap="round"/>';extra='<text class="dal-q" x="122" y="44" font-size="32" fill="#e0bd7a" font-family="DM Serif Display,Georgia,serif">?</text>';}
+  else {face=eyes()+'<path d="M72 88 Q81 95 90 88" stroke="'+ink+'" stroke-width="3" fill="none" stroke-linecap="round"/>';}
+  return '<svg class="dal-svg" viewBox="0 0 160 150" aria-hidden="true"><defs><radialGradient id="dalg" cx="34%" cy="28%" r="78%"><stop offset="0" stop-color="#d6f7df"/><stop offset=".55" stop-color="'+m+'"/><stop offset="1" stop-color="'+d+'"/></radialGradient></defs>'+
+    '<ellipse class="dal-shadow" cx="80" cy="142" rx="30" ry="4.5" fill="#000" opacity=".35"/><g class="dal-body">'+
+    '<path d="M79 30 C68 24 60 30 64 36 C67 40 72 36 69 33" stroke="#4f8a5e" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M80 38 C80 30 82 24 86 18" stroke="#3d6b4a" stroke-width="4" fill="none" stroke-linecap="round"/>'+
+    '<g class="dal-leaf"><path d="M86 20 C92 8 108 4 122 10 C118 14 120 18 126 20 C116 26 110 22 108 26 C100 30 92 28 86 20Z" fill="#8fe0ad"/><path d="M86 20 C98 16 110 14 122 12 M100 17 L104 24 M110 15 L114 21" stroke="#4f8a5e" stroke-width="1.4" fill="none" stroke-linecap="round"/></g>'+
+    b+arm(pose)+face+'</g>'+extra+'</svg>';
+}
+/* Help catalog — researched from the staging code of every app (Sep 2026). app = which tile opens it. */
+var DAL_HELP=[
+ {app:'vision',q:'How do I start a new inspection?',a:'Open Export Inspection, pick the product, then + New inspection. The button only appears while you’re viewing the active season.',k:'inspection new create start add'},
+ {app:'vision',q:'How does accepting or rejecting a batch work?',a:'The inspector sets A — Accept or R — Reject in the Decision card of the form. A rejected batch can be sent up with Escalate to board; the board decides in Escalation Review.',k:'accept reject decision escalate board approve'},
+ {app:'vision',q:'How do I switch season?',a:'Use the Season dropdown at the top of the Vision sidebar. The active season is tagged “— Active”.',k:'season switch change year'},
+ {app:'vision',q:'How do I add a client QC report?',a:'Open Client QC, pick the product, then + New client report. Upload the client’s PDF or photos and the fields fill in for you. Emailed reports also wait in the Intake panel.',k:'client qc cqc report upload intake'},
+ {app:'vision',q:'A client changed their score — how do I record it?',a:'Open the client QC report and use ↑ Upgrade or ↓ Downgrade, then Record. Revised reports show under the Revised filter.',k:'score upgrade downgrade revise cqc'},
+ {app:'vision',q:'Where do I find a container?',a:'In Vision, open Shipments, pick the product and search by container, client or variety. Export Inspection also searches by LOT or container.',k:'container find search shipment lot'},
+ {app:'vision',q:'Can I export inspection data?',a:'Yes: Export CSV in Inspections Analytics, and Client PDF / Internal PDF on a saved inspection. There’s no Excel export in Vision.',k:'export csv pdf download excel'},
+ {app:'commercial',q:'How do I raise a claim?',a:'In DalOS Commercial, click Raise claim on a container row or in its drawer. Choose Whole container or Part of load, add the value and save — evidence upload unlocks after the first save.',k:'claim raise complaint'},
+ {app:'commercial',q:'How does claim approval work?',a:'Open the claim and use Record settlement & submit for approval. At or below the threshold it closes on its own; above it an approver decides in Claim Approvals. You can’t approve your own settlement.',k:'claim approve approval settlement threshold'},
+ {app:'commercial',q:'How do I grade a container with no client QC?',a:'In DalOS Commercial open Grading — it lists containers without a client QC — click Grade, choose the grade and QC State, then Save grading.',k:'grade grading qc state'},
+ {app:'commercial',q:'How do I redirect goods to another client?',a:'From the container drawer in DalOS Commercial click Redirect, choose whole container, selected rows or a percentage, and the new client. Cancel from the Redirects tab.',k:'redirect return client'},
+ {app:'commercial',q:'How do I capture a lead at a stand?',a:'Use Show Mode in DalOS Commercial: scan a card or QR and Save & capture next. Or use + New lead on the Leads page.',k:'lead capture show mode stand card'},
+ {app:'commercial',q:'Can I import many leads at once?',a:'Leads → Import CSV → download the template, paste or upload, run the check, then Import ready rows. Only Company is required.',k:'import csv bulk leads'},
+ {app:'analytics',q:'How do I get access to Analytics?',a:'Click Request access on the Analytics tile here in Workspace. An admin approves it and the tile unlocks.',k:'access analytics request permission locked'},
+ {app:'analytics',q:'How do I find a dashboard?',a:'In Analytics press ⌘K (Ctrl K on Windows) or click Search Dashboards — it only shows dashboards you can open.',k:'dashboard find search report'},
+ {app:'analytics',q:'Which product dashboards exist?',a:'Grapes, Citrus, Mango and Pomegranate hubs, plus Finance and Project Management.',k:'dashboards hubs products list'},
+ {app:'landcloud',q:'How do I find a block?',a:'In Land Cloud open Block Register and search by block ID or Aydi, then click the row. You can also click a plot on Farm Map.',k:'block find farm plot aydi'},
+ {app:'landcloud',q:'How do I draw a block boundary?',a:'Open the block in Land Cloud, click the boundary tile in the Area section (+ Add boundary), draw on the map and Save boundary.',k:'boundary draw map polygon block'},
+ {app:'landcloud',q:'Where is the Harvest Planner?',a:'In Land Cloud under Manage → Harvest Planner.',k:'harvest planner plan'},
+ {app:'',q:'I forgot my password.',a:'Sign out, then on the sign-in screen click Forgot password?, enter your email and Send reset link.',k:'password forgot reset login'},
+ {app:'',q:'Why was I signed out?',a:'DalOS signs you out after 60 minutes with no activity in any tab. Signing out in one app signs you out of all of them.',k:'signed out logout session timeout'}
+];
+var DAL_SUGGEST={admin:[1,8,13],power_user:[8,9,5],board:[1,15,5],qc_manager:[3,4,6],ph_manager:[0,3,5],qc_supervisor:[0,1,2],inspector:[0,1,2],commercial:[7,9,11],marketing:[11,12,14],executive:[14,15,5],agronomy_admin:[16,17,18],agronomy_viewer:[16,18,15]};
+function dalAppLabel(a){return {vision:'Vision',analytics:'Analytics',commercial:'Commercial',landcloud:'Land Cloud'}[a]||'';}
+function dalCanOpen(a){
+  if(a==='vision')return true;
+  if(a==='analytics')return $('tileAnalytics')&&$('tileAnalytics').getAttribute('data-state')==='granted';
+  if(a==='commercial')return !!COMMERCIAL_ROLES[dalState.role];
+  if(a==='landcloud')return !!FARM_ROLES[dalState.role];
+  return false;
+}
+function dalKey(k){var d=new Date();return 'dal_'+k+'_'+(dalState.u&&dalState.u.id)+'_'+d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function dalGet(k){try{return localStorage.getItem(dalKey(k));}catch(e){return null;}}
+function dalSet(k){try{localStorage.setItem(dalKey(k),'1');}catch(e){}}
+function dalQuiet(){try{var h=+new Intl.DateTimeFormat('en-GB',{hour:'numeric',hour12:false,timeZone:'Africa/Cairo'}).format(new Date());return h<7||h>=20;}catch(e){return false;}}
+function dalCount(q){return q.then(function(r){return (r&&!r.error&&typeof r.count==='number')?r.count:0;},function(){return 0;});}
+/* Nudges in priority order — first one above zero wins. roles = who gets asked (RLS still scopes the count). */
+function dalNudges(){
+  var role=dalState.role,since=new Date(Date.now()-7*864e5).toISOString(),N=[];
+  function has(list){return list.indexOf(role)>=0;}
+  if(has(['board','admin','power_user']))N.push(dalCount(sb.from('inspections').select('id',{count:'exact',head:true}).eq('status','Escalated')).then(function(n){return n&&{expr:'alert',html:'<b>'+n+' rejected '+(n===1?'batch is':'batches are')+'</b> waiting for the board’s decision in Escalation Review.',app:'vision',cta:'Open Vision'};}));
+  if(has(['admin','power_user']))N.push(dalCount(sb.from('crm_claims').select('id',{count:'exact',head:true}).eq('status','pending')).then(function(n){return n&&{expr:'alert',html:'<b>'+n+' claim '+(n===1?'settlement is':'settlements are')+'</b> waiting in Claim Approvals.',app:'commercial',cta:'Open Commercial'};}));
+  if(role==='admin')N.push(Promise.all([dalCount(sb.from('dal_access_requests').select('id',{count:'exact',head:true}).eq('status','pending')),dalCount(sb.from('analytics_access_requests').select('id',{count:'exact',head:true}).eq('status','pending'))]).then(function(c){
+    if(c[0])return {expr:'alert',html:'<b>'+c[0]+' Analytics access '+(c[0]===1?'request is':'requests are')+'</b> waiting. Approve them in Analytics → Manage access.',app:'analytics',cta:'Open Analytics'};
+    if(c[1])return {expr:'alert',html:'<b>'+c[1]+' Analytics access '+(c[1]===1?'request':'requests')+'</b> from the Workspace tile '+(c[1]===1?'is':'are')+' waiting. These are approved from the request email — they don’t show in Manage access yet.',app:'',cta:''};
+    return 0;}));
+  if(has(['admin','power_user','qc_manager','ph_manager','qc_supervisor','commercial']))N.push(dalCount(sb.from('cqc_intake').select('id',{count:'exact',head:true}).neq('status','completed')).then(function(n){return n&&{expr:'alert',html:'<b>'+n+' client QC '+(n===1?'email is':'emails are')+'</b> waiting in the Client QC intake.',app:'vision',cta:'Open Vision'};}));
+  if(has(['agronomy_admin','admin','power_user']))N.push(Promise.all([dalCount(sb.from('farm_blocks').select('id',{count:'exact',head:true}).in('lifecycle',['EXP','WIP'])),dalCount(sb.from('v_farm_block_geom').select('id',{count:'exact',head:true}).in('lifecycle',['EXP','WIP']))]).then(function(c){var n=c[0]-c[1];return n>0&&{expr:'pointing',html:'<b>'+n+' producing or young '+(n===1?'block has':'blocks have')+'</b> no boundary drawn yet. Land Cloud → Block Register.',app:'landcloud',cta:'Open Land Cloud'};}));
+  if(has(['admin','power_user','commercial','marketing']))N.push(dalCount(sb.from('crm_leads').select('id',{count:'exact',head:true}).gte('created_at',since)).then(function(n){return n&&{expr:'happy',html:'<b>'+n+' new '+(n===1?'lead was':'leads were')+'</b> captured in the last 7 days.',app:'commercial',cta:'Open Commercial'};}));
+  return Promise.all(N).then(function(r){for(var i=0;i<r.length;i++)if(r[i])return r[i];
+    /* last resort: offer Analytics access — ask the server, the tile may not have loaded yet */
+    return sb.rpc('my_analytics_state').then(function(s){return (s&&!s.error&&s.data==='none')?{expr:'pointing',html:'You don’t have Analytics yet. Want me to request access for you?',app:'',cta:'Request access',act:'request'}:null;},function(){return null;});});
+}
+function dalGreeting(){var h=new Date().getHours(),g=h<12?'Good morning':h<17?'Good afternoon':'Good evening';var f=((dalState.u.name||'').trim().split(' ')[0])||'';return g+(f?', '+f:'')+'.';}
+function dalFace(expr){var c=dalState.el.querySelector('.dal-char-svg');c.innerHTML=dalSvg(expr);}
+function dalSay(html,o){
+  o=o||{};var el=dalState.el,msg=el.querySelector('.dal-msg'),act=el.querySelector('.dal-act');
+  dalFace('thinking');msg.innerHTML='<span class="dal-typing"><i></i><i></i><i></i></span>';act.innerHTML='';
+  setTimeout(function(){dalFace(o.expr||'neutral');msg.innerHTML=html;
+    if(o.cta){var b=document.createElement('button');b.type='button';b.className='dal-pri';b.textContent=o.cta;b.onclick=function(){if(o.act==='request'){dalMin(true);requestAnalyticsAccess();return;}if(o.app&&dalCanOpen(o.app))openProduct(o.app);};act.appendChild(b);}
+  },o.fast?0:650);
+}
+function dalAnswer(i){var h=DAL_HELP[i];if(!h)return;var can=h.app&&dalCanOpen(h.app);
+  dalSay(dalEsc(h.a)+(h.app&&!can?' <span class="dal-dim">You don’t have '+dalAppLabel(h.app)+' access yet.</span>':''),{expr:h.app?'pointing':'neutral',app:h.app,cta:can?'Open '+dalAppLabel(h.app):''});}
+function dalEsc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function dalRenderSugg(list){var box=dalState.el.querySelector('.dal-sugg-list');box.innerHTML='';
+  list.forEach(function(i){var b=document.createElement('button');b.type='button';b.textContent=DAL_HELP[i].q;b.onclick=function(){dalAnswer(i);};box.appendChild(b);});}
+function dalSearch(q){q=q.trim().toLowerCase();if(!q){dalRenderSugg(DAL_SUGGEST[dalState.role]||[0,13,19]);return;}
+  var words=q.split(/\s+/),hits=[];
+  DAL_HELP.forEach(function(h,i){var hay=(h.q+' '+h.k+' '+h.a).toLowerCase(),s=0;words.forEach(function(w){if(w.length>1&&hay.indexOf(w)>=0)s++;});if(s)hits.push([s,i]);});
+  hits.sort(function(a,b){return b[0]-a[0];});dalRenderSugg(hits.slice(0,4).map(function(x){return x[1];}));
+  return hits;}
+function dalMin(on){dalState.el.classList.toggle('is-min',on);if(on)dalSet('min');var c=dalState.el.querySelector('.dal-char');c.setAttribute('aria-expanded',on?'false':'true');}
+function dalBoot(u,animate){
+  if(!DAL_ENABLED||!u||DAL_OFF_ROLES[u.role]||dalState.booted)return;
+  dalState.booted=true;dalState.u=u;dalState.role=u.role||'';
+  var el=document.createElement('div');el.className='dal is-min is-hidden';el.id='dal';
+  el.innerHTML='<div class="dal-bubble" role="dialog" aria-label="Dal, the DalOS assistant">'+
+    '<div class="dal-head"><div><b>Dal</b><span>DalOS assistant</span></div><button type="button" class="dal-x" aria-label="Hide Dal">×</button></div>'+
+    '<div class="dal-msg" aria-live="polite"></div><div class="dal-act"></div>'+
+    '<div class="dal-sugg"><span>Ask me</span><div class="dal-sugg-list"></div></div>'+
+    '<form class="dal-ask" autocomplete="off"><input type="search" class="dal-in" placeholder="Where do I…? (e.g. claim, season)" aria-label="Ask Dal"><button type="submit" aria-label="Ask">↵</button></form>'+
+    '<div class="dal-foot">Answers are a fixed help list for now — Dal only sees what you can see.</div></div>'+
+    '<button type="button" class="dal-char" aria-label="Open Dal, the DalOS assistant" aria-expanded="false"><span class="dal-char-svg"></span><span class="dal-tag">Ask Dal</span></button>';
+  document.body.appendChild(el);dalState.el=el;dalFace(dalQuiet()?'sleepy':'neutral');
+  el.querySelector('.dal-x').onclick=function(){dalMin(true);};
+  el.querySelector('.dal-char').onclick=function(){var open=el.classList.contains('is-min');dalMin(!open);if(open&&!el.querySelector('.dal-msg').innerHTML)dalSay(dalGreeting()+' What are you looking for?',{expr:'happy',fast:true});};
+  el.addEventListener('keydown',function(e){if(e.key==='Escape')dalMin(true);});
+  var inp=el.querySelector('.dal-in');inp.addEventListener('input',function(){dalSearch(inp.value);});
+  el.querySelector('.dal-ask').onsubmit=function(e){e.preventDefault();var q=inp.value.trim();if(!q)return;var hits=dalSearch(q);
+    if(hits&&hits.length)dalAnswer(hits[0][1]);else dalSay('I don’t know that one yet. Tarek or Ramy can help.',{expr:'puzzled'});};
+  dalRenderSugg(DAL_SUGGEST[dalState.role]||[0,13,19]);
+  /* pupils follow the pointer */
+  if(!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))document.addEventListener('mousemove',function(ev){
+    [].forEach.call(el.querySelectorAll('.dal-pupil'),function(p){var sv=p.ownerSVGElement,r=sv.getBoundingClientRect();if(!r.width)return;
+      var px=r.left+(+p.getAttribute('data-cx'))/160*r.width,py=r.top+(+p.getAttribute('data-cy'))/150*r.height,dx=ev.clientX-px,dy=ev.clientY-py,dd=Math.hypot(dx,dy)||1,mm=Math.min(3.6,dd/40);
+      p.setAttribute('transform','translate('+(dx/dd*mm).toFixed(2)+' '+(dy/dd*mm).toFixed(2)+')');});});
+  /* nudge counts load in the background; Dal appears once the chooser is on screen */
+  var quiet=dalQuiet(),seen=dalGet('seen'),nudgeP=(quiet||seen)?Promise.resolve(null):dalNudges().catch(function(){return null;});
+  setTimeout(function(){
+    el.classList.remove('is-hidden');
+    nudgeP.then(function(n){
+      if(quiet){dalFace('sleepy');return;}
+      if(n&&!seen){dalSet('seen');dalMin(false);dalSay(n.html,{expr:n.expr,app:n.app,cta:n.cta,act:n.act});}
+      else dalFace('neutral');
+    });
+  },animate?2600:1200);
+}
 if(DALOS_LINK.type==='invite'||DALOS_LINK.type==='recovery'){
   showSetPw(DALOS_LINK.type);
 }else if(DALOS_LINK.error){
