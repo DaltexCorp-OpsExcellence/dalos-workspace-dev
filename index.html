@@ -199,7 +199,7 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
 /* ── god-mode app cards (two distinct apps inside DalOS) ── */
 .app-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;width:100%;max-width:1320px;position:relative;z-index:6;margin-bottom:auto;flex-shrink:0}
 @media(max-width:1160px){.app-grid{grid-template-columns:repeat(2,1fr);max-width:840px;gap:18px}}
-.app-card{position:relative;overflow:hidden;border-radius:24px;padding:24px 28px 22px;min-height:clamp(258px,42vh,380px);cursor:pointer;display:flex;flex-direction:column;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1);transition:transform .3s cubic-bezier(.3,1.25,.5,1),box-shadow .3s,border-color .3s;animation:dh-rise .6s ease both;opacity:0}
+.app-card{position:relative;overflow:hidden;border-radius:24px;padding:24px 28px 22px;min-height:clamp(220px,30vh,290px);cursor:pointer;display:flex;flex-direction:column;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1);transition:transform .3s cubic-bezier(.3,1.25,.5,1),box-shadow .3s,border-color .3s;animation:dh-rise .6s ease both;opacity:0}
 .app-card:hover{transform:translateY(-6px);box-shadow:0 30px 70px rgba(0,0,0,.5);border-color:color-mix(in srgb,var(--ac) 55%,transparent)}
 .app-card:active{transform:translateY(-3px) scale(.992)}
 .app-vision{--ac:#6fc191;background:linear-gradient(162deg,rgba(60,122,85,.34),rgba(10,24,15,.55));border-color:rgba(111,193,145,.28);animation-delay:.10s}
