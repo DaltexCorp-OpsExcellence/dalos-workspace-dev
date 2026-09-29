@@ -208,14 +208,12 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
 .app-commercial.is-locked{--ac:#8b94a3}
 .app-commercial.is-locked .app-name{color:#cdd3dc}
 .app-commercial.is-locked .app-tag{color:rgba(244,241,232,.42)}
-.app-commercial.is-locked .app-chip{opacity:.55}
 .app-commercial.is-locked .app-emblem{filter:none}
 .app-commercial.is-locked .lock-badge{border-color:rgba(139,148,163,.55);color:#aab3c0}
 .app-landcloud{--ac:#33cfe0;background:linear-gradient(162deg,rgba(22,132,150,.34),rgba(8,20,24,.58));border-color:rgba(51,207,224,.30);animation-delay:.28s}
 .app-landcloud.is-locked{--ac:#8b94a3}
 .app-landcloud.is-locked .app-name{color:#cdd3dc}
 .app-landcloud.is-locked .app-tag{color:rgba(244,241,232,.42)}
-.app-landcloud.is-locked .app-chip{opacity:.55}
 .app-landcloud.is-locked .app-emblem{opacity:.5}
 .app-landcloud.is-locked .lock-badge{border-color:rgba(51,207,224,.5);color:#33cfe0}
 .app-glow{position:absolute;width:220px;height:220px;border-radius:50%;filter:blur(60px);opacity:.45;top:-60px;right:-50px;background:var(--ac);transition:opacity .3s;pointer-events:none}
@@ -229,13 +227,11 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
 .app-emblem{width:56px;height:56px;margin:16px 0 13px;position:relative;z-index:2;color:var(--ac);filter:drop-shadow(0 0 16px color-mix(in srgb,var(--ac) 40%,transparent))}
 .app-name{font-family:var(--font-display);font-size:30px;color:#f4f1e8;position:relative;z-index:2;line-height:1.05}
 .app-tag{font-size:13px;color:rgba(244,241,232,.6);margin-top:8px;position:relative;z-index:2;max-width:300px;line-height:1.45}
-.app-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px;position:relative;z-index:2}
-.app-chip{font-size:11px;font-weight:500;color:rgba(244,241,232,.78);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);padding:5px 10px;border-radius:8px}
 .app-foot{margin-top:auto;padding-top:20px;position:relative;z-index:2}
 .app-go{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--ac);border:1px solid color-mix(in srgb,var(--ac) 40%,transparent);padding:10px 16px;border-radius:11px;transition:.2s;background:color-mix(in srgb,var(--ac) 8%,transparent)}
 .app-card:hover .app-go{background:var(--ac);color:#0a120c;border-color:var(--ac);box-shadow:0 8px 24px color-mix(in srgb,var(--ac) 40%,transparent)}
 .app-go b{font-weight:700;transition:transform .2s}
-.app-card:hover .app-go b{transform:translateX(4px)}.app-analytics.is-locked,.app-analytics.is-pending{--ac:#8b94a3}.app-analytics.is-locked .app-name,.app-analytics.is-pending .app-name{color:#cdd3dc}.app-analytics.is-locked .app-tag,.app-analytics.is-pending .app-tag{color:rgba(244,241,232,.42)}.app-analytics.is-locked .app-chip,.app-analytics.is-pending .app-chip{opacity:.55}.app-analytics.is-locked .app-emblem,.app-analytics.is-pending .app-emblem{filter:none}.app-emblem .lock-badge{position:absolute;right:-6px;bottom:-4px;width:22px;height:22px;border-radius:50%;background:#11192a;border:1px solid rgba(139,148,163,.55);display:flex;align-items:center;justify-content:center;font-size:12px;color:#aab3c0;z-index:3}
+.app-card:hover .app-go b{transform:translateX(4px)}.app-analytics.is-locked,.app-analytics.is-pending{--ac:#8b94a3}.app-analytics.is-locked .app-name,.app-analytics.is-pending .app-name{color:#cdd3dc}.app-analytics.is-locked .app-tag,.app-analytics.is-pending .app-tag{color:rgba(244,241,232,.42)}.app-analytics.is-locked .app-emblem,.app-analytics.is-pending .app-emblem{filter:none}.app-emblem .lock-badge{position:absolute;right:-6px;bottom:-4px;width:22px;height:22px;border-radius:50%;background:#11192a;border:1px solid rgba(139,148,163,.55);display:flex;align-items:center;justify-content:center;font-size:12px;color:#aab3c0;z-index:3}
 /* ── Idle card-logo animations — a slow "signature" motion per app that echoes
    its loading mark. Transform/dash based so it reads through the emblem opacity.
    Disabled under reduced-motion. ── */
@@ -342,7 +338,6 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
         <div class="app-emblem"><svg viewBox="0 0 48 48" width="100%" height="100%" fill="none"><circle cx="24" cy="24" r="17" stroke="currentColor" stroke-width="1.4" opacity=".5"/><g fill="currentColor"><circle cx="24" cy="17" r="3.1"/><circle cx="19" cy="22" r="3.1"/><circle cx="29" cy="22" r="3.1"/><circle cx="21.5" cy="27" r="3.1"/><circle cx="26.5" cy="27" r="3.1"/><circle cx="24" cy="32" r="3.1"/></g><path d="M24 14 V11 Q27 10 29 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg></div>
         <div class="app-name">DalOS Vision</div>
         <div class="app-tag">Quality control from packhouse to port — inspections, approvals and shipments.</div>
-        <div class="app-chips"><span class="app-chip">Inspections</span><span class="app-chip">Client QC</span><span class="app-chip">Shipments</span><span class="app-chip">Board Review</span></div>
         <div class="app-foot"><span class="app-go">Open Vision <b>→</b></span></div>
       </div>
       <div class="app-card app-analytics" id="tileAnalytics">
@@ -352,7 +347,6 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
         <div class="app-emblem"><svg viewBox="0 0 64 64" width="100%" height="100%" fill="none"><rect x="14" y="32" width="8.5" height="18" rx="4" fill="#f08a4b"/><rect x="27.75" y="24" width="8.5" height="26" rx="4" fill="#DC6428"/><rect x="41.5" y="15" width="8.5" height="35" rx="4" fill="#DC6428"/><circle cx="45.75" cy="15" r="4.3" fill="#f7c948"/></svg></div>
         <div class="app-name">DalOS Analytics</div>
         <div class="app-tag">Live shipment &amp; market intelligence across the whole season.</div>
-        <div class="app-chips"><span class="app-chip">Markets</span><span class="app-chip">Farms</span><span class="app-chip">Varieties</span><span class="app-chip">Clients</span><span class="app-chip">Cartons</span><span class="app-chip">Explorer</span></div>
         <div class="app-foot"><span class="app-go">Open Analytics <b>→</b></span></div>
       </div>
       <div class="app-card app-commercial" id="tileCommercial">
@@ -362,7 +356,6 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
         <div class="app-emblem"><svg viewBox="4 4 56 50" width="100%" height="100%" fill="none"><path d="M11 44 L25 36 L37 40 L53 17" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><g fill="currentColor"><circle cx="11" cy="44" r="3"/><circle cx="25" cy="36" r="3"/><circle cx="37" cy="40" r="3"/></g><circle cx="53" cy="17" r="5" fill="currentColor"/></svg></div>
         <div class="app-name">DalOS Commercial</div>
         <div class="app-tag">Claims, redirections, regional performance and lead generation.</div>
-        <div class="app-chips"><span class="app-chip">Claims</span><span class="app-chip">Redirections</span><span class="app-chip">Regions</span><span class="app-chip">Voyages</span><span class="app-chip">Leads</span><span class="app-chip">Campaigns</span></div>
         <div class="app-foot"><span class="app-go">Open Commercial <b>→</b></span></div>
       </div>
       <div class="app-card app-landcloud" id="tileLandCloud">
@@ -372,7 +365,6 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
         <div class="app-emblem"><svg viewBox="0 0 64 64" width="100%" height="100%" fill="none"><path d="M8 22 L27 6 L52 13 L58 36 L39 56 L14 48 Z" stroke="#33cfe0" stroke-width="2.6" stroke-linejoin="round" stroke-dasharray="7 5.5"/><path d="M19 25 L30 17 L45 21 L48 34 L36 45 L22 40 Z" fill="#7fe1ea"/></svg></div>
         <div class="app-name">DalOS Land Cloud</div>
         <div class="app-tag">Every block, every season, and how the land got its shape.</div>
-        <div class="app-chips"><span class="app-chip">Structure</span><span class="app-chip">Blocks</span><span class="app-chip">History</span><span class="app-chip">Farm Map</span><span class="app-chip">Reconciliation</span></div>
         <div class="app-foot"><span class="app-go">Open Land Cloud <b>→</b></span></div>
       </div>
     </div>
