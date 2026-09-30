@@ -948,6 +948,7 @@ function dalLookupInspection(id){
    Each one runs with the user's own session, so RLS scopes every answer (commercial sees
    their regions, inspectors their packhouses, agronomy the farms they can read).
    "This week" = the last 7 days. Containers are counted by VOYAGE (container + loading date). */
+var DAL_DUMMY_SEASON='e07c8879-dd77-413b-8d11-f6065fafc070'; /* test season — never in operational answers */
 function dalDay(off){var d=new Date();d.setDate(d.getDate()+(off||0));return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
 function dalCKey(c){return String(c||'').toUpperCase().replace(/\s+/g,' ').trim();}
 function dalVoyages(rows){var seen={},out=[];rows.forEach(function(s){var k=dalCKey(s.container_number)+'|'+String(s.loading_date||'').slice(0,10);if(!seen[k]){seen[k]=1;out.push(s);}});return out;}
@@ -994,24 +995,28 @@ var DAL_OPS={
      if(!v.length)return dalSay('No returned containers.',{expr:'happy'});
      dalOpSay('<b>'+v.length+' returned container'+(v.length>1?'s':'')+':</b><br>'+dalList(v,function(s){return dalLink(s.container_number)+' — '+dalEsc(s.client||'—')+', loaded '+dalFmtDate(s.loading_date);}),'commercial');});}},
  special:{label:'Rejected batches that still shipped (special accept)',run:function(){
-   dalSafe(sb.from('inspections').select('id,date,container_number,product_id').eq('status','Special Accept').order('date',{ascending:false}).limit(50)).then(function(r){
+   dalSafe(sb.from('inspections').select('id,date,container_number,product_id').eq('status','Special Accept').neq('season_id',DAL_DUMMY_SEASON).order('date',{ascending:false}).limit(50)).then(function(r){
      if(!r.length)return dalSay('No special-accepted batches.',{expr:'neutral'});
      dalOpSay('<b>'+r.length+' batch'+(r.length>1?'es were':' was')+' rejected and then special-accepted by the board:</b><br>'+dalList(r,function(x){return dalLink(x.id)+(x.container_number?' — '+dalLink(x.container_number):'')+', '+dalEsc(dalCap(x.product_id))+', '+dalFmtDate(x.date);}),'vision');});}},
  no_insp:{label:'Containers loaded without an inspection',run:function(){
-   dalSafe(sb.from('shipments').select('container_number,loading_date,client,pack_house').is('matched_inspection_id',null).gte('loading_date',dalDay(-30)).order('loading_date',{ascending:false}).limit(1000)).then(function(r){var v=dalVoyages(r);
-     if(!v.length)return dalSay('Every container loaded in the last 30 days is linked to an inspection.',{expr:'happy'});
-     dalOpSay('<b>'+v.length+' container'+(v.length>1?'s':'')+' loaded in the last 30 days with no linked inspection</b>'+dalCapNote(r)+':<br>'+dalList(v,function(s){return dalLink(s.container_number)+' — '+dalEsc(s.client||'—')+', '+dalFmtDate(s.loading_date)+(s.pack_house?' ('+dalEsc(s.pack_house)+')':'');})+'<br><span class="dal-dim">“Linked” = matched in Shipments; an inspection may exist but not be matched yet.</span>','vision');});}},
+   /* not linked in Shipments AND no inspection on that container in the 60 days before loading */
+   Promise.all([dalSafe(sb.from('shipments').select('container_number,loading_date,client,pack_house').is('matched_inspection_id',null).gte('loading_date',dalDay(-30)).order('loading_date',{ascending:false}).limit(1000)),
+     dalSafe(sb.from('inspections').select('container_number,date').neq('season_id',DAL_DUMMY_SEASON).gte('date',dalDay(-100)).not('container_number','is',null).limit(1000))]).then(function(r){
+     var have={};r[1].forEach(function(x){var k=dalCKey(x.container_number);(have[k]=have[k]||[]).push(String(x.date).slice(0,10));});
+     var v=dalVoyages(r[0]).filter(function(s){var ds=have[dalCKey(s.container_number)];if(!ds)return true;var ld=new Date(String(s.loading_date).slice(0,10));return !ds.some(function(d){var g=(ld-new Date(d))/864e5;return g>=-1&&g<=60;});});
+     if(!v.length)return dalSay('Every container loaded in the last 30 days has an inspection.',{expr:'happy'});
+     dalOpSay('<b>'+v.length+' container'+(v.length>1?'s':'')+' loaded in the last 30 days with no inspection found</b>'+dalCapNote(r[0])+':<br>'+dalList(v,function(s){return dalLink(s.container_number)+' — '+dalEsc(s.client||'—')+', '+dalFmtDate(s.loading_date)+(s.pack_house?' ('+dalEsc(s.pack_house)+')':'');})+'<br><span class="dal-dim">Checked by container number at the packhouses you can see.</span>','vision');});}},
  cqc_red:{label:'Containers the client scored RED (last 30 days)',run:function(){
    dalSafe(sb.from('client_qc_reports').select('container_number,score,load_date,created_at').ilike('score','red%').is('superseded_by',null).gte('created_at',dalDay(-30)).order('created_at',{ascending:false}).limit(200)).then(function(r){
      if(!r.length)return dalSay('No containers scored RED by a client in the last 30 days.',{expr:'happy'});
      dalOpSay('<b>'+r.length+' container'+(r.length>1?'s':'')+' scored RED in the last 30 days:</b><br>'+dalList(r,function(c){return dalLink(c.container_number)+(c.load_date?' — loaded '+dalFmtDate(c.load_date):'');}),'vision','alert');});}},
  insp_week:{label:'Inspections in the last 7 days',run:function(){
-   dalSafe(sb.from('inspections').select('id,date,status,container_number,product_id').gte('date',dalDay(-7)).order('date',{ascending:false}).limit(500)).then(function(r){
+   dalSafe(sb.from('inspections').select('id,date,status,container_number,product_id').neq('season_id',DAL_DUMMY_SEASON).gte('date',dalDay(-7)).order('date',{ascending:false}).limit(500)).then(function(r){
      if(!r.length)return dalSay('No inspections in the last 7 days at the packhouses you can see.',{expr:'neutral'});
      var st={};r.forEach(function(x){st[x.status||'—']=(st[x.status||'—']||0)+1;});
      dalOpSay('<b>'+r.length+' inspection'+(r.length>1?'s':'')+' in the last 7 days</b> ('+Object.keys(st).map(function(k){return st[k]+' '+dalEsc(k);}).join(', ')+'). Latest:<br>'+dalList(r,function(x){return dalLink(x.id)+(x.container_number?' — '+dalLink(x.container_number):'')+', '+dalEsc(x.status||'—')+', '+dalFmtDate(x.date);}),'vision');});}},
  rejected_week:{label:'Rejected batches in the last 7 days',run:function(){
-   dalSafe(sb.from('inspections').select('id,date,status,container_number,product_id').in('status',['Rejected','Escalated','Special Reject']).gte('date',dalDay(-7)).order('date',{ascending:false}).limit(200)).then(function(r){
+   dalSafe(sb.from('inspections').select('id,date,status,container_number,product_id').in('status',['Rejected','Escalated','Special Reject']).neq('season_id',DAL_DUMMY_SEASON).gte('date',dalDay(-7)).order('date',{ascending:false}).limit(200)).then(function(r){
      if(!r.length)return dalSay('No rejected batches in the last 7 days.',{expr:'happy'});
      dalOpSay('<b>'+r.length+' rejected batch'+(r.length>1?'es':'')+' in the last 7 days:</b><br>'+dalList(r,function(x){return dalLink(x.id)+' — '+dalEsc(dalCap(x.product_id))+', '+dalEsc(x.status)+', '+dalFmtDate(x.date);}),'vision','alert');});}},
  to_country:{label:'Containers to a country (last 12 months)',needs:'country',run:function(arg){
