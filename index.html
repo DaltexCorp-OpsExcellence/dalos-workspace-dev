@@ -273,6 +273,8 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
 .dal-msg{font-size:14px;line-height:1.5;min-height:21px}
 .dal-msg b{color:#8fe0ad;font-weight:600}
 .dal-dim{color:#7c9785}
+.dal-link{font:inherit;font-weight:600;color:#8fe0ad;background:none;border:none;padding:0;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(143,224,173,.4);text-underline-offset:2px}
+.dal-link:hover{color:#b9f0cb}
 .dal-voy{margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(143,224,173,.18);font-size:13px}
 .dal-voy span{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#caa86a;font-weight:700;margin-bottom:3px}
 .dal-msg{max-height:46vh;overflow:auto}
@@ -805,7 +807,7 @@ function dalNudges(){
   if(has(['admin','power_user','qc_manager','ph_manager','qc_supervisor','commercial']))N.push(dalCount(sb.from('cqc_intake').select('id',{count:'exact',head:true}).neq('status','completed')).then(function(n){return n&&{expr:'alert',html:'<b>'+n+' client QC '+(n===1?'email is':'emails are')+'</b> waiting in the Client QC intake.',app:'vision',cta:'Open Vision'};}));
   if(has(['agronomy_admin','admin','power_user']))N.push(Promise.all([dalCount(sb.from('farm_blocks').select('id',{count:'exact',head:true}).in('lifecycle',['EXP','WIP'])),dalCount(sb.from('v_farm_block_geom').select('id',{count:'exact',head:true}).in('lifecycle',['EXP','WIP']))]).then(function(c){var n=c[0]-c[1];return n>0&&{expr:'pointing',html:'<b>'+n+' producing or young '+(n===1?'block has':'blocks have')+'</b> no boundary drawn yet. Land Cloud → Block Register.',app:'landcloud',cta:'Open Land Cloud'};}));
   if(has(['admin','power_user','commercial','marketing']))N.push(dalCount(sb.from('crm_leads').select('id',{count:'exact',head:true}).gte('created_at',since)).then(function(n){return n&&{expr:'happy',html:'<b>'+n+' new '+(n===1?'lead was':'leads were')+'</b> captured in the last 7 days.',app:'commercial',cta:'Open Commercial'};}));
-  return Promise.all(N).then(function(r){for(var i=0;i<r.length;i++)if(r[i])return r[i];
+  return Promise.all(N).then(function(r){dalState.pending=r.filter(Boolean);for(var i=0;i<r.length;i++)if(r[i])return r[i];
     /* last resort: offer Analytics access — ask the server, the tile may not have loaded yet */
     return sb.rpc('my_analytics_state').then(function(s){return (s&&!s.error&&s.data==='none')?{expr:'pointing',html:'You don’t have Analytics yet. Want me to request access for you?',app:'',cta:'Request access',act:'request'}:null;},function(){return null;});});
 }
@@ -823,7 +825,12 @@ function dalAnswer(i){var h=DAL_HELP[i];if(!h)return;var can=h.app&&dalCanOpen(h
   dalSay(dalEsc(h.a)+(h.app&&!can?' <span class="dal-dim">You don’t have '+dalAppLabel(h.app)+' access yet.</span>':''),{expr:h.app?'pointing':'neutral',app:h.app,cta:can?'Open '+dalAppLabel(h.app):''});}
 function dalEsc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function dalRenderSugg(list){var box=dalState.el.querySelector('.dal-sugg-list');box.innerHTML='';
-  list.forEach(function(i){var b=document.createElement('button');b.type='button';b.textContent=DAL_HELP[i].q;b.onclick=function(){dalAnswer(i);};box.appendChild(b);});}
+  list.forEach(function(i){var b=document.createElement('button');b.type='button';
+    if(typeof i==='number'){b.textContent=DAL_HELP[i].q;b.onclick=function(){dalAnswer(i);};}
+    else if(i&&i.q){b.textContent=i.label;b.onclick=function(){dalAsk(i.q);};}
+    else{var p=String(i).split(':'),op=DAL_OPS[p[0]];if(!op)return;b.textContent=p[1]&&p[0]==='farm'?'Farm summary: '+dalFarmName(p[1]):op.label;b.onclick=function(){dalRunOp(p[0],p[1]);};}
+    box.appendChild(b);});}
+function dalDefaultSugg(){var s=(DAL_OPS_SUGGEST[dalState.role]||[13,19,20]).slice();if(dalState.latestBox)s.unshift({label:'What happened with '+dalState.latestBox+'?',q:dalState.latestBox});return s;}
 /* ── Dal understanding (level 1 — in the browser, no AI) ──
    Normalises English / Arabic / Franco-Arabic, maps words to topics, forgives typos,
    spots container numbers and inspection IDs and looks them up live (with the user's
@@ -879,7 +886,7 @@ function dalRank(q){var tp=dalTopics(q),nq=dalNorm(q),hits=[];if(!nq)return hits
   DAL_HELP.forEach(function(h,i){var s=0;h.t.forEach(function(t){if(tp.indexOf(t)>=0)s+=(DAL_GENERIC[t]||3);});
     nq.split(' ').forEach(function(w){if(w.length>3&&dalNorm(h.q+' '+h.k).indexOf(w)>=0)s+=1;});if(s)hits.push([s,i]);});
   hits.sort(function(a,b){return b[0]-a[0];});return hits;}
-function dalSearch(q){if(!q.trim()){dalRenderSugg(DAL_SUGGEST[dalState.role]||[0,13,19]);return [];}
+function dalSearch(q){if(!q.trim()){dalRenderSugg(dalDefaultSugg());return [];}
   var hits=dalRank(q);if(hits.length)dalRenderSugg(hits.slice(0,4).map(function(x){return x[1];}));return hits;}
 /* entities */
 var DAL_RX_BOX=/\b([a-z]{4})\s*(\d{6,7})\b/i,DAL_RX_SLASH=/\b(\d{3,5})\s*\/\s*(\d{3,5})\b/,DAL_RX_INSP=/\b(gr|ct|mn|pm)\s*-\s*(\d{4})\s*-\s*(\d{1,4})\b/i;
@@ -937,6 +944,138 @@ function dalLookupInspection(id){
       dalState.last={type:'inspection',app:'vision'};
       dalSay('<b>'+dalEsc(x.id)+'</b> — '+dalEsc(dalCap(x.product_id))+(p.length?' at '+dalEsc(p[0].name):'')+', '+dalFmtDate(x.date)+'.<br>Decision: <b>'+dalEsc(x.status||'—')+'</b>.'+(x.container_number?'<br>Container '+dalEsc(x.container_number)+'.':'')+(x.lot_number?' Lot '+dalEsc(x.lot_number)+'.':''),{expr:'pointing',app:'vision',cta:'Open Vision'});});});
 }
+/* ── Dal operational questions — fixed live queries (no AI) ──
+   Each one runs with the user's own session, so RLS scopes every answer (commercial sees
+   their regions, inspectors their packhouses, agronomy the farms they can read).
+   "This week" = the last 7 days. Containers are counted by VOYAGE (container + loading date). */
+function dalDay(off){var d=new Date();d.setDate(d.getDate()+(off||0));return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+function dalCKey(c){return String(c||'').toUpperCase().replace(/\s+/g,' ').trim();}
+function dalVoyages(rows){var seen={},out=[];rows.forEach(function(s){var k=dalCKey(s.container_number)+'|'+String(s.loading_date||'').slice(0,10);if(!seen[k]){seen[k]=1;out.push(s);}});return out;}
+function dalLink(c){return '<button type="button" class="dal-link" data-q="'+dalEsc(c)+'">'+dalEsc(c)+'</button>';}
+function dalList(items,fmt,max){max=max||5;var h=items.slice(0,max).map(fmt).join('<br>');if(items.length>max)h+='<br><span class="dal-dim">…and '+(items.length-max)+' more.</span>';return h;}
+function dalCapNote(rows){return rows.length>=1000?' <span class="dal-dim">(first 1,000 lines only)</span>':'';}
+function dalOpSay(html,app,expr){dalState.last={type:'op',app:app};dalSay(html,{expr:expr||'pointing',app:app,cta:app&&dalCanOpen(app)?'Open '+dalAppLabel(app):''});}
+var DAL_FARMS=[['BD','badr','بدر'],['HA','hana','هنا'],['KH','el khair','khair','الخير'],['NO','nour','نور'],['SA','salma','سلمي'],['ME','menia','menya','minya','المنيا','منيا'],['LA','layla','ليلي'],['BA','elbaraka','baraka','البركه','بركه']];
+function dalFarmIn(n){for(var i=0;i<DAL_FARMS.length;i++){var f=DAL_FARMS[i];for(var j=1;j<f.length;j++){if((' '+n+' ').indexOf(' '+dalNorm(f[j])+' ')>=0)return f[0];}if(new RegExp('\\b'+f[0].toLowerCase()+'\\b').test(n)&&/farm|مزرعه/.test(n))return f[0];}return null;}
+var DAL_OPS={
+ waiting:{label:'What’s waiting for me?',run:function(){dalNudges().then(function(){var p=dalState.pending||[];
+   if(!p.length)return dalSay('Nothing is waiting for you right now.',{expr:'happy'});
+   dalOpSay('<b>'+p.length+' thing'+(p.length>1?'s':'')+' waiting for you:</b><br>'+p.map(function(x){return '• '+x.html;}).join('<br>'),p[0].app,'alert');});}},
+ at_sea:{label:'Containers at sea right now',run:function(){
+   dalSafe(sb.from('shipments').select('container_number,loading_date,client,eta,receiving_country').eq('shipping_status','Shipped').order('eta',{ascending:true}).limit(1000)).then(function(r){var v=dalVoyages(r);
+     if(!v.length)return dalSay('No containers at sea right now.',{expr:'happy'});
+     dalOpSay('<b>'+v.length+' container'+(v.length>1?'s':'')+' at sea</b>'+dalCapNote(r)+'. Arriving soonest:<br>'+dalList(v,function(s){return dalLink(s.container_number)+' — '+dalEsc(s.client||'—')+(s.eta?', ETA '+dalFmtDate(s.eta):'');}),'vision');});}},
+ arriving:{label:'Containers arriving in the next 7 days',run:function(){
+   dalSafe(sb.from('shipments').select('container_number,loading_date,client,eta,receiving_country').eq('shipping_status','Shipped').gte('eta',dalDay(0)).lte('eta',dalDay(7)).order('eta',{ascending:true}).limit(1000)).then(function(r){var v=dalVoyages(r);
+     if(!v.length)return dalSay('No containers are due to arrive in the next 7 days.',{expr:'neutral'});
+     dalOpSay('<b>'+v.length+' container'+(v.length>1?'s':'')+' arriving in the next 7 days:</b><br>'+dalList(v,function(s){return dalLink(s.container_number)+' — '+dalEsc(s.client||'—')+(s.receiving_country?', '+dalEsc(s.receiving_country):'')+', ETA '+dalFmtDate(s.eta);}),'vision');});}},
+ loaded_week:{label:'Containers loaded in the last 7 days',run:function(){
+   dalSafe(sb.from('shipments').select('container_number,loading_date,client,product_id,pack_house').gte('loading_date',dalDay(-7)).order('loading_date',{ascending:false}).limit(1000)).then(function(r){var v=dalVoyages(r);
+     if(!v.length)return dalSay('No containers were loaded in the last 7 days.',{expr:'neutral'});
+     dalOpSay('<b>'+v.length+' container'+(v.length>1?'s':'')+' loaded in the last 7 days:</b><br>'+dalList(v,function(s){return dalLink(s.container_number)+' — '+dalEsc(dalCap(s.product_id))+' to '+dalEsc(s.client||'—')+', '+dalFmtDate(s.loading_date)+(s.pack_house?' ('+dalEsc(s.pack_house)+')':'');}),'vision');});}},
+ no_cqc:{label:'Delivered but no client QC yet',run:function(){
+   Promise.all([dalSafe(sb.from('shipments').select('container_number,loading_date,client').eq('shipping_status','Delivered').gte('loading_date',dalDay(-60)).lte('loading_date',dalDay(-7)).order('loading_date',{ascending:false}).limit(1000)),
+     dalSafe(sb.from('client_qc_reports').select('container_number,load_date').gte('created_at',dalDay(-150)).limit(1000))]).then(function(r){
+     var have={};r[1].forEach(function(c){have[dalCKey(c.container_number)]=(have[dalCKey(c.container_number)]||[]).concat([c.load_date?String(c.load_date).slice(0,10):'']);});
+     var v=dalVoyages(r[0]).filter(function(s){var ds=have[dalCKey(s.container_number)];if(!ds)return true;var ld=new Date(String(s.loading_date).slice(0,10));return !ds.some(function(d){return !d||Math.abs((new Date(d)-ld)/864e5)<=3;});});
+     if(!v.length)return dalSay('Every container delivered in the last 60 days has a client QC report.',{expr:'happy'});
+     dalOpSay('<b>'+v.length+' delivered container'+(v.length>1?'s have':' has')+' no client QC yet</b> <span class="dal-dim">(loaded 7–60 days ago)</span>:<br>'+dalList(v,function(s){return dalLink(s.container_number)+' — '+dalEsc(s.client||'—')+', loaded '+dalFmtDate(s.loading_date);}),'commercial');});}},
+ open_claims:{label:'Containers with open claims',run:function(){
+   Promise.all([dalCount(sb.from('crm_claims').select('id',{count:'exact',head:true}).in('status',['open','pending'])),
+     dalSafe(sb.from('crm_claims').select('claim_ref,container_number,client,status,claimed_value,claimed_currency,raised_at').in('status',['open','pending']).order('raised_at',{ascending:false}).limit(5))]).then(function(r){
+     if(!r[0])return dalSay('No open claims that you can see.',{expr:'happy'});
+     dalOpSay('<b>'+r[0]+' open claim'+(r[0]>1?'s':'')+'.</b> Most recent:<br>'+dalList(r[1],function(c){return dalLink(c.container_number)+' — '+dalEsc(c.claim_ref)+', '+dalEsc(c.client||'—')+(c.claimed_value?', '+dalEsc(c.claimed_value)+' '+dalEsc(c.claimed_currency||''):'')+(c.status==='pending'?' <span class="dal-dim">(awaiting approval)</span>':'');}),'commercial');});}},
+ returned:{label:'Returned containers',run:function(){
+   dalSafe(sb.from('shipments').select('container_number,loading_date,client').eq('shipping_status','Returned').order('loading_date',{ascending:false}).limit(200)).then(function(r){var v=dalVoyages(r);
+     if(!v.length)return dalSay('No returned containers.',{expr:'happy'});
+     dalOpSay('<b>'+v.length+' returned container'+(v.length>1?'s':'')+':</b><br>'+dalList(v,function(s){return dalLink(s.container_number)+' — '+dalEsc(s.client||'—')+', loaded '+dalFmtDate(s.loading_date);}),'commercial');});}},
+ special:{label:'Rejected batches that still shipped (special accept)',run:function(){
+   dalSafe(sb.from('inspections').select('id,date,container_number,product_id').eq('status','Special Accept').order('date',{ascending:false}).limit(50)).then(function(r){
+     if(!r.length)return dalSay('No special-accepted batches.',{expr:'neutral'});
+     dalOpSay('<b>'+r.length+' batch'+(r.length>1?'es were':' was')+' rejected and then special-accepted by the board:</b><br>'+dalList(r,function(x){return dalLink(x.id)+(x.container_number?' — '+dalLink(x.container_number):'')+', '+dalEsc(dalCap(x.product_id))+', '+dalFmtDate(x.date);}),'vision');});}},
+ no_insp:{label:'Containers loaded without an inspection',run:function(){
+   dalSafe(sb.from('shipments').select('container_number,loading_date,client,pack_house').is('matched_inspection_id',null).gte('loading_date',dalDay(-30)).order('loading_date',{ascending:false}).limit(1000)).then(function(r){var v=dalVoyages(r);
+     if(!v.length)return dalSay('Every container loaded in the last 30 days is linked to an inspection.',{expr:'happy'});
+     dalOpSay('<b>'+v.length+' container'+(v.length>1?'s':'')+' loaded in the last 30 days with no linked inspection</b>'+dalCapNote(r)+':<br>'+dalList(v,function(s){return dalLink(s.container_number)+' — '+dalEsc(s.client||'—')+', '+dalFmtDate(s.loading_date)+(s.pack_house?' ('+dalEsc(s.pack_house)+')':'');})+'<br><span class="dal-dim">“Linked” = matched in Shipments; an inspection may exist but not be matched yet.</span>','vision');});}},
+ cqc_red:{label:'Containers the client scored RED (last 30 days)',run:function(){
+   dalSafe(sb.from('client_qc_reports').select('container_number,score,load_date,created_at').ilike('score','red%').is('superseded_by',null).gte('created_at',dalDay(-30)).order('created_at',{ascending:false}).limit(200)).then(function(r){
+     if(!r.length)return dalSay('No containers scored RED by a client in the last 30 days.',{expr:'happy'});
+     dalOpSay('<b>'+r.length+' container'+(r.length>1?'s':'')+' scored RED in the last 30 days:</b><br>'+dalList(r,function(c){return dalLink(c.container_number)+(c.load_date?' — loaded '+dalFmtDate(c.load_date):'');}),'vision','alert');});}},
+ insp_week:{label:'Inspections in the last 7 days',run:function(){
+   dalSafe(sb.from('inspections').select('id,date,status,container_number,product_id').gte('date',dalDay(-7)).order('date',{ascending:false}).limit(500)).then(function(r){
+     if(!r.length)return dalSay('No inspections in the last 7 days at the packhouses you can see.',{expr:'neutral'});
+     var st={};r.forEach(function(x){st[x.status||'—']=(st[x.status||'—']||0)+1;});
+     dalOpSay('<b>'+r.length+' inspection'+(r.length>1?'s':'')+' in the last 7 days</b> ('+Object.keys(st).map(function(k){return st[k]+' '+dalEsc(k);}).join(', ')+'). Latest:<br>'+dalList(r,function(x){return dalLink(x.id)+(x.container_number?' — '+dalLink(x.container_number):'')+', '+dalEsc(x.status||'—')+', '+dalFmtDate(x.date);}),'vision');});}},
+ rejected_week:{label:'Rejected batches in the last 7 days',run:function(){
+   dalSafe(sb.from('inspections').select('id,date,status,container_number,product_id').in('status',['Rejected','Escalated','Special Reject']).gte('date',dalDay(-7)).order('date',{ascending:false}).limit(200)).then(function(r){
+     if(!r.length)return dalSay('No rejected batches in the last 7 days.',{expr:'happy'});
+     dalOpSay('<b>'+r.length+' rejected batch'+(r.length>1?'es':'')+' in the last 7 days:</b><br>'+dalList(r,function(x){return dalLink(x.id)+' — '+dalEsc(dalCap(x.product_id))+', '+dalEsc(x.status)+', '+dalFmtDate(x.date);}),'vision','alert');});}},
+ to_country:{label:'Containers to a country (last 12 months)',needs:'country',run:function(arg){
+   dalSafe(sb.from('shipments').select('container_number,loading_date,client,product_id,receiving_country').ilike('receiving_country','%'+arg+'%').gte('loading_date',dalDay(-365)).order('loading_date',{ascending:false}).limit(1000)).then(function(r){var v=dalVoyages(r);
+     if(!v.length)return dalSay('I found no containers to <b>'+dalEsc(arg)+'</b> in the last 12 months that you can see.',{expr:'puzzled'});
+     var cl={};v.forEach(function(s){cl[s.client||'—']=(cl[s.client||'—']||0)+1;});var top=Object.keys(cl).sort(function(a,b){return cl[b]-cl[a];}).slice(0,3);
+     dalOpSay('<b>'+v.length+' container'+(v.length>1?'s':'')+' to '+dalEsc(v[0].receiving_country||arg)+'</b> in the last 12 months'+dalCapNote(r)+'. Top clients: '+top.map(function(k){return dalEsc(k)+' ('+cl[k]+')';}).join(', ')+'. Latest:<br>'+dalList(v,function(s){return dalLink(s.container_number)+' — '+dalEsc(s.client||'—')+', '+dalFmtDate(s.loading_date);},3),'vision');});}},
+ for_client:{label:'Containers for a client (last 12 months)',needs:'client',run:function(arg){
+   dalSafe(sb.from('shipments').select('container_number,loading_date,client,shipping_status,receiving_country').ilike('client','%'+arg+'%').gte('loading_date',dalDay(-365)).order('loading_date',{ascending:false}).limit(1000)).then(function(r){var v=dalVoyages(r);
+     if(!v.length)return dalSay('I found no containers for a client matching <b>'+dalEsc(arg)+'</b> in the last 12 months that you can see.',{expr:'puzzled'});
+     var st={};v.forEach(function(s){st[s.shipping_status||'—']=(st[s.shipping_status||'—']||0)+1;});
+     dalOpSay('<b>'+v.length+' container'+(v.length>1?'s':'')+' for '+dalEsc(v[0].client)+'</b> in the last 12 months ('+Object.keys(st).map(function(k){return st[k]+' '+dalEsc(k.toLowerCase());}).join(', ')+'). Latest:<br>'+dalList(v,function(s){return dalLink(s.container_number)+' — '+dalFmtDate(s.loading_date)+', '+dalEsc(s.shipping_status||'—');},3),'vision');});}},
+ /* ── Land Cloud ── */
+ no_boundary:{label:'Blocks with no boundary drawn, by farm',run:function(){
+   dalSafe(sb.from('farm_blocks').select('farm_code,aydi_block_number').in('lifecycle',['EXP','WIP']).is('geom',null).limit(1000)).then(function(r){
+     if(!r.length)return dalSay('Every producing and young block has a boundary.',{expr:'celebrate'});
+     var f={};r.forEach(function(b){f[b.farm_code||'—']=(f[b.farm_code||'—']||0)+1;});
+     dalOpSay('<b>'+r.length+' producing or young block'+(r.length>1?'s have':' has')+' no boundary:</b><br>'+Object.keys(f).sort(function(a,b){return f[b]-f[a];}).map(function(k){return '• '+dalEsc(dalFarmName(k))+': '+f[k];}).join('<br>'),'landcloud');});}},
+ wip:{label:'Young (WIP) blocks by farm',run:function(){
+   dalSafe(sb.from('farm_blocks').select('farm_code,product_id,planted_area_fed').eq('lifecycle','WIP').limit(1000)).then(function(r){
+     if(!r.length)return dalSay('No young (WIP) blocks.',{expr:'neutral'});
+     var f={};r.forEach(function(b){var k=b.farm_code||'—';f[k]=f[k]||{n:0,a:0};f[k].n++;f[k].a+=+b.planted_area_fed||0;});
+     dalOpSay('<b>'+r.length+' young (WIP) block'+(r.length>1?'s':'')+':</b><br>'+Object.keys(f).sort(function(a,b){return f[b].n-f[a].n;}).map(function(k){return '• '+dalEsc(dalFarmName(k))+': '+f[k].n+' blocks, '+Math.round(f[k].a)+' fed planted';}).join('<br>'),'landcloud');});}},
+ farm:{label:'Farm summary',needs:'farm',run:function(code){
+   dalSafe(sb.from('farm_blocks').select('lifecycle,product_id,planted_area_fed,geom_source').eq('farm_code',code).limit(1000)).then(function(r){
+     if(!r.length)return dalSay('I can’t see any blocks for '+dalEsc(dalFarmName(code))+'.',{expr:'puzzled'});
+     var c={},prods={},area=0,nog=0;r.forEach(function(b){c[b.lifecycle]=(c[b.lifecycle]||0)+1;prods[b.product_id]=1;if(b.lifecycle==='EXP'||b.lifecycle==='WIP'){area+=+b.planted_area_fed||0;if(!b.geom_source)nog++;}});
+     dalOpSay('<b>'+dalEsc(dalFarmName(code))+'</b> — '+r.length+' blocks ('+Object.keys(prods).map(dalCap).join(', ')+').<br>Producing (EXP): <b>'+(c.EXP||0)+'</b> · Young (WIP): <b>'+(c.WIP||0)+'</b> · Retired: '+(c.retired||0)+(c.planned?' · Planned: '+c.planned:'')+'.<br>Planted area (EXP + WIP): <b>'+Math.round(area)+' fed</b>.','landcloud');});}},
+ block:{label:'Show me a block',needs:'block',run:function(id){
+   var q=sb.from('farm_blocks').select('operational_block_id,aydi_block_number,farm_code,product_id,variety_code,rootstock_code,planting_year,lifecycle,planted_area_fed,total_area_fed,last_producing_season,geom_source');
+   q=/^\d{2}-\d{2}/.test(id)?q.ilike('aydi_block_number',id):q.ilike('operational_block_id',id);
+   dalSafe(q.limit(6)).then(function(r){
+     if(!r.length)return dalSay('I couldn’t find block <b>'+dalEsc(id)+'</b> in the farms you can see.',{expr:'puzzled'});
+     dalOpSay((r.length>1?'<b>'+r.length+' blocks</b> use '+dalEsc(id)+' — Aydi numbers repeat across farms and crops:<br>':'')+r.map(function(b){return '<b>'+dalEsc(b.aydi_block_number||b.operational_block_id)+'</b> — '+dalEsc(dalFarmName(b.farm_code))+', '+dalEsc(dalCap(b.product_id))+(b.variety_code?' ('+dalEsc(b.variety_code)+(b.rootstock_code?' on '+dalEsc(b.rootstock_code):'')+')':'')+(b.planting_year?', planted '+dalEsc(b.planting_year):'')+'. '+dalEsc(b.lifecycle||'—')+(b.planted_area_fed?', '+dalEsc(b.planted_area_fed)+' fed planted':'')+(b.last_producing_season?', last producing '+dalEsc(b.last_producing_season):'')+'.'+(b.geom_source?'':' <span class="dal-dim">No boundary.</span>');}).join('<br>'),'landcloud');});}}
+};
+function dalFarmName(code){var m={BD:'Badr',HA:'Hana',KH:'El Khair',NO:'Nour',SA:'Salma',ME:'Menia',LA:'Layla',BA:'ELBaraka'};return m[code]||code||'—';}
+/* role → suggested live questions (agronomy = Land Cloud; everyone else = containers) */
+var DAL_OPS_SUGGEST={admin:['at_sea','no_cqc','open_claims'],power_user:['at_sea','no_cqc','open_claims'],board:['special','returned','open_claims'],
+ qc_manager:['no_insp','cqc_red','no_cqc'],ph_manager:['no_insp','cqc_red','no_cqc'],qc_supervisor:['insp_week','rejected_week','no_insp'],inspector:['insp_week','rejected_week','no_insp'],
+ commercial:['arriving','no_cqc','open_claims'],marketing:['arriving','open_claims','loaded_week'],executive:['at_sea','loaded_week','returned'],
+ agronomy_admin:['no_boundary','wip','farm:BD'],agronomy_viewer:['farm:NO','wip','no_boundary']};
+/* typed questions → operational intents (English, Arabic, Franco). Checked before the help list. */
+function dalOpMatch(n,raw){
+  var box=/(container|containers|shipment|shipments|كونتينر|كونتينرات|حاويه|حاويات|شحنه|شحنات)/.test(n);
+  var m;
+  if(/(waiting for me|pending for me|my tasks|to ?do list|what do i have|ايه المطلوب|مستنيني|مطلوب مني)/.test(n))return ['waiting'];
+  if(/(no boundar|without (a )?boundar|missing boundar|boundar(y|ies) missing|not drawn|بدون حدود|مفيش حدود)/.test(n))return ['no_boundary'];
+  if(/(young|wip|pre ?bearing|not producing yet|تحت الانتاج|صغيره)/.test(n)&&/(block|blocks|بلوك|farm|مزرعه)/.test(n))return ['wip'];
+  if((m=raw.match(/\b(\d{2}-\d{2}[a-z]?)\b/i)))return ['block',m[1].toUpperCase()];
+  if((m=raw.match(/\b([A-Z]{2}\d{4}[A-Z0-9]{4,10})\b/)))return ['block',m[1]];
+  var farm=dalFarmIn(n);if(farm&&!box)return ['farm',farm];
+  if(/(at sea|in transit|on the water|sailing|في البحر|في الطريق|بتبحر)/.test(n))return ['at_sea'];
+  if(/(arriv|eta|due to arrive|coming in|هيوصل|هتوصل|توصل|وصول|واصله)/.test(n)&&(box||/(week|اسبوع|soon|قريب)/.test(n)))return ['arriving'];
+  if(/(no|without|missing|not yet|pending) (client )?(qc|cqc|report)|بدون (تقرير|qc)|مفيش تقرير/.test(n))return ['no_cqc'];
+  if(/(open|pending|outstanding|active) claims?|claims? (open|pending)|containers? with claims?|شكاوي مفتوحه|كليمات مفتوحه/.test(n))return ['open_claims'];
+  if(/(returned containers?|containers? (were )?returned|which (were )?returned|مرتجع|رجعت)/.test(n)&&!/(redirect|another client|عميل تاني)/.test(n))return ['returned'];
+  if(/(special accept|shipped anyway|still shipped|rejected but shipped|اتشحن رغم)/.test(n))return ['special'];
+  if(/(without (an )?inspection|no inspection|not inspected|uninspected|بدون فحص|مفيش فحص)/.test(n))return ['no_insp'];
+  if(/\b(red|احمر)\b/.test(n)&&(box||/(score|client|scored|عميل|درجه)/.test(n)))return ['cqc_red'];
+  var recent=/(this week|last (7|seven) days|recent|latest|الاسبوع|اخر اسبوع|اخر ٧|اخيره)/.test(n);
+  if(/(reject|rejection|مرفوض|رفض)/.test(n)&&(recent||/(which|list|show|كام|ايه)/.test(n)))return ['rejected_week'];
+  if(/(inspections?|فحص|فحوصات)/.test(n)&&(recent||/^my inspections|فحوصاتي/.test(n))&&!/(new|start|create|جديد|اعمل)/.test(n))return ['insp_week'];
+  if(/(loaded|loading|تحميل|اتحمل|شحنا)/.test(n)&&recent)return ['loaded_week'];
+  if(box&&(m=n.match(/\b(?:to|going to|ل|الي|علي) ([a-z\u0600-\u06FF][a-z\u0600-\u06FF ]{2,20}?)(?: this| last| in|$)/)))return ['to_country',m[1].trim()];
+  if(box&&(m=n.match(/\b(?:for|client|customer|عميل) ([a-z0-9\u0600-\u06FF][a-z0-9\u0600-\u06FF &]{1,24}?)(?: this| last| in|$)/)))return ['for_client',m[1].trim()];
+  return null;
+}
+function dalRunOp(id,arg){var op=DAL_OPS[id];if(!op)return;dalBusy();op.run(arg);}
 var DAL_HELLO=/^(hi|hey|hello|hola|salam|salamo|السلام|سلام|اهلا|مرحبا|صباح|مساء|good (morning|afternoon|evening))\b/;
 var DAL_THANKS=/\b(thanks|thank you|thx|merci|shokran|شكرا|متشكر|تسلم)\b/;
 /* a follow-up only when it's short and points back ("who can do that?", "مين يقدر يعمل ده؟") — not "who signs off on settlements" */
@@ -953,6 +1092,7 @@ function dalAsk(q){
   var last=dalState.last;
   if(last&&DAL_OPENQ.test(n)&&last.app){if(dalCanOpen(last.app))return openProduct(last.app);return dalSay('You don’t have '+dalAppLabel(last.app)+' access yet.',{expr:'neutral'});}
   if(last&&last.type==='help'&&DAL_WHOQ.test(n))return dalSay('<b>Who can:</b> '+dalEsc(DAL_HELP[last.i].w),{expr:'neutral'});
+  var op=dalOpMatch(n,raw);if(op)return dalRunOp(op[0],op[1]);
   /* numbers, trends and "why" need real analysis — say so honestly and log it */
   if(DAL_DATAQ.test(n)){dalMiss(q);return dalSay('I can’t count or compare things yet — that’s coming. For now, <b>Inspections Analytics</b> in Vision and the Analytics dashboards show those numbers.',{expr:'puzzled',app:'vision',cta:'Open Vision'});}
   var kw=dalRank(q);
@@ -1006,7 +1146,7 @@ function dalBoot(u,animate){
   el.innerHTML='<div class="dal-bubble" role="dialog" aria-label="Dal, the DalOS assistant">'+
     '<div class="dal-head"><div><b>Dal</b><span>DalOS assistant</span></div><button type="button" class="dal-x" aria-label="Hide Dal">×</button></div>'+
     '<div class="dal-msg" aria-live="polite"></div><div class="dal-act"></div>'+
-    '<div class="dal-sugg"><span>Ask me</span><div class="dal-sugg-list"></div></div>'+
+    '<div class="dal-sugg"><span>Try asking</span><div class="dal-sugg-list"></div></div>'+
     '<form class="dal-ask" autocomplete="off"><input type="search" class="dal-in" placeholder="Ask in English or Arabic, or paste a container / inspection ID" aria-label="Ask Dal"><button type="submit" aria-label="Ask">↵</button></form>'+
     '<div class="dal-foot">Dal understands your question, answers from its help list and looks up containers and inspections — only what you can see.</div></div>'+
     '<button type="button" class="dal-char" aria-label="Open Dal, the DalOS assistant" aria-expanded="false"><span class="dal-char-svg"></span><span class="dal-tag">Ask Dal</span></button>';
@@ -1016,7 +1156,11 @@ function dalBoot(u,animate){
   el.addEventListener('keydown',function(e){if(e.key==='Escape')dalMin(true);});
   var inp=el.querySelector('.dal-in');inp.addEventListener('input',function(){dalSearch(inp.value);});
   el.querySelector('.dal-ask').onsubmit=function(e){e.preventDefault();var q=inp.value.trim();if(!q)return;inp.value='';dalAsk(q);};
-  dalRenderSugg(DAL_SUGGEST[dalState.role]||[0,13,19]);
+  dalRenderSugg(dalDefaultSugg());
+  /* live example: the newest container this user can see (skipped for Land Cloud roles) */
+  if(!/^agronomy/.test(dalState.role))dalSafe(sb.from('shipments').select('container_number').order('loading_date',{ascending:false}).limit(1)).then(function(r){if(r.length&&r[0].container_number){dalState.latestBox=dalCKey(r[0].container_number);dalRenderSugg(dalDefaultSugg());}});
+  /* containers and IDs inside answers are clickable */
+  el.querySelector('.dal-msg').addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.dal-link');if(b)dalAsk(b.getAttribute('data-q'));});
   /* pupils follow the pointer */
   if(!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))document.addEventListener('mousemove',function(ev){
     [].forEach.call(el.querySelectorAll('.dal-pupil'),function(p){var sv=p.ownerSVGElement,r=sv.getBoundingClientRect();if(!r.width)return;
