@@ -962,9 +962,13 @@ var DAL_OPS={
    if(!p.length)return dalSay('Nothing is waiting for you right now.',{expr:'happy'});
    dalOpSay('<b>'+p.length+' thing'+(p.length>1?'s':'')+' waiting for you:</b><br>'+p.map(function(x){return '• '+x.html;}).join('<br>'),p[0].app,'alert');});}},
  at_sea:{label:'Containers at sea right now',run:function(){
-   dalSafe(sb.from('shipments').select('container_number,loading_date,client,eta,receiving_country').eq('shipping_status','Shipped').order('eta',{ascending:true}).limit(1000)).then(function(r){var v=dalVoyages(r);
-     if(!v.length)return dalSay('No containers at sea right now.',{expr:'happy'});
-     dalOpSay('<b>'+v.length+' container'+(v.length>1?'s':'')+' at sea</b>'+dalCapNote(r)+'. Arriving soonest:<br>'+dalList(v,function(s){return dalLink(s.container_number)+' — '+dalEsc(s.client||'—')+(s.eta?', ETA '+dalFmtDate(s.eta):'');}),'vision');});}},
+   dalSafe(sb.from('shipments').select('container_number,loading_date,client,eta,receiving_country').eq('shipping_status','Shipped').order('eta',{ascending:true}).limit(1000)).then(function(r){var v=dalVoyages(r),today=dalDay(0);
+     if(!v.length)return dalSay('No containers are marked as shipped right now.',{expr:'happy'});
+     /* many rows stay "Shipped" after arrival (status not synced) — split them out honestly */
+     var ahead=v.filter(function(s){return s.eta&&String(s.eta).slice(0,10)>=today;}),stale=v.filter(function(s){return !s.eta||String(s.eta).slice(0,10)<today;});
+     var h=ahead.length?'<b>'+ahead.length+' container'+(ahead.length>1?'s':'')+' on the way</b>, arriving soonest:<br>'+dalList(ahead,function(s){return dalLink(s.container_number)+' — '+dalEsc(s.client||'—')+', ETA '+dalFmtDate(s.eta);}):'No containers with an ETA still ahead.';
+     if(stale.length)h+='<br><span class="dal-dim"><b>'+stale.length+'</b> more are still marked “Shipped” but their ETA has passed — their status probably wasn’t updated to Delivered. Oldest: '+stale.slice(0,2).map(function(s){return dalLink(s.container_number)+' (ETA '+dalFmtDate(s.eta)+')';}).join(', ')+'.</span>';
+     dalOpSay(h+dalCapNote(r),'vision');});}},
  arriving:{label:'Containers arriving in the next 7 days',run:function(){
    dalSafe(sb.from('shipments').select('container_number,loading_date,client,eta,receiving_country').eq('shipping_status','Shipped').gte('eta',dalDay(0)).lte('eta',dalDay(7)).order('eta',{ascending:true}).limit(1000)).then(function(r){var v=dalVoyages(r);
      if(!v.length)return dalSay('No containers are due to arrive in the next 7 days.',{expr:'neutral'});
