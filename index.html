@@ -273,6 +273,9 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
 .dal-msg{font-size:14px;line-height:1.5;min-height:21px}
 .dal-msg b{color:#8fe0ad;font-weight:600}
 .dal-dim{color:#7c9785}
+.dal-voy{margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(143,224,173,.18);font-size:13px}
+.dal-voy span{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#caa86a;font-weight:700;margin-bottom:3px}
+.dal-msg{max-height:46vh;overflow:auto}
 .dal-act:not(:empty){margin-top:10px}
 .dal-pri{font-family:var(--font-body);font-size:12.5px;font-weight:700;border-radius:9px;padding:8px 13px;cursor:pointer;border:1px solid #6fc191;background:#6fc191;color:#0a120c}
 .dal-pri:hover{background:#8fe0ad;border-color:#8fe0ad}
@@ -883,22 +886,49 @@ var DAL_RX_BOX=/\b([a-z]{4})\s*(\d{6,7})\b/i,DAL_RX_SLASH=/\b(\d{3,5})\s*\/\s*(\
 function dalFmtDate(d){if(!d)return '';var x=new Date(d);return isNaN(x)?String(d):x.getDate()+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][x.getMonth()]+' '+x.getFullYear();}
 function dalCap(s){s=String(s||'');return s.charAt(0).toUpperCase()+s.slice(1);}
 function dalSafe(p){return p.then(function(r){return (r&&!r.error&&r.data)||[];},function(){return [];});}
+/* Container lookup — by VOYAGE (container + loading date), the same grain as Commercial.
+   A container number can be reused, so each voyage is shown on its own, newest first:
+   claims match by voyage_key, inspections by the shipment's matched_inspection_id (else the
+   nearest earlier inspection within 60 days), client QC by load date or inspection. */
 function dalLookupContainer(label,likePat,exact){
   function q(tbl,cols){var b=sb.from(tbl).select(cols);return exact?b.eq('container_number',exact):b.ilike('container_number',likePat);}
+  function day(d){return d?String(d).slice(0,10):'';}
   return Promise.all([
-    dalSafe(q('shipments','loading_date,client,product_id,variety,receiving_country,shipping_status').order('loading_date',{ascending:false}).limit(3)),
-    dalSafe(q('inspections','id,status,date').order('date',{ascending:false}).limit(3)),
-    dalSafe(q('client_qc_reports','score,qc_report_number,superseded_by').is('superseded_by',null).limit(2)),
-    dalSafe(q('crm_claims','claim_ref,status,claimed_value,claimed_currency').limit(2))
-  ]).then(function(r){var sh=r[0],ins=r[1],cq=r[2],cl=r[3],lines=[];
+    dalSafe(q('shipments','loading_date,client,product_id,variety,receiving_country,shipping_status,matched_inspection_id').order('loading_date',{ascending:false}).limit(80)),
+    dalSafe(q('inspections','id,status,date').order('date',{ascending:false}).limit(20)),
+    dalSafe(q('client_qc_reports','score,qc_report_number,load_date,inspection_id').is('superseded_by',null).limit(20)),
+    dalSafe(q('crm_claims','claim_ref,status,claimed_value,claimed_currency,voyage_key').limit(20))
+  ]).then(function(r){var sh=r[0],ins=r[1],cq=r[2],cl=r[3];
     if(!sh.length&&!ins.length&&!cq.length&&!cl.length)return dalSay('I couldn’t find <b>'+dalEsc(label)+'</b> in anything you have access to. Check the number, or it may belong to a product you can’t see.',{expr:'puzzled'});
-    if(sh.length){var s=sh[0];lines.push('Loaded <b>'+dalFmtDate(s.loading_date)+'</b> — '+dalEsc(dalCap(s.product_id))+(s.variety?' ('+dalEsc(s.variety)+')':'')+' to <b>'+dalEsc(s.client||'—')+'</b>'+(s.receiving_country?', '+dalEsc(s.receiving_country):'')+(s.shipping_status?'. Status: '+dalEsc(s.shipping_status):'')+'.'+(sh.length>1?' <span class="dal-dim">('+sh.length+' loadings on this number)</span>':''));}
-    lines.push(ins.length?'Inspection <b>'+dalEsc(ins[0].id)+'</b>: '+dalEsc(ins[0].status||'—')+'.':'No inspection linked.');
-    if(cq.length)lines.push('Client QC score <b>'+dalEsc(cq[0].score==null?'—':cq[0].score)+'</b>'+(cq[0].qc_report_number?' (report '+dalEsc(cq[0].qc_report_number)+')':'')+'.');
-    if(cl.length)lines.push('Claim <b>'+dalEsc(cl[0].claim_ref)+'</b>: '+dalEsc(cl[0].status)+(cl[0].claimed_value?', '+dalEsc(cl[0].claimed_value)+' '+dalEsc(cl[0].claimed_currency||''):'')+'.');
-    else if(sh.length||ins.length)lines.push('No claim.');
-    dalState.last={type:'container',app:cl.length&&dalCanOpen('commercial')?'commercial':'vision'};
-    dalSay('<b>'+dalEsc(label)+'</b><br>'+lines.join('<br>'),{expr:'pointing',app:dalState.last.app,cta:'Open '+dalAppLabel(dalState.last.app)});});
+    /* 1. voyages from shipment lines */
+    var V={},order=[];
+    sh.forEach(function(s){var k=day(s.loading_date);if(!V[k]){V[k]={d:k,s:s,vars:{},insp:{},cqc:[],claims:[]};order.push(k);}if(s.variety)V[k].vars[s.variety]=1;if(s.matched_inspection_id)V[k].insp[s.matched_inspection_id]=1;});
+    order.sort().reverse();
+    var byId={};ins.forEach(function(x){byId[x.id]=x;});
+    /* 2. inspections: matched id first, else nearest earlier inspection within 60 days */
+    var usedI={};order.forEach(function(k){Object.keys(V[k].insp).forEach(function(id){usedI[id]=1;});});
+    ins.forEach(function(x){if(usedI[x.id])return;var best=null,gap=1e9;order.forEach(function(k){var g=(new Date(k)-new Date(day(x.date)))/864e5;if(g>=0&&g<=60&&g<gap){gap=g;best=k;}});if(best){V[best].insp[x.id]=1;usedI[x.id]=1;}});
+    /* 3. client QC: same load date, or linked to one of the voyage's inspections */
+    var looseQ=[];cq.forEach(function(c){var k=day(c.load_date);if(!V[k]){order.forEach(function(kk){if(c.inspection_id&&V[kk].insp[c.inspection_id])k=kk;});}if(V[k])V[k].cqc.push(c);else looseQ.push(c);});
+    /* 4. claims by voyage_key "CONTAINER|YYYY-MM-DD" */
+    var looseC=[];cl.forEach(function(c){var k=c.voyage_key?String(c.voyage_key).split('|')[1]:'';if(V[k])V[k].claims.push(c);else looseC.push(c);});
+    function voyageLines(v){var s=v.s,out=[],vs=Object.keys(v.vars);
+      out.push('Loaded <b>'+dalFmtDate(v.d)+'</b> — '+dalEsc(dalCap(s.product_id))+(vs.length?' ('+dalEsc(vs.slice(0,3).join(', '))+(vs.length>3?' +'+(vs.length-3):'')+')':'')+' to <b>'+dalEsc(s.client||'—')+'</b>'+(s.receiving_country?', '+dalEsc(s.receiving_country):'')+(s.shipping_status?'. '+dalEsc(s.shipping_status):'')+'.');
+      var ii=Object.keys(v.insp).map(function(id){return byId[id]||{id:id};});
+      out.push(ii.length?ii.map(function(x){return 'Inspection <b>'+dalEsc(x.id)+'</b>'+(x.status?': '+dalEsc(x.status):'');}).join(' · ')+'.':'No inspection linked.');
+      if(v.cqc.length)out.push('Client QC score <b>'+dalEsc(v.cqc[0].score==null?'—':v.cqc[0].score)+'</b>'+(v.cqc[0].qc_report_number?' (report '+dalEsc(v.cqc[0].qc_report_number)+')':'')+'.');
+      out.push(v.claims.length?v.claims.map(function(c){return 'Claim <b>'+dalEsc(c.claim_ref)+'</b>: '+dalEsc(c.status)+(c.claimed_value?', '+dalEsc(c.claimed_value)+' '+dalEsc(c.claimed_currency||''):'');}).join(' · ')+'.':'No claim.');
+      return out.join('<br>');}
+    var html='<b>'+dalEsc(label)+'</b>';
+    if(order.length>1)html+=' — <b>'+order.length+' voyages</b> on this number, newest first:';
+    order.slice(0,3).forEach(function(k,i){html+=(order.length>1?'<div class="dal-voy"><span>Voyage '+(i+1)+'</span>':'<div>')+voyageLines(V[k])+'</div>';});
+    if(order.length>3)html+='<div class="dal-dim">…and '+(order.length-3)+' older voyage'+(order.length-3>1?'s':'')+' — see Shipments.</div>';
+    if(!order.length&&ins.length)html+='<br>No shipment found. Inspection <b>'+dalEsc(ins[0].id)+'</b>: '+dalEsc(ins[0].status||'—')+'.';
+    if(looseC.length)html+='<div class="dal-dim">Claim '+looseC.map(function(c){return dalEsc(c.claim_ref)+' ('+dalEsc(c.status)+')';}).join(', ')+' isn’t tied to a voyage above.</div>';
+    if(looseQ.length&&order.length)html+='<div class="dal-dim">'+looseQ.length+' client QC report'+(looseQ.length>1?'s':'')+' couldn’t be matched to a voyage.</div>';
+    var anyClaim=cl.length>0;
+    dalState.last={type:'container',app:anyClaim&&dalCanOpen('commercial')?'commercial':'vision'};
+    dalSay(html,{expr:'pointing',app:dalState.last.app,cta:'Open '+dalAppLabel(dalState.last.app)});});
 }
 function dalLookupInspection(id){
   dalSafe(sb.from('inspections').select('id,status,date,product_id,container_number,packhouse_id,lot_number').eq('id',id).limit(1)).then(function(r){
