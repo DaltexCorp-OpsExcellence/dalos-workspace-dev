@@ -276,6 +276,9 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
 .dal-act:not(:empty){margin-top:10px}
 .dal-pri{font-family:var(--font-body);font-size:12.5px;font-weight:700;border-radius:9px;padding:8px 13px;cursor:pointer;border:1px solid #6fc191;background:#6fc191;color:#0a120c}
 .dal-pri:hover{background:#8fe0ad;border-color:#8fe0ad}
+.dal-act{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.dal-choice{font-family:var(--font-body);font-size:12.5px;text-align:left;color:#e3ebe5;background:rgba(143,224,173,.08);border:1px solid rgba(143,224,173,.35);border-radius:9px;padding:7px 10px;cursor:pointer;width:100%}
+.dal-choice:hover{background:rgba(143,224,173,.16)}
 .dal-sugg{margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)}
 .dal-sugg>span{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#7c9785;font-weight:700;margin-bottom:6px}
 .dal-sugg-list{display:flex;flex-direction:column;gap:5px}
@@ -809,19 +812,122 @@ function dalSay(html,o){
   o=o||{};var el=dalState.el,msg=el.querySelector('.dal-msg'),act=el.querySelector('.dal-act');
   dalFace('thinking');msg.innerHTML='<span class="dal-typing"><i></i><i></i><i></i></span>';act.innerHTML='';
   setTimeout(function(){dalFace(o.expr||'neutral');msg.innerHTML=html;
+    if(o.choices)o.choices.forEach(function(c){var b=document.createElement('button');b.type='button';b.className='dal-choice';b.textContent=c.label;b.onclick=c.fn;act.appendChild(b);});
     if(o.cta){var b=document.createElement('button');b.type='button';b.className='dal-pri';b.textContent=o.cta;b.onclick=function(){if(o.act==='request'){dalMin(true);requestAnalyticsAccess();return;}if(o.app&&dalCanOpen(o.app))openProduct(o.app);};act.appendChild(b);}
   },o.fast?0:650);
 }
-function dalAnswer(i){var h=DAL_HELP[i];if(!h)return;var can=h.app&&dalCanOpen(h.app);
+function dalAnswer(i){var h=DAL_HELP[i];if(!h)return;var can=h.app&&dalCanOpen(h.app);dalState.last={type:'help',i:i,app:h.app};
   dalSay(dalEsc(h.a)+(h.app&&!can?' <span class="dal-dim">You don’t have '+dalAppLabel(h.app)+' access yet.</span>':''),{expr:h.app?'pointing':'neutral',app:h.app,cta:can?'Open '+dalAppLabel(h.app):''});}
 function dalEsc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function dalRenderSugg(list){var box=dalState.el.querySelector('.dal-sugg-list');box.innerHTML='';
   list.forEach(function(i){var b=document.createElement('button');b.type='button';b.textContent=DAL_HELP[i].q;b.onclick=function(){dalAnswer(i);};box.appendChild(b);});}
-function dalSearch(q){q=q.trim().toLowerCase();if(!q){dalRenderSugg(DAL_SUGGEST[dalState.role]||[0,13,19]);return;}
-  var words=q.split(/\s+/),hits=[];
-  DAL_HELP.forEach(function(h,i){var hay=(h.q+' '+h.k+' '+h.a).toLowerCase(),s=0;words.forEach(function(w){if(w.length>1&&hay.indexOf(w)>=0)s++;});if(s)hits.push([s,i]);});
-  hits.sort(function(a,b){return b[0]-a[0];});dalRenderSugg(hits.slice(0,4).map(function(x){return x[1];}));
-  return hits;}
+/* ── Dal understanding (level 1 — in the browser, no AI) ──
+   Normalises English / Arabic / Franco-Arabic, maps words to topics, forgives typos,
+   spots container numbers and inspection IDs and looks them up live (with the user's
+   own session, so RLS decides what comes back). */
+var DAL_TAGS=[['inspection','create'],['decide','reject','inspection','escalate'],['season'],['cqc','create'],['score','cqc','change'],['container','find'],['export'],['claim','create'],['claim','decide'],['grade','container'],['redirect'],['lead','create','stand'],['lead','import'],['access','analytics'],['dashboard','find'],['dashboard','list'],['block','find'],['boundary','block'],['harvest'],['password'],['signout']];
+var DAL_WHO=['admin, power_user, qc_manager, ph_manager, qc_supervisor and inspectors.','Anyone who can create or edit inspections sets Accept / Reject. Escalating: admin, power_user, qc_manager, qc_supervisor. Deciding escalations: the board, admin, power_user.','Everyone in Vision.','admin, power_user, qc_manager, ph_manager, commercial and client_qc.','admin, power_user, qc_manager, ph_manager, commercial and client_qc.','Most roles — not inspectors, qc_supervisor or marketing.','Roles with Inspections Analytics.','admin, power_user and commercial.','Claim approvers: admin, power_user and anyone granted approval.','admin, power_user and commercial.','admin, power_user and commercial.','Roles that manage leads: admin, power_user, commercial, marketing.','Roles that manage leads: admin, power_user, commercial, marketing.','Anyone can request; admins approve.','Anyone with Analytics access.','Depends on your Analytics access.','Anyone with Land Cloud.','admin, power_user and agronomy_admin.','Viewing: Land Cloud users. Editing: planners.','Anyone.','Everyone.'];
+DAL_HELP.forEach(function(h,i){h.t=DAL_TAGS[i]||[];h.w=DAL_WHO[i]||'';});
+/* word → topic. Arabic is matched after normalisation (no diacritics, أإآ→ا, ى→ي, ة→ه). */
+var DAL_SYN={
+ claim:'claim claims complaint complaints complain shakwa shakwah shekaya shakawa kleem claym rotten rot decay decayed mould mold moldy damaged damage spoiled spoilt bruised compensation refund شكوي شكاوي شكوه كليم مطالبه تعويض عفن معفن تالف خربان بايظ ممعفن',
+ create:'raise new create add make start submit record open file a3mel a3ml 3amel e3mel اعمل عمل اعملها اضيف اضافه جديد جديده ابدا سجل اسجل',
+ decide:'approve approval approved accept accepted decide decision sign موافقه اوافق اعتماد يعتمد اعتمد قبول قرار',
+ reject:'reject rejected rejection refuse refused رفض مرفوض مرفوضه',
+ escalate:'escalate escalation board تصعيد مجلس',
+ inspection:'inspection inspections inspect batch session pallet pallets fahs فحص تفتيش معاينه باتش بالته',
+ container:'container containers cont konteiner kontainer shipment shipments كونتينر حاويه حاويات شحنه شحنات',
+ find:'find search where locate look see show feen fein fen فين اين الاقي القي ابحث دور اشوف',
+ season:'season seasons year mawsem mosem موسم الموسم سنه',
+ cqc:'cqc qc client_qc clientqc report reports تقرير تقارير جوده',
+ score:'score scores rating points mark درجه درجات سكور',
+ change:'change changed update revise revised upgrade downgrade fix edit تغيير غير تعديل عدل رفع خفض',
+ grade:'grade grades grading graded جريد تقييم قيم',
+ export:'export download excel csv pdf print extract تصدير نزل تنزيل اكسل طباعه استخراج',
+ redirect:'redirect redirection reroute divert returned return تحويل حول مرتجع رجوع',
+ lead:'lead leads prospect prospects contact contacts buyer ليد ليدز عميل عملاء محتمل',
+ stand:'stand booth fair exhibition expo show card scan معرض ستاند كارت',
+ import:'import bulk upload many sheet list استيراد رفع ملف كتير',
+ access:'access permission permissions locked lock allowed unlock صلاحيه صلاحيات اكسس دخول مقفول',
+ analytics:'analytics analysis انالتكس تحليلات',
+ dashboard:'dashboard dashboards chart charts داشبورد لوحه',
+ list:'which list all available ايه ايش كل',
+ block:'block blocks plot plots farm farms aydi بلوك بلوكات قطعه مزرعه مزارع حوشه',
+ boundary:'boundary boundaries border map polygon draw shape حدود خريطه ارسم رسم',
+ harvest:'harvest planner plan planning picking حصاد خطه تخطيط قطف جمع',
+ password:'password pass pwd passcode باسورد باسوورد كلمه سر المرور',
+ signout:'signed logout logged kicked timeout expired session out خروج طلعني خرجني'
+};
+var DAL_WORD={},DAL_VOCAB=[];
+function dalNorm(s){return String(s||'').toLowerCase().replace(/[ً-ْـ]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[^a-z0-9؀-ۿ\s\/-]/g,' ').replace(/\s+/g,' ').trim();}
+Object.keys(DAL_SYN).forEach(function(t){dalNorm(DAL_SYN[t]).split(' ').forEach(function(w){if(w){DAL_WORD[w]=t;DAL_VOCAB.push(w);}});});
+function dalLev(a,b){if(Math.abs(a.length-b.length)>2)return 9;var p=[],i,j;for(j=0;j<=b.length;j++)p[j]=j;
+  for(i=1;i<=a.length;i++){var prev=p[0];p[0]=i;for(j=1;j<=b.length;j++){var tmp=p[j];p[j]=Math.min(p[j]+1,p[j-1]+1,prev+(a[i-1]===b[j-1]?0:1));prev=tmp;}}return p[b.length];}
+function dalTopics(q){var words=dalNorm(q).split(' '),t={};
+  words.forEach(function(w){if(w.length<2)return;var hit=DAL_WORD[w];
+    if(!hit&&w.length>=4){/* strip Arabic al- prefix, then forgive typos */
+      if(w.indexOf('ال')===0&&DAL_WORD[w.slice(2)])hit=DAL_WORD[w.slice(2)];
+      else{var best=9,bw='';DAL_VOCAB.forEach(function(v){if(v.length<4)return;var d=dalLev(w,v);if(d<best){best=d;bw=v;}});if(best<=(w.length>=7?2:1))hit=DAL_WORD[bw];}}
+    if(hit)t[hit]=1;});
+  return Object.keys(t);}
+/* generic topics count less than specific ones, so “rotten container” means a claim, not a search */
+var DAL_GENERIC={container:1,find:1,create:1,list:1,change:1,decide:2,report:1};
+function dalRank(q){var tp=dalTopics(q),nq=dalNorm(q),hits=[];if(!nq)return hits;
+  DAL_HELP.forEach(function(h,i){var s=0;h.t.forEach(function(t){if(tp.indexOf(t)>=0)s+=(DAL_GENERIC[t]||3);});
+    nq.split(' ').forEach(function(w){if(w.length>3&&dalNorm(h.q+' '+h.k).indexOf(w)>=0)s+=1;});if(s)hits.push([s,i]);});
+  hits.sort(function(a,b){return b[0]-a[0];});return hits;}
+function dalSearch(q){if(!q.trim()){dalRenderSugg(DAL_SUGGEST[dalState.role]||[0,13,19]);return [];}
+  var hits=dalRank(q);if(hits.length)dalRenderSugg(hits.slice(0,4).map(function(x){return x[1];}));return hits;}
+/* entities */
+var DAL_RX_BOX=/\b([a-z]{4})\s*(\d{6,7})\b/i,DAL_RX_SLASH=/\b(\d{3,5})\s*\/\s*(\d{3,5})\b/,DAL_RX_INSP=/\b(gr|ct|mn|pm)\s*-\s*(\d{4})\s*-\s*(\d{1,4})\b/i;
+function dalFmtDate(d){if(!d)return '';var x=new Date(d);return isNaN(x)?String(d):x.getDate()+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][x.getMonth()]+' '+x.getFullYear();}
+function dalCap(s){s=String(s||'');return s.charAt(0).toUpperCase()+s.slice(1);}
+function dalSafe(p){return p.then(function(r){return (r&&!r.error&&r.data)||[];},function(){return [];});}
+function dalLookupContainer(label,likePat,exact){
+  function q(tbl,cols){var b=sb.from(tbl).select(cols);return exact?b.eq('container_number',exact):b.ilike('container_number',likePat);}
+  return Promise.all([
+    dalSafe(q('shipments','loading_date,client,product_id,variety,receiving_country,shipping_status').order('loading_date',{ascending:false}).limit(3)),
+    dalSafe(q('inspections','id,status,date').order('date',{ascending:false}).limit(3)),
+    dalSafe(q('client_qc_reports','score,qc_report_number,superseded_by').is('superseded_by',null).limit(2)),
+    dalSafe(q('crm_claims','claim_ref,status,claimed_value,claimed_currency').limit(2))
+  ]).then(function(r){var sh=r[0],ins=r[1],cq=r[2],cl=r[3],lines=[];
+    if(!sh.length&&!ins.length&&!cq.length&&!cl.length)return dalSay('I couldn’t find <b>'+dalEsc(label)+'</b> in anything you have access to. Check the number, or it may belong to a product you can’t see.',{expr:'puzzled'});
+    if(sh.length){var s=sh[0];lines.push('Loaded <b>'+dalFmtDate(s.loading_date)+'</b> — '+dalEsc(dalCap(s.product_id))+(s.variety?' ('+dalEsc(s.variety)+')':'')+' to <b>'+dalEsc(s.client||'—')+'</b>'+(s.receiving_country?', '+dalEsc(s.receiving_country):'')+(s.shipping_status?'. Status: '+dalEsc(s.shipping_status):'')+'.'+(sh.length>1?' <span class="dal-dim">('+sh.length+' loadings on this number)</span>':''));}
+    lines.push(ins.length?'Inspection <b>'+dalEsc(ins[0].id)+'</b>: '+dalEsc(ins[0].status||'—')+'.':'No inspection linked.');
+    if(cq.length)lines.push('Client QC score <b>'+dalEsc(cq[0].score==null?'—':cq[0].score)+'</b>'+(cq[0].qc_report_number?' (report '+dalEsc(cq[0].qc_report_number)+')':'')+'.');
+    if(cl.length)lines.push('Claim <b>'+dalEsc(cl[0].claim_ref)+'</b>: '+dalEsc(cl[0].status)+(cl[0].claimed_value?', '+dalEsc(cl[0].claimed_value)+' '+dalEsc(cl[0].claimed_currency||''):'')+'.');
+    else if(sh.length||ins.length)lines.push('No claim.');
+    dalState.last={type:'container',app:cl.length&&dalCanOpen('commercial')?'commercial':'vision'};
+    dalSay('<b>'+dalEsc(label)+'</b><br>'+lines.join('<br>'),{expr:'pointing',app:dalState.last.app,cta:'Open '+dalAppLabel(dalState.last.app)});});
+}
+function dalLookupInspection(id){
+  dalSafe(sb.from('inspections').select('id,status,date,product_id,container_number,packhouse_id,lot_number').eq('id',id).limit(1)).then(function(r){
+    if(!r.length)return dalSay('I couldn’t find inspection <b>'+dalEsc(id)+'</b> — it may be at a packhouse you don’t have access to.',{expr:'puzzled'});
+    var x=r[0];return dalSafe(sb.from('packhouses').select('name').eq('id',x.packhouse_id).limit(1)).then(function(p){
+      dalState.last={type:'inspection',app:'vision'};
+      dalSay('<b>'+dalEsc(x.id)+'</b> — '+dalEsc(dalCap(x.product_id))+(p.length?' at '+dalEsc(p[0].name):'')+', '+dalFmtDate(x.date)+'.<br>Decision: <b>'+dalEsc(x.status||'—')+'</b>.'+(x.container_number?'<br>Container '+dalEsc(x.container_number)+'.':'')+(x.lot_number?' Lot '+dalEsc(x.lot_number)+'.':''),{expr:'pointing',app:'vision',cta:'Open Vision'});});});
+}
+var DAL_HELLO=/^(hi|hey|hello|hola|salam|salamo|السلام|سلام|اهلا|مرحبا|صباح|مساء|good (morning|afternoon|evening))\b/;
+var DAL_THANKS=/\b(thanks|thank you|thx|merci|shokran|شكرا|متشكر|تسلم)\b/;
+var DAL_WHOQ=/^(who|min|meen|مين|مين اللي)\b|who can|مين يقدر/;
+var DAL_OPENQ=/^(open( it)?|take me( there)?|go|افتح|افتحها|وديني|روح)\b/;
+function dalBusy(){dalFace('thinking');dalState.el.querySelector('.dal-msg').innerHTML='<span class="dal-typing"><i></i><i></i><i></i></span>';dalState.el.querySelector('.dal-act').innerHTML='';}
+function dalAsk(q){
+  var n=dalNorm(q),raw=String(q);
+  var m=raw.match(DAL_RX_INSP);if(m){dalBusy();return dalLookupInspection(m[1].toUpperCase()+'-'+m[2]+'-'+('0000'+m[3]).slice(-4));}
+  m=raw.match(DAL_RX_BOX);if(m){dalBusy();return dalLookupContainer(m[1].toUpperCase()+' '+m[2],m[1]+'%'+m[2],null);}
+  m=raw.match(DAL_RX_SLASH);if(m){dalBusy();return dalLookupContainer(m[1]+'/'+m[2],null,m[1]+'/'+m[2]);}
+  if(DAL_HELLO.test(n))return dalSay(dalGreeting()+' Ask me where something is, or paste a container number or inspection ID.',{expr:'happy'});
+  if(DAL_THANKS.test(n))return dalSay('Anytime.',{expr:'happy'});
+  var last=dalState.last;
+  if(last&&DAL_OPENQ.test(n)&&last.app){if(dalCanOpen(last.app))return openProduct(last.app);return dalSay('You don’t have '+dalAppLabel(last.app)+' access yet.',{expr:'neutral'});}
+  if(last&&last.type==='help'&&DAL_WHOQ.test(n))return dalSay('<b>Who can:</b> '+dalEsc(DAL_HELP[last.i].w),{expr:'neutral'});
+  var hits=dalRank(q);
+  if(!hits.length)return dalSay('I don’t know that one yet. Try other words, paste a container number, or ask Tarek or Ramy.',{expr:'puzzled'});
+  if(hits.length>1&&hits[1][0]>=hits[0][0]&&hits[0][0]<6){var a=hits[0][1],b=hits[1][1];
+    return dalSay('Did you mean one of these?',{expr:'thinking',choices:[{label:DAL_HELP[a].q,fn:function(){dalAnswer(a);}},{label:DAL_HELP[b].q,fn:function(){dalAnswer(b);}}]});}
+  dalAnswer(hits[0][1]);
+}
 function dalMin(on){dalState.el.classList.toggle('is-min',on);if(on)dalSet('min');var c=dalState.el.querySelector('.dal-char');c.setAttribute('aria-expanded',on?'false':'true');}
 function dalBoot(u,animate){
   if(!DAL_ENABLED||!u||DAL_OFF_ROLES[u.role]||dalState.booted)return;
@@ -831,16 +937,15 @@ function dalBoot(u,animate){
     '<div class="dal-head"><div><b>Dal</b><span>DalOS assistant</span></div><button type="button" class="dal-x" aria-label="Hide Dal">×</button></div>'+
     '<div class="dal-msg" aria-live="polite"></div><div class="dal-act"></div>'+
     '<div class="dal-sugg"><span>Ask me</span><div class="dal-sugg-list"></div></div>'+
-    '<form class="dal-ask" autocomplete="off"><input type="search" class="dal-in" placeholder="Where do I…? (e.g. claim, season)" aria-label="Ask Dal"><button type="submit" aria-label="Ask">↵</button></form>'+
-    '<div class="dal-foot">Answers are a fixed help list for now — Dal only sees what you can see.</div></div>'+
+    '<form class="dal-ask" autocomplete="off"><input type="search" class="dal-in" placeholder="Ask in English or Arabic, or paste a container / inspection ID" aria-label="Ask Dal"><button type="submit" aria-label="Ask">↵</button></form>'+
+    '<div class="dal-foot">Dal matches your question to its help list and looks up containers and inspections — only what you can see.</div></div>'+
     '<button type="button" class="dal-char" aria-label="Open Dal, the DalOS assistant" aria-expanded="false"><span class="dal-char-svg"></span><span class="dal-tag">Ask Dal</span></button>';
   document.body.appendChild(el);dalState.el=el;dalFace(dalQuiet()?'sleepy':'neutral');
   el.querySelector('.dal-x').onclick=function(){dalMin(true);};
   el.querySelector('.dal-char').onclick=function(){var open=el.classList.contains('is-min');dalMin(!open);if(open&&!el.querySelector('.dal-msg').innerHTML)dalSay(dalGreeting()+' What are you looking for?',{expr:'happy',fast:true});};
   el.addEventListener('keydown',function(e){if(e.key==='Escape')dalMin(true);});
   var inp=el.querySelector('.dal-in');inp.addEventListener('input',function(){dalSearch(inp.value);});
-  el.querySelector('.dal-ask').onsubmit=function(e){e.preventDefault();var q=inp.value.trim();if(!q)return;var hits=dalSearch(q);
-    if(hits&&hits.length)dalAnswer(hits[0][1]);else dalSay('I don’t know that one yet. Tarek or Ramy can help.',{expr:'puzzled'});};
+  el.querySelector('.dal-ask').onsubmit=function(e){e.preventDefault();var q=inp.value.trim();if(!q)return;inp.value='';dalAsk(q);};
   dalRenderSugg(DAL_SUGGEST[dalState.role]||[0,13,19]);
   /* pupils follow the pointer */
   if(!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))document.addEventListener('mousemove',function(ev){
