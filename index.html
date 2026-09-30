@@ -281,6 +281,11 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
 .dal.is-top{align-items:flex-start}.dal.is-top .dal-bubble{margin:30px 0 0;transform-origin:100% 0}
 .dal.is-drag .dal-char{cursor:grabbing}.dal.is-drag{transition:none}
 .dal-char{touch-action:none}
+.dal-char-svg{transform-origin:50% 92%;will-change:transform}
+.dal .dal-shadow{display:none}
+.dal-ground{position:absolute;left:50%;bottom:1px;width:56px;height:9px;margin-left:-28px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(0,0,0,.5),rgba(0,0,0,0) 70%);pointer-events:none;z-index:-1;transform-origin:50% 50%}
+.dal-dust{position:absolute;left:50%;bottom:4px;width:7px;height:7px;margin-left:-3.5px;border-radius:50%;background:rgba(205,231,216,.55);pointer-events:none}
+.dal.is-moving .dal-body,.dal.is-moving .dal-leaf,.dal.is-moving .dal-arm-wave,.dal.is-moving .dal-arm-point{animation:none!important}
 .dal-link{font:inherit;font-weight:600;color:#8fe0ad;background:none;border:none;padding:0;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(143,224,173,.4);text-underline-offset:2px}
 .dal-link:hover{color:#b9f0cb}
 .dal-voy{margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(143,224,173,.18);font-size:13px}
@@ -830,26 +835,80 @@ function dalStill(){return (window.matchMedia&&matchMedia('(prefers-reduced-moti
 function dalGlow(tile,on){if(tile)tile.classList.toggle('dal-target',!!on);}
 function dalPointTo(app){
   var tile=$(DAL_TILE[app]);if(!tile||!dalState.el||dalState.dragging)return;
-  dalGoHome(true);dalGlow(tile,true);clearTimeout(dalState.homeT);
-  dalState.homeT=setTimeout(function(){dalGoHome();},4200);
+  clearTimeout(dalState.homeT);[].forEach.call(document.querySelectorAll('.dal-target'),function(x){if(x!==tile)dalGlow(x,false);});
+  dalGlow(tile,true);
+  dalState.homeT=setTimeout(function(){dalGoHome();},4800);
   if(dalStill()||dalState.el.classList.contains('is-min'))return;
-  var ch=dalState.el.querySelector('.dal-char'),c=ch.getBoundingClientRect(),t=tile.getBoundingClientRect();
-  /* land just below the tile, a little right of centre, never on top of it; if there's no
-     room below, land just above it */
-  var tx=t.left+t.width*0.62-c.width/2,ty=t.bottom+8,below=ty+c.height<=window.innerHeight-56;
-  if(!below)ty=t.top-c.height-8;
-  var dx=Math.round(tx-c.left),dy=Math.round(ty-c.top),lift=Math.min(-60,dy<0?dy-40:-60);
-  dalFace(below?'pointup':'pointing');dalState.away={dx:dx,dy:dy,tile:tile};
-  dalState.hop=ch.animate([{transform:'translate(0,0) scale(1,1)'},{transform:'translate('+dx*0.5+'px,'+(dy*0.5+lift)+'px) scale(.94,1.08)',offset:.45},{transform:'translate('+dx+'px,'+dy+'px) scale(1.1,.88)',offset:.8},{transform:'translate('+dx+'px,'+dy+'px) scale(1,1)'}],{duration:760,easing:'cubic-bezier(.3,.7,.4,1)',fill:'forwards'});
+  var ch=dalState.el.querySelector('.dal-char'),c=ch.getBoundingClientRect(),t=tile.getBoundingClientRect(),o=dalState.off||{x:0,y:0};
+  var homeL=c.left-o.x,homeT=c.top-o.y;
+  /* land just below the tile, a little right of centre (never on it); above it if there's no room */
+  var lx=t.left+t.width*0.62-c.width/2,ly=t.bottom+8,below=ly+c.height<=window.innerHeight-56;if(!below)ly=t.top-c.height-8;
+  dalState.away={tile:tile};
+  dalTravel(Math.round(lx-homeL),Math.round(ly-homeT),function(){dalFace(below?'pointup':'pointing');dalState.lookAt=null;});
 }
 function dalGoHome(instant){
-  var a=dalState.away;clearTimeout(dalState.homeT);
+  clearTimeout(dalState.homeT);
   [].forEach.call(document.querySelectorAll('.dal-target'),function(x){dalGlow(x,false);});
-  if(!a||!dalState.el)return;dalState.away=null;
-  var ch=dalState.el.querySelector('.dal-char');if(dalState.hop){dalState.hop.cancel();dalState.hop=null;}
-  if(instant||dalStill())return;
-  ch.animate([{transform:'translate('+a.dx+'px,'+a.dy+'px)'},{transform:'translate('+a.dx*0.5+'px,'+(a.dy*0.5-50)+'px) scale(.95,1.06)',offset:.5},{transform:'translate(0,0) scale(1.06,.93)',offset:.85},{transform:'translate(0,0) scale(1,1)'}],{duration:650,easing:'cubic-bezier(.3,.7,.4,1)'});
-  var m=dalState.el.querySelector('.dal-msg');setTimeout(function(){if(!m.querySelector('.dal-typing'))dalFace('neutral');},660);
+  if(!dalState.el)return;var was=dalState.away;dalState.away=null;
+  if(instant||dalStill()){cancelAnimationFrame(dalState.raf);dalState.raf=0;dalState.off={x:0,y:0};dalState.lookAt=null;dalState.el.classList.remove('is-moving');dalSetPose({x:0,y:0});return;}
+  if(!was&&!dalState.raf)return;
+  dalTravel(0,0,function(){dalState.lookAt=null;var m=dalState.el.querySelector('.dal-msg');if(!m.querySelector('.dal-typing'))dalFace('neutral');});
+}
+/* ── physics: anticipation → gravity arcs (1–4 hops) → squash on impact → damped settle ──
+   Only transforms are animated (compositor-friendly). The body leans into the direction of
+   travel, the leaf follows through, the ground shadow stays on the ground, dust on landing. */
+function dalSetPose(o){
+  var ch=dalState.el.querySelector('.dal-char'),sv=ch.querySelector('.dal-char-svg'),g=ch.querySelector('.dal-ground');
+  ch.style.transform=(o.x||o.y)?'translate('+o.x.toFixed(1)+'px,'+o.y.toFixed(1)+'px)':'';
+  sv.style.transform=(o.sx||o.sy||o.rot)?'rotate('+(o.rot||0).toFixed(2)+'deg) scale('+(o.sx||1).toFixed(3)+','+(o.sy||1).toFixed(3)+')':'';
+  if(g){var l=o.lift||0;g.style.transform=l?'translateY('+l.toFixed(1)+'px) scale('+Math.max(.4,1-l/130).toFixed(3)+')':'';g.style.opacity=l?Math.max(.2,1-l/150).toFixed(2):'';}
+  var leaf=sv.querySelector('.dal-leaf');if(leaf)leaf.style.transform=o.leaf?'rotate('+o.leaf.toFixed(1)+'deg)':'';
+  if(dalState.lookAt){var L=dalState.lookAt;[].forEach.call(sv.querySelectorAll('.dal-pupil'),function(p){p.setAttribute('transform','translate('+(L.x*3.4).toFixed(2)+' '+(L.y*3.4).toFixed(2)+')');});}
+}
+function dalPuff(){
+  var ch=dalState.el.querySelector('.dal-char');
+  for(var i=0;i<7;i++){(function(i){var s=document.createElement('span');s.className='dal-dust';ch.appendChild(s);
+    var side=i%2?1:-1,dx=side*(10+Math.random()*26),dy=-(3+Math.random()*10),sc=.6+Math.random()*.8;
+    var a=s.animate([{transform:'translate(0,0) scale(.3)',opacity:.75},{transform:'translate('+dx+'px,'+dy+'px) scale('+sc+')',opacity:0}],{duration:420+Math.random()*180,easing:'cubic-bezier(.2,.7,.3,1)'});
+    a.onfinish=function(){s.remove();};})(i);}
+}
+function dalTravel(tx,ty,done){
+  var el=dalState.el;cancelAnimationFrame(dalState.raf);
+  var o=dalState.off||{x:0,y:0},sx=o.x,sy=o.y,dx=tx-sx,dy=ty-sy,dist=Math.hypot(dx,dy);
+  if(dist<2){dalState.off={x:tx,y:ty};dalSetPose({x:tx,y:ty});done&&done();return;}
+  el.classList.add('is-moving');
+  var hops=Math.max(1,Math.min(4,Math.round(dist/300))),dir=dx>=0?1:-1,seg=dist/hops;
+  var CROUCH=150,HOP=Math.min(560,320+seg*0.35),GAP=70,SETTLE=520,AIR=hops*HOP+(hops-1)*GAP;
+  var H=Math.min(95,30+seg*0.2),UP=dy<0?Math.min(50,-dy/hops*0.35):0;
+  /* look where we're going first */
+  dalState.lookAt={x:dx/dist,y:dy/dist};dalFace('neutral');
+  var t0=performance.now(),landed=0;
+  function frame(now){
+    var t=now-t0,p={x:sx,y:sy,sx:1,sy:1,rot:0,lift:0,leaf:0};
+    if(t<CROUCH){/* anticipation: crouch and lean */
+      var c=Math.sin(t/CROUCH*Math.PI/2);p.sy=1-.15*c;p.sx=1+.11*c;p.rot=dir*5*c;p.leaf=dir*6*c;
+    }else if(t<CROUCH+AIR){
+      var u=t-CROUCH,i=Math.min(hops-1,Math.floor(u/(HOP+GAP))),v=u-i*(HOP+GAP),a=i/hops,b=(i+1)/hops;
+      if(v>HOP){/* between hops: land, squash, push off again */
+        if(landed<=i){landed=i+1;dalPuff();}
+        var w=(v-HOP)/GAP,k=Math.sin(w*Math.PI);p.x=sx+dx*b;p.y=sy+dy*b;p.sy=1-.17*k;p.sx=1+.12*k;p.rot=dir*4;p.leaf=-dir*8*(1-w);
+      }else{
+        var s=v/HOP,e=s<.5?2*s*s:1-Math.pow(-2*s+2,2)/2,h=H+UP,lift=h*4*s*(1-s);
+        p.x=sx+dx*(a+(b-a)*e);p.y=sy+dy*(a+(b-a)*e)-lift;p.lift=lift;
+        var vel=1-2*s;/* +1 take-off … -1 landing */
+        p.sy=1+.13*Math.abs(vel);p.sx=1-.09*Math.abs(vel);p.rot=dir*(7*vel*vel+2);
+        p.leaf=-dir*16*vel+(vel<0?-dir*8:0);
+        if(s>.93){var q=(s-.93)/.07;p.sy=1-.18*q;p.sx=1+.13*q;}
+      }
+    }else{
+      if(landed<hops){landed=hops;dalPuff();}
+      var w2=t-CROUCH-AIR,k2=w2/1000,osc=Math.exp(-k2/0.1)*Math.cos(2*Math.PI*k2/0.24);
+      p.x=tx;p.y=ty;p.sy=1-.18*osc;p.sx=1+.13*osc;p.rot=dir*3*osc;p.leaf=-dir*18*osc;
+      if(w2>=SETTLE){dalState.off={x:tx,y:ty};dalSetPose({x:tx,y:ty});el.classList.remove('is-moving');dalState.raf=0;done&&done();return;}
+    }
+    dalState.off={x:p.x,y:p.y};dalSetPose(p);dalState.raf=requestAnimationFrame(frame);
+  }
+  dalState.raf=requestAnimationFrame(frame);
 }
 /* drag to move (desktop). Position is remembered on this computer; double-click Dal to send it home. */
 function dalPlace(pos){var el=dalState.el;if(!el)return;
@@ -1218,7 +1277,7 @@ function dalBoot(u,animate){
     '<div class="dal-sugg"><span>Try asking</span><div class="dal-sugg-list"></div></div>'+
     '<form class="dal-ask" autocomplete="off"><input type="search" class="dal-in" placeholder="Ask in English or Arabic, or paste a container / inspection ID" aria-label="Ask Dal"><button type="submit" aria-label="Ask">↵</button></form>'+
     '<div class="dal-foot">Dal understands your question, answers from its help list and looks up containers and inspections — only what you can see.</div></div>'+
-    '<button type="button" class="dal-char" aria-label="Open Dal, the DalOS assistant" aria-expanded="false"><span class="dal-char-svg"></span><span class="dal-tag">Ask Dal</span></button>';
+    '<button type="button" class="dal-char" aria-label="Open Dal, the DalOS assistant" aria-expanded="false"><span class="dal-ground"></span><span class="dal-char-svg"></span><span class="dal-tag">Ask Dal</span></button>';
   document.body.appendChild(el);dalState.el=el;dalFace(dalQuiet()?'sleepy':'neutral');
   el.querySelector('.dal-x').onclick=function(){dalMin(true);};
   el.querySelector('.dal-char').onclick=function(){if(dalState.justDragged)return;var open=el.classList.contains('is-min');dalMin(!open);if(open&&!el.querySelector('.dal-msg').innerHTML)dalSay(dalGreeting()+' What are you looking for?',{expr:'happy',fast:true});};
@@ -1232,7 +1291,7 @@ function dalBoot(u,animate){
   /* containers and IDs inside answers are clickable */
   el.querySelector('.dal-msg').addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.dal-link');if(b)dalAsk(b.getAttribute('data-q'));});
   /* pupils follow the pointer */
-  if(!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))document.addEventListener('mousemove',function(ev){
+  if(!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))document.addEventListener('mousemove',function(ev){if(dalState.lookAt)return;
     [].forEach.call(el.querySelectorAll('.dal-pupil'),function(p){var sv=p.ownerSVGElement,r=sv.getBoundingClientRect();if(!r.width)return;
       var px=r.left+(+p.getAttribute('data-cx'))/160*r.width,py=r.top+(+p.getAttribute('data-cy'))/150*r.height,dx=ev.clientX-px,dy=ev.clientY-py,dd=Math.hypot(dx,dy)||1,mm=Math.min(3.6,dd/40);
       p.setAttribute('transform','translate('+(dx/dd*mm).toFixed(2)+' '+(dy/dd*mm).toFixed(2)+')');});});
