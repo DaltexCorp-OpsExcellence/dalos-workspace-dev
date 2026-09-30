@@ -922,11 +922,50 @@ function dalAsk(q){
   var last=dalState.last;
   if(last&&DAL_OPENQ.test(n)&&last.app){if(dalCanOpen(last.app))return openProduct(last.app);return dalSay('You don’t have '+dalAppLabel(last.app)+' access yet.',{expr:'neutral'});}
   if(last&&last.type==='help'&&DAL_WHOQ.test(n))return dalSay('<b>Who can:</b> '+dalEsc(DAL_HELP[last.i].w),{expr:'neutral'});
-  var hits=dalRank(q);
-  if(!hits.length)return dalSay('I don’t know that one yet. Try other words, paste a container number, or ask Tarek or Ramy.',{expr:'puzzled'});
-  if(hits.length>1&&hits[1][0]>=hits[0][0]&&hits[0][0]<6){var a=hits[0][1],b=hits[1][1];
-    return dalSay('Did you mean one of these?',{expr:'thinking',choices:[{label:DAL_HELP[a].q,fn:function(){dalAnswer(a);}},{label:DAL_HELP[b].q,fn:function(){dalAnswer(b);}}]});}
+  /* numbers, trends and "why" need real analysis — say so honestly and log it */
+  if(DAL_DATAQ.test(n)){dalMiss(q);return dalSay('I can’t count or compare things yet — that’s coming. For now, <b>Inspections Analytics</b> in Vision and the Analytics dashboards show those numbers.',{expr:'puzzled',app:'vision',cta:'Open Vision'});}
+  var kw=dalRank(q);
+  if(/[\u0600-\u06FF]/.test(raw))return dalDecideKw(q,kw);   /* the meaning model is English-only */
+  dalBusy();
+  dalSemantic(q).then(function(sem){
+    if(sem&&sem.length>1){var a=sem[0],b=sem[1];
+      if(a[1]>=0.86&&a[1]-b[1]>=0.02)return dalAnswer(a[0]);
+      if(a[1]>=0.82)return dalClarify(a[0],b[0]);}
+    dalDecideKw(q,kw);
+  });
+}
+var DAL_DATAQ=/^(how many|how much|how often|count|total|compare|why|what percent|كام|عدد|ليه|قارن|نسبه)\b/;
+function dalMiss(q){try{sb.from('dal_misses').insert({question:String(q).slice(0,300),role:dalState.role||null}).then(function(){},function(){});}catch(e){}}
+function dalClarify(a,b){return dalSay('Did you mean one of these?',{expr:'thinking',choices:[{label:DAL_HELP[a].q,fn:function(){dalAnswer(a);}},{label:DAL_HELP[b].q,fn:function(){dalAnswer(b);}}]});}
+function dalDecideKw(q,hits){
+  if(!hits.length){dalMiss(q);return dalSay('I don’t know that one yet — I’ve noted the question so it can be added. Try other words, paste a container number, or ask Tarek or Ramy.',{expr:'puzzled'});}
+  if(hits.length>1&&hits[1][0]>=hits[0][0]&&hits[0][0]<6)return dalClarify(hits[0][1],hits[1][1]);
   dalAnswer(hits[0][1]);
+}
+/* Meaning search (level 1.5): the dal-search edge function fingerprints the question with
+   Supabase's built-in gte-small model; this page compares it with dal-vectors.json
+   (4–5 example phrasings per help answer). Falls back to word matching on any failure. */
+var dalVecP=null;
+function dalVectors(){
+  if(!dalVecP)dalVecP=fetch('dal-vectors.json',{cache:'force-cache'}).then(function(r){return r.ok?r.json():null;}).then(function(d){
+    if(!d||!d.b64)return null;
+    /* guard: the file must describe this exact help list */
+    var ok=d.qs&&d.qs.length===DAL_HELP.length&&d.qs.every(function(q,i){return dalNorm(q)===dalNorm(DAL_HELP[i].q);});
+    if(!ok)return null;
+    var raw=atob(d.b64),vecs=[],dim=d.dim||384;
+    for(var i=0;i<raw.length;i+=dim){var v=new Float32Array(dim);for(var k=0;k<dim;k++){var c=raw.charCodeAt(i+k);v[k]=(c>127?c-256:c)/d.scale;}vecs.push(v);}
+    return {idx:d.idx,vecs:vecs};
+  }).catch(function(){return null;});
+  return dalVecP;
+}
+function dalSemantic(q){
+  var timeout=new Promise(function(res){setTimeout(function(){res(null);},4500);});
+  var work=Promise.all([dalVectors(),sb.functions.invoke('dal-search',{body:{q:String(q).slice(0,300)}})]).then(function(r){
+    var V=r[0],e=r[1]&&!r[1].error&&r[1].data&&r[1].data.e;if(!V||!e)return null;
+    var best={};V.vecs.forEach(function(v,j){var s=0;for(var k=0;k<v.length;k++)s+=v[k]*e[k];var i=V.idx[j];if(!(i in best)||s>best[i])best[i]=s;});
+    return Object.keys(best).map(function(i){return [+i,best[i]];}).sort(function(a,b){return b[1]-a[1];});
+  }).catch(function(){return null;});
+  return Promise.race([work,timeout]);
 }
 function dalMin(on){dalState.el.classList.toggle('is-min',on);if(on)dalSet('min');var c=dalState.el.querySelector('.dal-char');c.setAttribute('aria-expanded',on?'false':'true');}
 function dalBoot(u,animate){
@@ -938,7 +977,7 @@ function dalBoot(u,animate){
     '<div class="dal-msg" aria-live="polite"></div><div class="dal-act"></div>'+
     '<div class="dal-sugg"><span>Ask me</span><div class="dal-sugg-list"></div></div>'+
     '<form class="dal-ask" autocomplete="off"><input type="search" class="dal-in" placeholder="Ask in English or Arabic, or paste a container / inspection ID" aria-label="Ask Dal"><button type="submit" aria-label="Ask">↵</button></form>'+
-    '<div class="dal-foot">Dal matches your question to its help list and looks up containers and inspections — only what you can see.</div></div>'+
+    '<div class="dal-foot">Dal understands your question, answers from its help list and looks up containers and inspections — only what you can see.</div></div>'+
     '<button type="button" class="dal-char" aria-label="Open Dal, the DalOS assistant" aria-expanded="false"><span class="dal-char-svg"></span><span class="dal-tag">Ask Dal</span></button>';
   document.body.appendChild(el);dalState.el=el;dalFace(dalQuiet()?'sleepy':'neutral');
   el.querySelector('.dal-x').onclick=function(){dalMin(true);};
