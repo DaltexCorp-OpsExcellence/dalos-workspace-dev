@@ -859,7 +859,7 @@ var DAL_SYN={
  signout:'signed logout logged kicked timeout expired session out خروج طلعني خرجني'
 };
 var DAL_WORD={},DAL_VOCAB=[];
-function dalNorm(s){return String(s||'').toLowerCase().replace(/[ً-ْـ]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[^a-z0-9؀-ۿ\s\/-]/g,' ').replace(/\s+/g,' ').trim();}
+function dalNorm(s){return String(s||'').toLowerCase().replace(/[ً-ْـ]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[\u060C\u061B\u061F\u066A-\u066D\u06D4]/g,' ').replace(/[^a-z0-9؀-ۿ\s\/-]/g,' ').replace(/\s+/g,' ').trim();}
 Object.keys(DAL_SYN).forEach(function(t){dalNorm(DAL_SYN[t]).split(' ').forEach(function(w){if(w){DAL_WORD[w]=t;DAL_VOCAB.push(w);}});});
 function dalLev(a,b){if(Math.abs(a.length-b.length)>2)return 9;var p=[],i,j;for(j=0;j<=b.length;j++)p[j]=j;
   for(i=1;i<=a.length;i++){var prev=p[0];p[0]=i;for(j=1;j<=b.length;j++){var tmp=p[j];p[j]=Math.min(p[j]+1,p[j-1]+1,prev+(a[i-1]===b[j-1]?0:1));prev=tmp;}}return p[b.length];}
@@ -909,7 +909,8 @@ function dalLookupInspection(id){
 }
 var DAL_HELLO=/^(hi|hey|hello|hola|salam|salamo|السلام|سلام|اهلا|مرحبا|صباح|مساء|good (morning|afternoon|evening))\b/;
 var DAL_THANKS=/\b(thanks|thank you|thx|merci|shokran|شكرا|متشكر|تسلم)\b/;
-var DAL_WHOQ=/^(who|min|meen|مين|مين اللي)\b|who can|مين يقدر/;
+/* a follow-up only when it's short and points back ("who can do that?", "مين يقدر يعمل ده؟") — not "who signs off on settlements" */
+var DAL_WHOQ=/^(who( can)?( do)?( (that|it|this))?|who is allowed|min|meen|مين|مين يقدر( يعمل)?( ده| دي| كده)?)$/;
 var DAL_OPENQ=/^(open( it)?|take me( there)?|go|افتح|افتحها|وديني|روح)\b/;
 function dalBusy(){dalFace('thinking');dalState.el.querySelector('.dal-msg').innerHTML='<span class="dal-typing"><i></i><i></i><i></i></span>';dalState.el.querySelector('.dal-act').innerHTML='';}
 function dalAsk(q){
