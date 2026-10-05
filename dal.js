@@ -459,7 +459,9 @@ function dalCKey(c){return String(c||'').toUpperCase().replace(/\s+/g,' ').trim(
 function dalVoyages(rows){var seen={},out=[];rows.forEach(function(s){var k=dalCKey(s.container_number)+'|'+String(s.loading_date||'').slice(0,10);if(!seen[k]){seen[k]=1;out.push(s);}});return out;}
 function dalLink(c){return '<button type="button" class="dal-link" data-q="'+dalEsc(c)+'">'+dalEsc(c)+'</button>';}
 function dalList(items,fmt,max){max=max||5;var h=items.slice(0,max).map(fmt).join('<br>');if(items.length>max)h+='<br><span class="dal-dim">…and '+(items.length-max)+' more.</span>';return h;}
-function dalCapNote(rows){return rows.length>=1000?' <span class="dal-dim">(first 1,000 lines only)</span>':'';}
+/* PostgREST caps a request at 1,000 rows — page through (up to 5,000) so voyage counts are real */
+function dalPaged(make,pages){pages=pages||5;var out=[];function next(i){return dalSafe(make().range(i*1000,i*1000+999)).then(function(r){out=out.concat(r);return (r.length===1000&&i+1<pages)?next(i+1):out;});}return next(0);}
+function dalCapNote(rows){return rows.length>=5000?' <span class="dal-dim">(first 5,000 lines only)</span>':'';}
 var DAL_FARMS=[['BD','badr','بدر'],['HA','hana','مزرعه هنا'],['KH','el khair','khair','الخير'],['NO','nour','نور'],['SA','salma','سلمي'],['ME','menia','menya','minya','المنيا','منيا'],['LA','layla','ليلي'],['BA','elbaraka','baraka','البركه','بركه']];
 function dalFarmIn(n){for(var i=0;i<DAL_FARMS.length;i++){var f=DAL_FARMS[i];for(var j=1;j<f.length;j++){if((' '+n+' ').indexOf(' '+dalNorm(f[j])+' ')>=0)return f[0];}if(new RegExp('\\b'+f[0].toLowerCase()+'\\b').test(n)&&/farm|مزرعه/.test(n))return f[0];}return null;}
 var DAL_OPS={
@@ -467,7 +469,7 @@ var DAL_OPS={
    if(!p.length)return dalSay('Nothing is waiting for you right now.',{expr:'happy'});
    dalOpSay('<b>'+p.length+' thing'+(p.length>1?'s':'')+' waiting for you:</b><br>'+p.map(function(x){return '• '+x.html;}).join('<br>'),p[0].app,'alert');});}},
  at_sea:{label:'Containers at sea right now',run:function(){
-   dalSafe(sb.from('shipments').select('container_number,loading_date,client,eta,receiving_country').eq('shipping_status','Shipped').order('eta',{ascending:true}).limit(1000)).then(function(r){var v=dalVoyages(r),today=dalDay(0);
+   dalPaged(function(){return sb.from('shipments').select('container_number,loading_date,client,eta,receiving_country').eq('shipping_status','Shipped').order('eta',{ascending:true});}).then(function(r){var v=dalVoyages(r),today=dalDay(0);
      if(!v.length)return dalSay('No containers are marked as shipped right now.',{expr:'happy'});
      /* many rows stay "Shipped" after arrival (status not synced) — split them out honestly */
      var ahead=v.filter(function(s){return s.eta&&String(s.eta).slice(0,10)>=today;}),stale=v.filter(function(s){return !s.eta||String(s.eta).slice(0,10)<today;});
@@ -475,15 +477,15 @@ var DAL_OPS={
      if(stale.length)h+='<br><span class="dal-dim"><b>'+stale.length+'</b> more are still marked “Shipped” but their ETA has passed — their status probably wasn’t updated to Delivered. Oldest: '+stale.slice(0,2).map(function(s){return dalLink(s.container_number)+' (ETA '+dalFmtDate(s.eta)+')';}).join(', ')+'.</span>';
      dalOpSay(h+dalCapNote(r),'vision');});}},
  arriving:{label:'Containers arriving in the next 7 days',run:function(){
-   dalSafe(sb.from('shipments').select('container_number,loading_date,client,eta,receiving_country').eq('shipping_status','Shipped').gte('eta',dalDay(0)).lte('eta',dalDay(7)).order('eta',{ascending:true}).limit(1000)).then(function(r){var v=dalVoyages(r);
+   dalPaged(function(){return sb.from('shipments').select('container_number,loading_date,client,eta,receiving_country').eq('shipping_status','Shipped').gte('eta',dalDay(0)).lte('eta',dalDay(7)).order('eta',{ascending:true});}).then(function(r){var v=dalVoyages(r);
      if(!v.length)return dalSay('No containers are due to arrive in the next 7 days.',{expr:'neutral'});
      dalOpSay('<b>'+v.length+' container'+(v.length>1?'s':'')+' arriving in the next 7 days:</b><br>'+dalList(v,function(s){return dalLink(s.container_number)+' — '+dalEsc(s.client||'—')+(s.receiving_country?', '+dalEsc(s.receiving_country):'')+', ETA '+dalFmtDate(s.eta);}),'vision');});}},
  loaded_week:{label:'Containers loaded in the last 7 days',run:function(){
-   dalSafe(sb.from('shipments').select('container_number,loading_date,client,product_id,pack_house').gte('loading_date',dalDay(-7)).order('loading_date',{ascending:false}).limit(1000)).then(function(r){var v=dalVoyages(r);
+   dalPaged(function(){return sb.from('shipments').select('container_number,loading_date,client,product_id,pack_house').gte('loading_date',dalDay(-7)).order('loading_date',{ascending:false});}).then(function(r){var v=dalVoyages(r);
      if(!v.length)return dalSay('No containers were loaded in the last 7 days.',{expr:'neutral'});
      dalOpSay('<b>'+v.length+' container'+(v.length>1?'s':'')+' loaded in the last 7 days:</b><br>'+dalList(v,function(s){return dalLink(s.container_number)+' — '+dalEsc(dalCap(s.product_id))+' to '+dalEsc(s.client||'—')+', '+dalFmtDate(s.loading_date)+(s.pack_house?' ('+dalEsc(s.pack_house)+')':'');}),'vision');});}},
  no_cqc:{label:'Delivered but no client QC yet',run:function(){
-   Promise.all([dalSafe(sb.from('shipments').select('container_number,loading_date,client').eq('shipping_status','Delivered').gte('loading_date',dalDay(-60)).lte('loading_date',dalDay(-7)).order('loading_date',{ascending:false}).limit(1000)),
+   Promise.all([dalPaged(function(){return sb.from('shipments').select('container_number,loading_date,client').eq('shipping_status','Delivered').gte('loading_date',dalDay(-60)).lte('loading_date',dalDay(-7)).order('loading_date',{ascending:false});}),
      dalSafe(sb.from('client_qc_reports').select('container_number,load_date').gte('created_at',dalDay(-150)).limit(1000))]).then(function(r){
      var have={};r[1].forEach(function(c){have[dalCKey(c.container_number)]=(have[dalCKey(c.container_number)]||[]).concat([c.load_date?String(c.load_date).slice(0,10):'']);});
      var v=dalVoyages(r[0]).filter(function(s){var ds=have[dalCKey(s.container_number)];if(!ds)return true;var ld=new Date(String(s.loading_date).slice(0,10));return !ds.some(function(d){return !d||Math.abs((new Date(d)-ld)/864e5)<=3;});});
@@ -504,7 +506,7 @@ var DAL_OPS={
      dalOpSay('<b>'+r.length+' batch'+(r.length>1?'es were':' was')+' rejected and then special-accepted by the board:</b><br>'+dalList(r,function(x){return dalLink(x.id)+(x.container_number?' — '+dalLink(x.container_number):'')+', '+dalEsc(dalCap(x.product_id))+', '+dalFmtDate(x.date);}),'vision');});}},
  no_insp:{label:'Containers loaded without an inspection',run:function(){
    /* not linked in Shipments AND no inspection on that container in the 60 days before loading */
-   Promise.all([dalSafe(sb.from('shipments').select('container_number,loading_date,client,pack_house').is('matched_inspection_id',null).gte('loading_date',dalDay(-30)).order('loading_date',{ascending:false}).limit(1000)),
+   Promise.all([dalPaged(function(){return sb.from('shipments').select('container_number,loading_date,client,pack_house').is('matched_inspection_id',null).gte('loading_date',dalDay(-30)).order('loading_date',{ascending:false});}),
      dalSafe(sb.from('inspections').select('container_number,date').neq('season_id',DAL_DUMMY_SEASON).gte('date',dalDay(-100)).not('container_number','is',null).limit(1000))]).then(function(r){
      var have={};r[1].forEach(function(x){var k=dalCKey(x.container_number);(have[k]=have[k]||[]).push(String(x.date).slice(0,10));});
      var v=dalVoyages(r[0]).filter(function(s){var ds=have[dalCKey(s.container_number)];if(!ds)return true;var ld=new Date(String(s.loading_date).slice(0,10));return !ds.some(function(d){var g=(ld-new Date(d))/864e5;return g>=-1&&g<=60;});});
@@ -526,13 +528,13 @@ var DAL_OPS={
  to_country:{label:'Containers to a country (last 12 months)',needs:'country',run:function(arg){
    /* citrus rows have no receiving_country — the sync keeps the country in raw_data.Region */
    var c=dalCountryEn(arg).replace(/[^a-z\u0600-\u06FF ]/gi,'').trim();if(!c){dalState.inOp=false;return dalSay('Which country?',{expr:'puzzled'});}
-   dalSafe(sb.from('shipments').select('container_number,loading_date,client,product_id,receiving_country,region:raw_data->>Region').or('receiving_country.ilike.*'+c+'*,raw_data->>Region.ilike.*'+c+'*').gte('loading_date',dalDay(-365)).order('loading_date',{ascending:false}).limit(1000)).then(function(r){var v=dalVoyages(r);
+   dalPaged(function(){return sb.from('shipments').select('container_number,loading_date,client,product_id,receiving_country,region:raw_data->>Region').or('receiving_country.ilike.*'+c+'*,raw_data->>Region.ilike.*'+c+'*').gte('loading_date',dalDay(-365)).order('loading_date',{ascending:false});}).then(function(r){var v=dalVoyages(r);
      if(!v.length)return dalSay('I found no containers to <b>'+dalEsc(c)+'</b> in the last 12 months that you can see.',{expr:'puzzled'});
      var cl={};v.forEach(function(s){cl[s.client||'—']=(cl[s.client||'—']||0)+1;});var top=Object.keys(cl).sort(function(a,b){return cl[b]-cl[a];}).slice(0,3);
      var name=v[0].receiving_country||dalCap(String(v[0].region||c).toLowerCase());
      dalOpSay('<b>'+v.length+' container'+(v.length>1?'s':'')+' to '+dalEsc(name)+'</b> in the last 12 months'+dalCapNote(r)+'. Top clients: '+top.map(function(k){return dalEsc(k)+' ('+cl[k]+')';}).join(', ')+'. Latest:<br>'+dalList(v,function(s){return dalLink(s.container_number)+' — '+dalEsc(s.client||'—')+', '+dalFmtDate(s.loading_date);},3),'vision');});}},
  for_client:{label:'Containers for a client (last 12 months)',needs:'client',run:function(arg){
-   dalSafe(sb.from('shipments').select('container_number,loading_date,client,shipping_status,receiving_country').ilike('client','%'+arg+'%').gte('loading_date',dalDay(-365)).order('loading_date',{ascending:false}).limit(1000)).then(function(r){var v=dalVoyages(r);
+   dalPaged(function(){return sb.from('shipments').select('container_number,loading_date,client,shipping_status,receiving_country').ilike('client','%'+arg+'%').gte('loading_date',dalDay(-365)).order('loading_date',{ascending:false});}).then(function(r){var v=dalVoyages(r);
      if(!v.length)return dalSay('I found no containers for a client matching <b>'+dalEsc(arg)+'</b> in the last 12 months that you can see.',{expr:'puzzled'});
      var st={};v.forEach(function(s){st[s.shipping_status||'—']=(st[s.shipping_status||'—']||0)+1;});
      dalOpSay('<b>'+v.length+' container'+(v.length>1?'s':'')+' for '+dalEsc(v[0].client)+'</b> in the last 12 months ('+Object.keys(st).map(function(k){return st[k]+' '+dalEsc(k.toLowerCase());}).join(', ')+'). Latest:<br>'+dalList(v,function(s){return dalLink(s.container_number)+' — '+dalFmtDate(s.loading_date)+', '+dalEsc(s.shipping_status||'—');},3),'vision');});}},
@@ -773,7 +775,7 @@ function dalCard(){var r=dalState.role,help=(DAL_SUGGEST[r]||[13,19,20]).slice(0
 }
 
 /* ── the daily rhythm: Dal speaks first at most once a day; actionable things win over nice things ── */
-function dalRecap(){var since=dalDay(-7),N=[dalSafe(sb.from('shipments').select('container_number,loading_date').gte('loading_date',since).limit(1000)),dalCount(sb.from('inspections').select('id',{count:'exact',head:true}).neq('season_id',DAL_DUMMY_SEASON).gte('date',since))];
+function dalRecap(){var since=dalDay(-7),N=[dalPaged(function(){return sb.from('shipments').select('container_number,loading_date').gte('loading_date',since);}),dalCount(sb.from('inspections').select('id',{count:'exact',head:true}).neq('season_id',DAL_DUMMY_SEASON).gte('date',since))];
   if(COMMERCIAL_ROLES[dalState.role])N.push(dalCount(sb.from('crm_leads').select('id',{count:'exact',head:true}).gte('created_at',since)));
   return Promise.all(N).then(function(r){var c=dalVoyages(r[0]).length,i=r[1],l=r[2],parts=[];if(c)parts.push('<b>'+c+'</b> container'+(c>1?'s':'')+' loaded');if(i)parts.push('<b>'+i+'</b> inspection'+(i>1?'s':''));if(l)parts.push('<b>'+l+'</b> new lead'+(l>1?'s':''));
     return parts.length?'This week: '+parts.join(', ')+'. Have a good weekend'+(dalFirst()?', '+dalEsc(dalFirst()):'')+'.':null;});}
