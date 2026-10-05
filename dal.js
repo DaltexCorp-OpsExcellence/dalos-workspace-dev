@@ -746,6 +746,10 @@ function dalSmallTalk(n,raw){
   if(n==='dal'||n==='dal dal'||n==='دال'||n==='دالّ'){if(dalPref('nofun'))return dalSay(dalV('who_are_you',L),{expr:'happy',fast:true});return dalSay((L==='ar'?'تحت أمرك. ':'At your service. ')+'My name, دالّ, means “the one who points the way.”',{expr:'bow',fast:true});}
   if(/^(grape|grapes|عنب|3enab)$/.test(n))return dalSay(L==='ar'?'ده أنا.':'That’s me. A cluster, to be exact.',{expr:'happy',fast:true});
   if(DAL_CAN.test(n)){dalCard();return true;}
+  /* just an app name (seen in the unanswered log: "vision") → what it is + open it */
+  var APPS={vision:['vision','Quality control from packhouse to port — inspections, client QC, shipments and escalations.'],analytics:['analytics','Shipment and market dashboards for every product.'],commercial:['commercial','Claims, redirections, grading, regions and lead generation.'],landcloud:['landcloud','Every farm block, its seasons, boundaries and the Harvest Planner.']};
+  var an=n.replace(/^(open|go to|افتح|dalos)\s+/,'').replace(/\s+/g,'').replace(/^(فيجن|فيچن)$/,'vision').replace(/^(انالتكس|اناليتكس)$/,'analytics').replace(/^(كوميرشال)$/,'commercial').replace(/^(lc|land)$/,'landcloud');
+  if(APPS[an]){var A=APPS[an],can=dalCanOpen(A[0]);dalState.last={type:'app',app:A[0]};return dalSay('<b>DalOS '+dalAppLabel(A[0])+'</b> — '+A[1]+(can?'':' <span class="dal-dim">You don’t have access yet.</span>'),{expr:'pointing',app:A[0],cta:can?'Open '+dalAppLabel(A[0]):'',fast:true});}
   for(var i=0;i<DAL_SMALL.length;i++)if(DAL_SMALL[i][1].test(n)){var k=DAL_SMALL[i][0];if(k==='wrong'&&dalState.prevQ)dalMiss('[wrong] '+dalState.prevQ);if(k==='joke'&&dalPref('nofun'))k='who_are_you';
     return dalSay(dalV(k,L),{expr:k==='joke'||k==='good_job'||k==='how_are_you'?'happy':k==='wrong'?'puzzled':'neutral',fast:true});}
   if(DAL_ABOUTQ.test(n))return dalSay(DAL_ABOUT+'<br><span class="dal-dim">'+DAL_HISTORY[dalDayIndex()%DAL_HISTORY.length]+'</span>',{expr:'happy',src:'Daltex’s public website and press',follow:[{label:'Daltex history',q:'daltex history'},{label:'Tell me something interesting',q:'did you know'}]});
