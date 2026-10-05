@@ -1,0 +1,81 @@
+/* ── Dal — DalOS assistant (phase 1) ── */
+.dal{position:fixed;right:22px;bottom:68px;z-index:60;display:flex;align-items:flex-end;gap:10px;font-family:var(--font-body);transition:opacity .4s}
+.dal.is-hidden{opacity:0;pointer-events:none}
+.dal-bubble{width:360px;background:rgba(16,28,20,.94);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(143,224,173,.3);border-radius:20px 20px 6px 20px;padding:14px 16px 12px;box-shadow:0 24px 60px rgba(0,0,0,.55);transform-origin:100% 100%;transition:opacity .25s,transform .35s cubic-bezier(.3,1.3,.5,1);margin-bottom:30px;color:#dbe6de}
+.dal.is-min .dal-bubble{opacity:0;transform:scale(.6) translate(20px,20px);pointer-events:none;visibility:hidden}
+.dal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.dal-head b{font-family:var(--font-display);font-weight:400;font-size:20px;color:#f4f1e8;margin-right:8px}
+.dal-head span{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#caa86a;font-weight:600}
+.dal-x{background:none;border:none;color:#7c9785;font-size:20px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:6px}
+.dal-x:hover{color:#f4f1e8;background:rgba(255,255,255,.08)}
+.dal-msg{font-size:14px;line-height:1.5;min-height:21px}
+.dal-msg b{color:#8fe0ad;font-weight:600}
+.dal-dim{color:#7c9785}
+/* glow lives on an overlay — the card's own animation (dh-rise, which ends at opacity 1) must not be replaced */
+.app-card.dal-target{border-color:var(--ac)}
+.app-card.dal-target::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:4;animation:dal-glow 1.1s ease-in-out infinite alternate}
+@keyframes dal-glow{from{box-shadow:inset 0 0 0 1px var(--ac),inset 0 0 18px color-mix(in srgb,var(--ac) 25%,transparent)}to{box-shadow:inset 0 0 0 2px var(--ac),inset 0 0 50px color-mix(in srgb,var(--ac) 45%,transparent)}}
+.dal.is-left{flex-direction:row-reverse}.dal.is-left .dal-bubble{border-radius:20px 20px 20px 6px;transform-origin:0 100%}
+.dal.is-top{align-items:flex-start}.dal.is-top .dal-bubble{margin:30px 0 0;transform-origin:100% 0}
+.dal.is-drag .dal-char{cursor:grabbing}.dal.is-drag{transition:none}
+.dal-char{touch-action:none}
+.dal-char-svg{transform-origin:50% 92%;will-change:transform}
+.dal .dal-shadow{display:none}
+.dal-ground{position:absolute;left:50%;bottom:1px;width:56px;height:9px;margin-left:-28px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(0,0,0,.5),rgba(0,0,0,0) 70%);pointer-events:none;z-index:-1;transform-origin:50% 50%}
+.dal-dust{position:absolute;left:50%;bottom:4px;width:7px;height:7px;margin-left:-3.5px;border-radius:50%;background:rgba(205,231,216,.55);pointer-events:none}
+.dal.is-moving .dal-body,.dal.is-moving .dal-leaf,.dal.is-moving .dal-arm-wave,.dal.is-moving .dal-arm-point{animation:none!important}
+.dal-link{font:inherit;font-weight:600;color:#8fe0ad;background:none;border:none;padding:0;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(143,224,173,.4);text-underline-offset:2px}
+.dal-link:hover{color:#b9f0cb}
+.dal-voy{margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(143,224,173,.18);font-size:13px}
+.dal-voy span{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#caa86a;font-weight:700;margin-bottom:3px}
+.dal-msg{max-height:46vh;overflow:auto}
+.dal-act:not(:empty){margin-top:10px}
+.dal-pri{font-family:var(--font-body);font-size:12.5px;font-weight:700;border-radius:9px;padding:8px 13px;cursor:pointer;border:1px solid #6fc191;background:#6fc191;color:#0a120c}
+.dal-pri:hover{background:#8fe0ad;border-color:#8fe0ad}
+.dal-act{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.dal-choice{font-family:var(--font-body);font-size:12.5px;text-align:left;color:#e3ebe5;background:rgba(143,224,173,.08);border:1px solid rgba(143,224,173,.35);border-radius:9px;padding:7px 10px;cursor:pointer;width:100%}
+.dal-choice:hover{background:rgba(143,224,173,.16)}
+.dal-sugg{margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)}
+.dal-sugg>span{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#7c9785;font-weight:700;margin-bottom:6px}
+.dal-sugg-list{display:flex;flex-direction:column;gap:5px}
+.dal-sugg-list button{font-family:var(--font-body);font-size:12.5px;text-align:left;color:#cde0d3;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:9px;padding:7px 10px;cursor:pointer}
+.dal-sugg-list button:hover{border-color:rgba(143,224,173,.5);color:#fff}
+.dal-ask{display:flex;align-items:center;gap:6px;margin-top:10px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:0 6px 0 10px}
+.dal-ask:focus-within{border-color:#6fc191}
+.dal-in{flex:1;min-width:0;background:none;border:none;outline:none;color:#f4f1e8;font-family:var(--font-body);font-size:13px;padding:9px 0}
+.dal-in::placeholder{color:#7c9785}
+.dal-ask button{background:none;border:none;color:#8fe0ad;font-size:15px;cursor:pointer;padding:4px 6px}
+.dal-foot{margin-top:8px;font-size:10.5px;color:#6b8573}
+.dal-char{position:relative;width:88px;height:84px;background:none;border:none;padding:0;cursor:pointer;flex-shrink:0;filter:drop-shadow(0 10px 18px rgba(0,0,0,.45)) drop-shadow(0 0 16px rgba(111,193,145,.22))}
+.dal-char:focus-visible,.dal-x:focus-visible,.dal-pri:focus-visible,.dal-sugg-list button:focus-visible{outline:2px solid #8fe0ad;outline-offset:3px;border-radius:10px}
+.dal-char-svg,.dal-char-svg .dal-svg{display:block;width:100%;height:100%;overflow:visible}
+.dal-tag{position:absolute;left:50%;bottom:-10px;transform:translateX(-50%);font-size:10.5px;font-weight:700;color:#0a120c;background:#8fe0ad;padding:2px 8px;border-radius:10px;white-space:nowrap;opacity:0;transition:opacity .3s}
+.dal.is-min .dal-tag{opacity:1}
+.dal-typing{display:inline-flex;gap:4px;padding:6px 0}.dal-typing i{width:6px;height:6px;border-radius:50%;background:#8fe0ad;animation:dal-dot 1s infinite}.dal-typing i:nth-child(2){animation-delay:.15s}.dal-typing i:nth-child(3){animation-delay:.3s}
+.dal-body{transform-box:view-box;transform-origin:80px 140px;animation:dal-breathe 3.6s ease-in-out infinite}
+.dal-leaf{transform-box:view-box;transform-origin:86px 20px;animation:dal-leaf 4s ease-in-out infinite}
+.dal-lid{transform-box:fill-box;transform-origin:center top;transform:scaleY(0);animation:dal-blink 5s infinite}
+.dal-arm-wave{transform-box:view-box;transform-origin:48px 82px;animation:dal-wave 1.8s ease-in-out infinite}
+.dal-arm-point{animation:dal-point 1.3s ease-in-out infinite}
+.dal-bang,.dal-q{transform-box:fill-box;transform-origin:center;animation:dal-pop 1.4s ease-in-out infinite}
+.dal-dots circle{animation:dal-dot 1.2s infinite}.dal-dots circle:nth-child(2){animation-delay:.2s}.dal-dots circle:nth-child(3){animation-delay:.4s}
+.dal-z text{animation:dal-z 2.6s infinite}.dal-z text:nth-child(2){animation-delay:1.3s}
+.dal-char:hover .dal-body{animation:dal-squish .5s ease}
+@keyframes dal-breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.015,.985)}}
+@keyframes dal-leaf{0%,100%{transform:rotate(0)}50%{transform:rotate(-10deg)}}
+@keyframes dal-blink{0%,94%,100%{transform:scaleY(0)}96%{transform:scaleY(1)}}
+@keyframes dal-wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-16deg)}}
+@keyframes dal-point{0%,100%{transform:translate(0,0)}50%{transform:translate(-3px,-2px)}}
+@keyframes dal-pop{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+@keyframes dal-dot{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes dal-z{0%{transform:translateY(4px);opacity:0}40%{opacity:1}100%{transform:translateY(-8px);opacity:0}}
+@keyframes dal-squish{0%,100%{transform:scale(1,1)}40%{transform:scale(1.07,.92)}70%{transform:scale(.97,1.04)}}
+.dal.is-enter .dal-char{animation:dal-enter 1.05s cubic-bezier(.3,1.3,.5,1) both}
+.dal.is-enter .dal-char::after{content:"";position:absolute;left:50%;bottom:2px;width:70px;height:14px;margin-left:-35px;border-radius:50%;border:2px solid rgba(143,224,173,.7);opacity:0;animation:dal-ripple .8s .5s ease-out both;pointer-events:none}
+.dal.is-enter .dal-tag{opacity:0;transition-delay:1.2s}
+@keyframes dal-enter{0%{transform:translateY(160px) scale(.85,1.15);opacity:0}40%{transform:translateY(-22px) scale(.94,1.07);opacity:1}58%{transform:translateY(0) scale(1.12,.86)}74%{transform:translateY(-6px) scale(.97,1.03)}88%{transform:translateY(0) scale(1.02,.98)}100%{transform:none}}
+@keyframes dal-ripple{0%{transform:scale(.4);opacity:.9}100%{transform:scale(1.8);opacity:0}}
+@keyframes dal-fade{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.dal *,.app-card.dal-target::after{animation:none!important;transition:none!important}.app-card.dal-target::after{box-shadow:inset 0 0 0 2px var(--ac)}.dal.is-enter{animation:dal-fade .4s ease both}.dal.is-enter .dal-char::after{display:none}}
+@media(max-width:760px){.dal{right:12px;bottom:12px}.dal-bubble{width:min(340px,calc(100vw - 100px))}.dal-char{width:66px;height:64px}}
+@media(max-width:430px){.dal{flex-direction:column;align-items:flex-end}.dal-bubble{width:calc(100vw - 24px);margin-bottom:0}}
