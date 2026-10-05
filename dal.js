@@ -736,7 +736,8 @@ var DAL_SMALL=[
  ['joke',/(^|\s)(joke|funny|nokta|نكته|ضحكني)(?=\s|$)/],
  ['good_job',/^(good job|well done|nice|great|perfect|brilliant|gamed|7elw|helw|جامد|حلو|برافو|عاش)(?=\s|$)/],
  ['wrong',/(you re wrong|youre wrong|wrong answer|not what i (asked|meant)|that s wrong|thats wrong|incorrect|ghalat|غلط|مش ده)/]];
-var DAL_CAN=/^(what can you do|help|what do you know|te2dar te3mel eh|تقدر تعمل ايه|بتعمل ايه|مساعده|\?)$/;
+/* "what can you do" and its natural variants (seen in the unanswered log: "What else can you do?") */
+var DAL_CAN=/^(help|help me|\?|مساعده|ساعدني)$|what (else )?(can|could) (you|u) do|what (else )?do (you|u) (do|know)|what are you (able|good) (to|at)|what (are|else are) your (features|skills|abilities)|how (can|could) (you|u) help|^anything else( you can do)?$|^what else$|show me what you can do|te2dar te3mel (eh|eih)|bt3ml eh|تقدر تعمل ايه|تعرف تعمل ايه|بتعمل ايه|بتعرف تعمل ايه|ايه تاني|تقدر تساعدني في ايه/;
 var DAL_ABOUTQ=/(about daltex|what is daltex|who is daltex|who are we|tell me about (the )?company|عن دالتكس|دالتكس ايه|يعني ايه دالتكس)/;
 var DAL_HISTQ=/(daltex history|history of daltex|when was daltex|founded|since when|تاريخ دالتكس|اتاسست امتي|اتأسست)/;
 var DAL_FACTQ=/(did you know|fun fact|tell me something|surprise me|interesting fact|any fact|معلومه|قولي حاجه|حاجه حلوه)/;
