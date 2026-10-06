@@ -16,7 +16,7 @@ var CEL_CSS=
  '.cel-bunting svg{display:block;width:100%;height:100%;overflow:visible}'+
  '.cel-pen{transform-box:fill-box;transform-origin:50% 0;animation:cel-sway 3s ease-in-out infinite}'+
  '@keyframes cel-sway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}'+
- '.cel-banner{position:relative;margin-top:18px;max-width:980px;border-radius:16px;overflow:hidden;padding:16px 20px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:18px;align-items:center;'+
+ '.cel-banner{position:relative;margin-top:18px;max-width:980px;border-radius:16px;overflow:hidden;padding:16px 20px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center;'+
   'background:linear-gradient(110deg,rgba(206,17,38,.34),rgba(10,18,12,.62) 38%,rgba(10,18,12,.62) 62%,rgba(20,20,20,.55));border:1px solid rgba(233,195,122,.45);box-shadow:0 18px 40px rgba(0,0,0,.35);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);animation:cel-in .7s cubic-bezier(.2,.8,.2,1) .2s both}'+
  '.cel-banner::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;background:linear-gradient(90deg,#ce1126 0 33.33%,#fff 33.33% 66.66%,#111 66.66%)}'+
  '.cel-shine{position:absolute;inset:0;pointer-events:none;background:linear-gradient(100deg,transparent 35%,rgba(233,195,122,.22) 48%,rgba(255,255,255,.1) 52%,transparent 64%);transform:translateX(-100%);animation:cel-sh 4.5s ease-in-out infinite}'+
@@ -32,7 +32,7 @@ var CEL_CSS=
  '.cel-x{position:relative;width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#f4f1e8;font-size:17px;line-height:1;cursor:pointer;pointer-events:auto}'+
  '.cel-x:hover{background:rgba(255,255,255,.16)}.cel-x:focus-visible{outline:2px solid #e9c37a;outline-offset:2px}'+
  '.cel-fw{position:absolute;inset:0;width:100%;height:100%;display:block}'+
- '@media(max-width:760px){.cel-banner{grid-template-columns:auto minmax(0,1fr);gap:12px;padding:16px 14px 14px}.cel-x{position:absolute;top:10px;right:10px;width:26px;height:26px}.cel-seal{width:46px;height:46px;align-self:start;margin-top:2px}.cel-seal b{font-size:18px}.cel-seal small{font-size:7px}.cel-en{font-size:19px;padding-right:22px}.cel-ar{font-size:14.5px;white-space:nowrap}.cel-bunting{height:30px}.cel-on .dh-body{padding-top:40px}}'+
+ '@media(max-width:760px){.cel-banner{grid-template-columns:auto minmax(0,1fr);gap:12px;padding:16px 14px 14px}.cel-x{position:absolute;top:10px;right:10px;width:26px;height:26px}.cel-seal{width:46px;height:46px;align-self:start;margin-top:2px}.cel-seal b{font-size:18px}.cel-seal small{font-size:7px}.cel-en{font-size:19px}.cel-ar{font-size:14.5px;white-space:nowrap}.cel-bunting{height:30px}.cel-on .dh-body{padding-top:40px}}'+
  '@media(max-width:359px){.cel-ar{white-space:normal}}'+
  '@media(prefers-reduced-motion:reduce){.cel-pen,.cel-shine,.cel-banner{animation:none}}';
 
@@ -65,8 +65,8 @@ function celebrateBoot(){if(document.querySelector('.cel-banner,.cel-bunting'))r
   var aur=document.querySelector('.dbd-aur');if(aur){var b=document.createElement('b');b.style.cssText='width:360px;height:360px;background:#8a1a26;top:22%;right:4%;opacity:.5';aur.appendChild(b);}
   var cs=document.getElementById('chooserStage');if(cs)cs.classList.add('cel-on');var tb=document.querySelector('#chooserStage .dh-tb');if(tb){var bu=document.createElement('div');bu.className='cel-bunting';tb.appendChild(bu);celBunting(bu);
     var rt;window.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(function(){celBunting(bu);},150);});}
-  var hero=document.querySelector('#chooserStage .dh-hero'),key='cel_closed_'+c.id;
-  if(hero&&!celGet(key)){var bn=document.createElement('div');bn.className='cel-banner';bn.setAttribute('role','note');
-    bn.innerHTML='<div class="cel-shine"></div><div class="cel-seal"><b>'+c.years+'</b><small>years</small></div><div class="cel-text"><div class="cel-en">'+c.en+'</div><div class="cel-ar" dir="rtl" lang="ar">'+c.ar+'</div><div class="cel-sub">'+c.sub+'</div></div><button type="button" class="cel-x" aria-label="Close">×</button>';
-    hero.appendChild(bn);bn.querySelector('.cel-x').onclick=function(){celSet(key,'1');bn.remove();};}
+  var hero=document.querySelector('#chooserStage .dh-hero');
+  if(hero){var bn=document.createElement('div');bn.className='cel-banner';bn.setAttribute('role','note');
+    bn.innerHTML='<div class="cel-shine"></div><div class="cel-seal"><b>'+c.years+'</b><small>years</small></div><div class="cel-text"><div class="cel-en">'+c.en+'</div><div class="cel-ar" dir="rtl" lang="ar">'+c.ar+'</div><div class="cel-sub">'+c.sub+'</div></div>';
+    hero.appendChild(bn);}
   var layer=document.querySelector('.dbd');if(layer)celFireworks(layer);}
