@@ -1,7 +1,7 @@
 /* ── Workspace celebrations: date-gated (Cairo), switch themselves off at midnight ──
    One entry per occasion. Preview any day with ?celebrate=<id>. Hook: celebrateBoot() from showChooser. */
 var CEL_DAYS=[
- {id:'oct6',from:'2026-10-06',to:'2026-10-06',years:53,
+ {id:'oct6',from:'2026-10-06',to:'2026-10-10',/* shows through Sat 10 Oct, gone Sun 11 Oct (Cairo) */years:53,
   en:'Happy <em>6th of October</em> — Armed Forces Day',ar:'كل سنة وانتم طيبين بمناسبة ذكرى انتصارات أكتوبر',sub:'6 October 1973 · from all of us at Daltex'}
 ];
 var CEL_COLS=['#ce1126','#ffffff','#e9c37a','#ce1126','#f6dca0'];
