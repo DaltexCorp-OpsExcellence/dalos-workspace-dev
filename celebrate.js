@@ -32,13 +32,13 @@ var CEL_CSS=
  '.cel-x{position:relative;width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#f4f1e8;font-size:17px;line-height:1;cursor:pointer;pointer-events:auto}'+
  '.cel-x:hover{background:rgba(255,255,255,.16)}.cel-x:focus-visible{outline:2px solid #e9c37a;outline-offset:2px}'+
  '.cel-fw{position:absolute;inset:0;width:100%;height:100%;display:block}'+
- '@media(max-width:760px){.cel-banner{grid-template-columns:auto minmax(0,1fr);gap:12px;padding:16px 14px 14px}.cel-x{position:absolute;top:10px;right:10px;width:26px;height:26px}.cel-seal{width:54px;height:54px}.cel-seal b{font-size:21px}.cel-en{font-size:19px;padding-right:22px}.cel-ar{font-size:17px}}'+
+ '@media(max-width:760px){.cel-banner{grid-template-columns:auto minmax(0,1fr);gap:12px;padding:16px 14px 14px}.cel-x{position:absolute;top:10px;right:10px;width:26px;height:26px}.cel-seal{width:54px;height:54px}.cel-seal b{font-size:21px}.cel-en{font-size:19px;padding-right:22px}.cel-ar{font-size:15px}.cel-bunting{height:30px}.cel-on .dh-body{padding-top:40px}}'+
  '@media(prefers-reduced-motion:reduce){.cel-pen,.cel-shine,.cel-banner{animation:none}}';
 
-function celBunting(host){var W=Math.max(320,host.clientWidth||window.innerWidth),n=Math.max(8,Math.round(W/46)),cols=['#ce1126','#ffffff','#1a1a1a','#e9c37a'],sag=14,p='';
+function celBunting(host){var W=Math.max(320,host.clientWidth||window.innerWidth),ph=W<760,n=Math.max(10,Math.round(W/(ph?30:46))),hw=ph?7:11,len=ph?15:24,sag=ph?6:14,cols=['#ce1126','#ffffff','#1a1a1a','#e9c37a'],p='';
   for(var i=0;i<n;i++){var x=(i+.5)*W/n,t=(x-W/2)/(W/2),y=6+sag*(1-t*t);
-    p+='<path class="cel-pen" style="animation-delay:-'+((i*.37)%3).toFixed(2)+'s" d="M'+(x-11).toFixed(1)+' '+y.toFixed(1)+' L'+(x+11).toFixed(1)+' '+y.toFixed(1)+' L'+x.toFixed(1)+' '+(y+24).toFixed(1)+' Z" fill="'+cols[i%4]+'" stroke="rgba(0,0,0,.25)" stroke-width=".6"/>';}
-  host.innerHTML='<svg viewBox="0 0 '+W+' 44" aria-hidden="true"><path d="M0 6 Q'+(W/2)+' '+(6+sag*2)+' '+W+' 6" stroke="#caa86a" stroke-width="1.4" fill="none"/>'+p+'</svg>';}
+    p+='<path class="cel-pen" style="animation-delay:-'+((i*.37)%3).toFixed(2)+'s" d="M'+(x-hw).toFixed(1)+' '+y.toFixed(1)+' L'+(x+hw).toFixed(1)+' '+y.toFixed(1)+' L'+x.toFixed(1)+' '+(y+len).toFixed(1)+' Z" fill="'+cols[i%4]+'" stroke="rgba(0,0,0,.25)" stroke-width=".6"/>';}
+  host.innerHTML='<svg viewBox="0 0 '+W+' '+(ph?30:44)+'" aria-hidden="true"><path d="M0 6 Q'+(W/2)+' '+(6+sag*2)+' '+W+' 6" stroke="#caa86a" stroke-width="1.4" fill="none"/>'+p+'</svg>';}
 
 /* fireworks on one canvas in the fixed background layer: a gold trail rises, bursts in flag colours; paused when hidden */
 function celFireworks(layer){if(celStill())return;
@@ -62,7 +62,7 @@ function celebrateBoot(){if(document.querySelector('.cel-banner,.cel-bunting'))r
   var st=document.createElement('style');st.textContent=CEL_CSS;document.head.appendChild(st);
   /* warm the aurora with a hint of red */
   var aur=document.querySelector('.dbd-aur');if(aur){var b=document.createElement('b');b.style.cssText='width:360px;height:360px;background:#8a1a26;top:22%;right:4%;opacity:.5';aur.appendChild(b);}
-  var tb=document.querySelector('#chooserStage .dh-tb');if(tb){var bu=document.createElement('div');bu.className='cel-bunting';tb.appendChild(bu);celBunting(bu);
+  var cs=document.getElementById('chooserStage');if(cs)cs.classList.add('cel-on');var tb=document.querySelector('#chooserStage .dh-tb');if(tb){var bu=document.createElement('div');bu.className='cel-bunting';tb.appendChild(bu);celBunting(bu);
     var rt;window.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(function(){celBunting(bu);},150);});}
   var hero=document.querySelector('#chooserStage .dh-hero'),key='cel_closed_'+c.id;
   if(hero&&!celGet(key)){var bn=document.createElement('div');bn.className='cel-banner';bn.setAttribute('role','note');
