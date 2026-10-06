@@ -6,9 +6,9 @@
 <title>DalOS Workspace</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700&family=Amiri:wght@700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.8"></script>
-<link rel="stylesheet" href="dal.css?v=3">
+<link rel="stylesheet" href="dal.css?v=4">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#f0ede6;--red:#b03030;--red-bg:#faeaea;--red-border:#e8a0a0;--green:#1e6b3a;--green-bg:#e8f5ec;--green-border:#8ecba4;--text:#1a1a17;--text3:#7a7668;--border:#d0cbbe;--border2:#bcb8ae;--card:#ffffff;--font-display:'DM Serif Display',serif;--font-body:'Instrument Sans',sans-serif;--font-mono:'DM Mono',monospace;--r:8px;--r2:12px}
@@ -378,7 +378,8 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
   </div>
 </div>
 
-<script src="dal.js?v=6"></script>
+<script src="dal.js?v=7"></script>
+<script src="celebrate.js?v=1"></script>
 <script>
 var DALOS_SUPABASE_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
 var DALOS_SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeWp2Z2p3dnR3a3JucXJ2cXljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NzIxNjYsImV4cCI6MjA5MDQ0ODE2Nn0.FjA75XZsp0Kx5Xam_rrnYoAHX4JHKey6vEFCH_zlMuQ';
@@ -524,6 +525,7 @@ function openNext(target,animate){
 function showChooser(u,animate){
   fillChooser(u);applyAnalyticsState();applyCommercialState(u);applyLandCloudState(u);
   try{dalBoot(u,animate);}catch(e){}
+  try{celebrateBoot();}catch(e){}
   if(animate){
     $('lcard').classList.remove('dlogin-card-in');$('lcard').classList.add('dlogin-card-exit');
     var first=((u.name||u.full_name||'').trim().split(' ')[0])||'';

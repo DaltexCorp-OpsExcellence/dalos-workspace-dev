@@ -107,7 +107,7 @@ var DAL_HISTORY=['The first Daltex packhouse opened in <b>Kafr El Zayat in 1968<
 var DAL_TIPS=['Paste any container number and I’ll trace every voyage on it.','Ask in Arabic or Franco — “ezay a3mel shakwa” works.','Drag me anywhere on the screen. Double-click me to send me home.','Press <b>/</b> anywhere on this page to ask me something.','Click a container or ID in my answers to look it up.','Ask “what’s waiting for me?” any time — I’ll list everything, not just the daily heads-up.','In Analytics, press ⌘K (Ctrl K) to jump to any dashboard.'];
 /* Holidays — dates for Hijri-calendar holidays are approximate (moon sighting); confirm each year. */
 var DAL_DAYS=[
- {from:'2026-10-06',to:'2026-10-06',en:'Happy Armed Forces Day.',ar:'كل سنة وانتم طيبين بمناسبة عيد القوات المسلحة.'},
+ {from:'2026-10-06',to:'2026-10-06',en:'Happy <b>6th of October</b>{n} — 53 years since the victory.',ar:'كل سنة وانتم طيبين بمناسبة ذكرى انتصارات أكتوبر.',acc:'flag',expr:'flag'},
  {from:'2027-01-07',to:'2027-01-07',en:'Merry Christmas to everyone celebrating today.',ar:'عيد ميلاد مجيد.'},
  {from:'2027-02-08',to:'2027-03-09',en:'Ramadan Kareem.',ar:'رمضان كريم.',acc:'crescent'},
  {from:'2027-03-10',to:'2027-03-12',en:'Eid Mubarak.',ar:'عيد مبارك، كل سنة وانتم طيبين.',acc:'lantern'},
@@ -145,6 +145,7 @@ function dalArm(p){var d=DAL_D,m=DAL_M,rest='<path d="M114 90 C122 94 124 102 12
   if(p==='point')return '<g class="dal-arm-point"><path d="M48 84 C34 82 24 72 18 60" stroke="'+d+'" stroke-width="4.2" fill="none" stroke-linecap="round"/><circle cx="16" cy="58" r="4.6" fill="'+m+'" stroke="'+d+'" stroke-width="1.4"/></g>'+rest;
   if(p==='down')return '<g class="dal-arm-point"><path d="M48 92 C36 100 30 112 30 124" stroke="'+d+'" stroke-width="4.2" fill="none" stroke-linecap="round"/><circle cx="30" cy="127" r="4.6" fill="'+m+'" stroke="'+d+'" stroke-width="1.4"/></g>'+rest;
   if(p==='wave')return '<g class="dal-arm-wave"><path d="M48 82 C38 78 32 66 34 54" stroke="'+d+'" stroke-width="4.2" fill="none" stroke-linecap="round"/><circle cx="34" cy="51" r="4.6" fill="'+m+'" stroke="'+d+'" stroke-width="1.4"/></g>'+rest;
+  if(p==='flag')return '<g class="dal-arm-wave">'+'<g class="dal-flag"><line x1="37" y1="46" x2="37" y2="6" stroke="#caa86a" stroke-width="2" stroke-linecap="round"/><g class="dal-flag-cloth"><rect x="38" y="6" width="26" height="6" fill="#ce1126"/><rect x="38" y="12" width="26" height="6" fill="#fff"/><rect x="38" y="18" width="26" height="6" fill="#111"/><circle cx="51" cy="15" r="2" fill="#c09300"/></g></g>'+'<path d="M48 80 C36 72 32 58 36 46" stroke="'+d+'" stroke-width="4.2" fill="none" stroke-linecap="round"/><circle cx="37" cy="43" r="4.6" fill="'+m+'" stroke="'+d+'" stroke-width="1.4"/></g>'+rest;
   if(p==='up')return '<g class="dal-arm-wave"><path d="M48 80 C36 72 32 58 36 46" stroke="'+d+'" stroke-width="4.2" fill="none" stroke-linecap="round"/><circle cx="37" cy="43" r="4.6" fill="'+m+'" stroke="'+d+'" stroke-width="1.4"/></g>'+rest;
   if(p==='both')return '<g class="dal-arm-wave"><path d="M48 80 C36 72 32 58 36 46" stroke="'+d+'" stroke-width="4.2" fill="none" stroke-linecap="round"/><circle cx="37" cy="43" r="4.6" fill="'+m+'" stroke="'+d+'" stroke-width="1.4"/></g><g class="dal-arm-wave2"><path d="M112 80 C124 72 128 58 124 46" stroke="'+d+'" stroke-width="4.2" fill="none" stroke-linecap="round"/><circle cx="123" cy="43" r="4.6" fill="'+m+'" stroke="'+d+'" stroke-width="1.4"/></g>';
   if(p==='chin')return '<path d="M50 96 C44 100 50 106 60 98" stroke="'+d+'" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="62" cy="96" r="4.2" fill="'+m+'" stroke="'+d+'" stroke-width="1.4"/>'+rest;
@@ -164,6 +165,7 @@ var DAL_MOUTH={smile:'<path d="M72 88 Q81 95 90 88" stroke="'+DAL_INK+'" stroke-
 function dalExpr(e){
   switch(e){
    case 'happy':return {arm:'wave',face:dalHappyEyes()+dalCheeks(),mouth:'open'};
+   case 'flag':return {arm:'flag',face:dalHappyEyes()+dalCheeks(),mouth:'big'};
    case 'celebrate':return {arm:'both',face:dalHappyEyes()+dalCheeks(),mouth:'big'};
    case 'alert':return {arm:'up',face:dalEyes({r:10.5,pr:3.8})+dalBrows('M60 55 Q69 49 78 54','M84 54 Q93 49 102 55'),mouth:'o',extra:'<g class="dal-bang"><circle cx="130" cy="30" r="13" fill="#e0bd7a"/><rect x="128" y="21" width="4" height="11" rx="2" fill="'+DAL_INK+'"/><circle cx="130" cy="37" r="2.3" fill="'+DAL_INK+'"/></g>'};
    case 'pointup':return {arm:'up',face:dalEyes({dx:0,dy:-3.6})+dalBrows('M61 57 Q69 52 77 55','M85 55 Q93 52 101 57'),mouth:'soft'};
@@ -184,7 +186,7 @@ function dalFace(e){var s=dalState.svg;if(!s)return;if(e===dalState.expr)return;
   dalState.mouth=p.mouth;requestAnimationFrame(function(){f.style.opacity='';});
   if(e==='celebrate')dalSparks();if(e==='bow'&&!dalStill())dalState.svg.animate([{transform:'rotate(0)'},{transform:'rotate(-14deg)',offset:.4},{transform:'rotate(-14deg)',offset:.7},{transform:'rotate(0)'}],{duration:1100,easing:'ease-in-out'});}
 function dalAccessory(kind){var a=dalState.svg&&dalState.svg.querySelector('.dal-acc');if(!a)return;
-  a.innerHTML=kind==='crescent'?'<path d="M121 9 a7 7 0 1 0 6 11 a5.5 5.5 0 1 1 -6 -11Z" fill="#e0bd7a"/>':kind==='lantern'?'<g class="dal-lantern"><line x1="123" y1="16" x2="123" y2="22" stroke="#caa86a" stroke-width="1.2"/><path d="M119 22 h8 l2 4 v7 l-2 3 h-8 l-2 -3 v-7 Z" fill="#e0bd7a"/><rect x="120.5" y="26" width="5" height="7" rx="1.5" fill="#fff6d8" opacity=".85"/></g>':'';}
+  a.innerHTML=kind==='crescent'?'<path d="M121 9 a7 7 0 1 0 6 11 a5.5 5.5 0 1 1 -6 -11Z" fill="#e0bd7a"/>':kind==='flag'?'<g class="dal-minflag"><line x1="123" y1="20" x2="123" y2="3" stroke="#caa86a" stroke-width="1.2" stroke-linecap="round"/><g class="dal-flag-cloth"><rect x="123.6" y="3" width="13" height="3" fill="#ce1126"/><rect x="123.6" y="6" width="13" height="3" fill="#fff"/><rect x="123.6" y="9" width="13" height="3" fill="#111"/></g></g>':kind==='lantern'?'<g class="dal-lantern"><line x1="123" y1="16" x2="123" y2="22" stroke="#caa86a" stroke-width="1.2"/><path d="M119 22 h8 l2 4 v7 l-2 3 h-8 l-2 -3 v-7 Z" fill="#e0bd7a"/><rect x="120.5" y="26" width="5" height="7" rx="1.5" fill="#fff6d8" opacity=".85"/></g>':'';}
 /* talking mouth while an answer appears */
 function dalTalk(ms){if(dalStill())return;clearInterval(dalState.talkT);var m=dalState.svg&&dalState.svg.querySelector('.dal-mouth');if(!m)return;var end=Date.now()+ms,seq=['t1','t2','smile','t1','t2'],i=0,keep=dalState.mouth;
   dalState.talkT=setInterval(function(){if(Date.now()>end){clearInterval(dalState.talkT);m.innerHTML=DAL_MOUTH[keep]||'';return;}m.innerHTML=DAL_MOUTH[seq[i++%seq.length]];},95+Math.random()*40);}
@@ -797,7 +799,7 @@ function dalDaily(nudgeP,quiet,animate){
         var pick=null;
         if(firstEver){dalPSet('intro','1');pick={intro:true};}
         else if(n)pick={nudge:n};
-        else if(hol)pick={html:(hol.en)+(dalFirst()?' '+dalEsc(dalFirst())+'.':'')+' <span dir="rtl" class="dal-ar">'+hol.ar+'</span>',expr:'happy'};
+        else if(hol)pick={html:(hol.en.indexOf('{n}')>=0?hol.en.replace('{n}',dalFirst()?', '+dalEsc(dalFirst()):''):hol.en+(dalFirst()?' '+dalEsc(dalFirst())+'.':''))+' <span dir="rtl" class="dal-ar">'+hol.ar+'</span>',expr:hol.expr||'happy'};
         else if(cd.wd==='Thu'&&cd.h>=14)pick={recap:true};
         if(!pick){/* nothing actionable: no pop-up. A fact waits inside, signalled by a small badge */
           dalState.daily='<span class="dal-ack">Did you know?</span> '+dalFactOfDay();dalBadge(1);dalSet('seen');return;}
