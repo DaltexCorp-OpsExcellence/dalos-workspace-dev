@@ -33,6 +33,7 @@ var CEL_CSS=
  '.cel-x:hover{background:rgba(255,255,255,.16)}.cel-x:focus-visible{outline:2px solid #e9c37a;outline-offset:2px}'+
  '.cel-fw{position:absolute;inset:0;width:100%;height:100%;display:block}'+
  '@media(max-width:760px){.cel-banner{grid-template-columns:auto minmax(0,1fr);gap:12px;padding:16px 14px 14px}.cel-x{position:absolute;top:10px;right:10px;width:26px;height:26px}.cel-seal{width:46px;height:46px;align-self:start;margin-top:2px}.cel-seal b{font-size:18px}.cel-seal small{font-size:7px}.cel-en{font-size:19px;padding-right:22px}.cel-ar{font-size:14.5px;white-space:nowrap}.cel-bunting{height:30px}.cel-on .dh-body{padding-top:40px}}'+
+ '@media(max-width:359px){.cel-ar{white-space:normal}}'+
  '@media(prefers-reduced-motion:reduce){.cel-pen,.cel-shine,.cel-banner{animation:none}}';
 
 function celBunting(host){var W=Math.max(320,host.clientWidth||window.innerWidth),ph=W<760,n=Math.max(10,Math.round(W/(ph?30:46))),hw=ph?7:11,len=ph?15:24,sag=ph?6:14,cols=['#ce1126','#ffffff','#1a1a1a','#e9c37a'],p='';
