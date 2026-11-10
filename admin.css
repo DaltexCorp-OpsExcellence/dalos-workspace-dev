@@ -400,6 +400,7 @@ body.ws-admin{background:#1E2723}
   /* compact single-row sticky header (~52px ≈ 8% of a 667px screen) */
   .adm-hdr{padding:0 8px;gap:6px;height:52px}
   .adm-hdr .desk,.adm-hdr .so{display:none}
+  .adm-hdr .adm-word.mob{display:block;font-size:17px;padding-left:4px}
   .adm-hdr .staging-badge{padding:3px 8px 3px 6px;letter-spacing:.1em;gap:5px}
   .adm-back{padding:0 10px}
   .adm .ws-menu{top:52px}
@@ -467,7 +468,17 @@ body.ws-admin{background:#1E2723}
 .act-p{margin:0;font-size:14px;overflow-wrap:anywhere}
 .act-meta{margin:12px 0 0;font-size:14px;color:var(--muted);overflow-wrap:anywhere}
 .act-note{margin-top:12px}
+/* App-filter hint sits under the App select without breaking the toolbar's bottom alignment */
+.act-f{row-gap:26px;margin-bottom:30px}
+.act-f .apph{position:relative}
+.fl>.act-fhint{position:absolute;top:100%;left:0;margin-top:3px;font-size:13px;line-height:1.3;font-weight:400;color:var(--muted);white-space:nowrap}
+/* disabled primary (e.g. drawer Save · No changes) reads as inert, not bright green */
+.adm .adm-btn.pri:disabled{background:var(--surface);border-color:var(--border-strong);color:var(--muted)!important;font-weight:500}
+.adm .df .adm-btn:disabled{cursor:default}
+.adm-word.mob{display:none}
 @media(max-width:760px){
+  .act-f.open .fl>.act-fhint{position:static;white-space:normal}
+  .act-f.open{row-gap:10px}
   .act-fbar{display:flex;gap:8px;margin-bottom:12px}
   .act-f{display:none}
   .act-scrim{display:block}
@@ -484,3 +495,4 @@ body.ws-admin{background:#1E2723}
   .act-ch{grid-template-columns:minmax(0,1fr);gap:2px}
   .act-ch dd{margin-bottom:8px}
 }
+@media(max-width:359px){.adm-hdr .adm-word.mob{display:none}}

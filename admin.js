@@ -219,6 +219,7 @@ function admBuild(){
   st.innerHTML=
     '<header class="adm-hdr">'+
       '<div class="adm-word desk">Dal<i>OS</i> <small>Workspace</small></div>'+
+      '<div class="adm-word mob" aria-hidden="true">Dal<i>OS</i></div>'+
       '<span class="staging-badge"><span class="staging-dot"></span>Staging</span>'+
       '<a class="adm-back" href="./" data-act="home">← Workspace</a>'+
       '<div class="hsp"></div>'+
@@ -1238,7 +1239,7 @@ var ACT_TYPE={user:'user',packhouse:'packhouse',product:'product',category:'cate
 var ACT_APPS={workspace:'Workspace',vision:'Vision',analytics:'Analytics',commercial:'Commercial',land:'Land Cloud'};
 var ACT_ACTIONS=[
   ['People',[['user.','All user changes'],['user.added','User added'],['user.role_changed','Role changed'],['user.deactivated','Deactivated'],['user.reactivated','Reactivated'],['user.edited','Details edited'],['user.deleted','User deleted'],['user.packhouses','Vision packhouses'],['user.region','Commercial regions'],['user.password_reset_prepared','Password reset email'],['user.invite_email_prepared','Welcome email']]],
-  ['Analytics access',[['analytics.','All Analytics access'],['analytics.granted','Granted'],['analytics.revoked','Removed'],['analytics.request','Requests']]],
+  ['Analytics access',[['analytics.','All Analytics access'],['analytics.granted','Granted'],['analytics.revoked','Removed'],['analytics.request','Access requests']]],
   ['Vision settings',[['packhouse.','Packhouses'],['farm.','Farms'],['product.','Products'],['category.','Categories'],['variety.','Varieties'],['class.','Classes'],['carton_type.','Carton types'],['client.','Clients'],['sub_client.','Sub-clients'],['country.','Countries'],['season.','Seasons']]]
 ];
 function actDefF(){return {q:'',action:'',actor:'',app:'',range:'all',from:'',to:'',user:''};}
@@ -1378,13 +1379,16 @@ function admActivityHTML(){
   /* filters: inline toolbar on desktop, a bottom sheet on phone (same fields) */
   h+='<div class="act-fbar"><button type="button" class="adm-btn" data-act="actsheet" data-fid="actsheet" aria-expanded="'+A.sheet+'" aria-controls="actF">Filters'+(nf?' <span class="badge">'+nf+'</span>':'')+'</button>'+(nf?'<button type="button" class="adm-btn ghost" data-act="actclear">Clear</button>':'')+'</div>';
   if(A.sheet)h+='<div class="scrim act-scrim" data-act="actsheetx"></div>';
-  var who=[['','Anyone']].concat((AD.users||[]).slice().sort(function(x,y){return (x.name||x.email).localeCompare(y.name||y.email);}).map(function(u){return [u.id,(u.name||u.email)+(u.active?'':' (inactive)')];}));
+  /* Who mirrors the "by or about" banner when opened from a user's Recent activity */
+  var who=[['','Anyone']].concat((AD.users||[]).slice().sort(function(x,y){return (x.name||x.email).localeCompare(y.name||y.email);}).map(function(u){return [u.id,(u.name||u.email)+(u.active?'':' (inactive)')+(f.user&&String(u.id)===String(f.user)?' · by or about':'')];}));
+  if(f.user&&!aUser(f.user))who.push([f.user,'This user · by or about']);
+  var appHint='App filter applies to loaded entries only.';
   var actSel='<label class="fl"><span>Action</span><select data-fid="actaction" data-ch="actaction"><option value="">Any action</option>'+ACT_ACTIONS.map(function(g){return '<optgroup label="'+aEsc(g[0])+'">'+g[1].map(function(o){return '<option value="'+aEsc(o[0])+'"'+(o[0]===f.action?' selected':'')+'>'+aEsc(o[1])+'</option>';}).join('')+'</optgroup>';}).join('')+'</select></label>';
   h+='<div class="act-f'+(A.sheet?' open':'')+'" id="actF" role="group" aria-label="Filter activity">'+
     '<div class="act-fh"><h2>Filters</h2><button type="button" class="keb" data-act="actsheetx" aria-label="Close filters" data-autofocus>✕</button></div>'+
     '<label class="fl search"><span>Search</span><input class="inp" type="search" data-fid="actq" data-in="actq" value="'+aEsc(f.q)+'" placeholder="Person or what was changed" autocomplete="off"></label>'+
-    actSel+aSel('actactor','Who',who,f.actor)+
-    aSel('actapp','App',[['','Any app']].concat(Object.keys(ACT_APPS).map(function(k){return [k,ACT_APPS[k]];})).concat([['none','Not recorded']]),f.app)+
+    actSel+aSel('actactor','Who',who,f.user||f.actor)+
+    aSel('actapp','App',[['','Any app']].concat(Object.keys(ACT_APPS).map(function(k){return [k,ACT_APPS[k]];})).concat([['none','Not recorded']]),f.app,' apph').replace(/<\/label>$/,'<span class="act-fhint">'+aEsc(appHint)+'</span></label>')+
     aSel('actrange','When',[['all','Any time'],['today','Today'],['7','Last 7 days'],['30','Last 30 days'],['custom','Custom dates…']],f.range);
   if(f.range==='custom')h+='<label class="fl"><span>From</span><input class="inp" type="date" data-fid="actfrom" data-ch="actfrom" value="'+aEsc(f.from)+'"></label><label class="fl"><span>To</span><input class="inp" type="date" data-fid="actto" data-ch="actto" value="'+aEsc(f.to)+'"></label>';
   h+='<div class="act-fa"><button type="button" class="adm-btn" data-act="actclear"'+(nf?'':' disabled')+'>Clear filters</button><button type="button" class="adm-btn pri act-done" data-act="actsheetx">Show results</button></div></div>';
@@ -1398,7 +1402,7 @@ function admActivityHTML(){
     return h+aEmpty('No activity matches these filters','Try a wider date range or clear the filters.','<button type="button" class="adm-btn" data-act="actclear">Clear filters</button>')+note;
   }
   var one=A.streams.length===1?A.streams[0]:null;
-  var foot=f.app?vis.length+' of '+A.rows.length+' loaded entries match the App filter'+(more?' · load more to search further':'')
+  var foot=f.app?vis.length+' of '+A.rows.length+' loaded entries match the App filter'+(more?' · load more to search further':'')+' · '+appHint
     :'Showing '+A.rows.length+(one&&one.total!=null?' of '+one.total:'');
   h+='<div class="card">';
   if(vis.length)h+='<ol class="act-list" aria-label="Activity, newest first">'+vis.map(actRowHTML).join('')+'</ol>';
@@ -1521,7 +1525,7 @@ function admClick(e){
     case 'actclear':AD.act.f=actDefF();actReset();return;
     case 'actsheet':AD.act.sheet=!AD.act.sheet;if(AD.act.sheet)AD._focusAct=1;break;
     case 'actsheetx':actCloseSheet();return;
-    case 'actuserx':AD.act.f.user='';actReset();return;
+    case 'actuserx':AD.act.f.user='';AD.act.f.actor='';actReset();return;
     case 'actuser':if(admChanges().length){aToast('Save or discard your changes first.',true);return;}
       AD.drawer=null;AD.dlg=null;AD.act.f=actDefF();AD.act.f.user=arg;AD.act.sheet=false;
       if(location.hash!=='#admin/activity')location.hash='admin/activity';
@@ -1538,7 +1542,8 @@ function admChange(e){
   else if(k==='uapp'){AD.f.app=v;AD.f.page=0;}
   else if(k==='ustatus'){AD.f.status=v;AD.f.page=0;}
   else if(k==='actapp')AD.act.f.app=v;
-  else if(k==='actaction'||k==='actactor'||k==='actrange'||k==='actfrom'||k==='actto'){AD.act.f[{actaction:'action',actactor:'actor',actrange:'range',actfrom:'from',actto:'to'}[k]]=v;actReset();return;}
+  else if(k==='actactor'){AD.act.f.actor=v;AD.act.f.user='';actReset();return;}
+  else if(k==='actaction'||k==='actrange'||k==='actfrom'||k==='actto'){AD.act.f[{actaction:'action',actactor:'actor',actrange:'range',actfrom:'from',actto:'to'}[k]]=v;actReset();return;}
   else if(k==='drRole'){AD.drawer.d.role=v;/* region/packhouse rows untouched on role change — same as Vision */}
   else if(k==='add-role')AD.drawer.v.role=v;
   else if(k==='add-ph')AD.drawer.v.ph=v;
