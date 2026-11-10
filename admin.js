@@ -875,9 +875,10 @@ function feNoAr(x){return !String(x.ar||'').trim();}
 function feSecMiss(kind,r){return (FE_T[kind].secAr&&feNoAr(r))||feDefRows(kind,r).some(function(d){return d.active&&feNoAr(d);});}
 function feSecDirty(kind,r){var E=AD.fe[kind];if(r.isNew||E.se[r.id])return true;return feDefRows(kind,r).some(function(d){return d.isNew||E.de[d.id];});}
 function feStats(kind,pid){var T=FE_T[kind],st={defs:0,miss:0,arch:0};
-  feRows(kind,pid).forEach(function(r){if(!r.active){st.arch++;return;}if(T.secAr&&feNoAr(r))st.miss++;
+  feRows(kind,pid).forEach(function(r){if(!r.active){st.arch++;return;} /* chip counts defects only; sections missing AR keep their dot */
     feDefRows(kind,r).forEach(function(d){if(!d.active){st.arch++;return;}st.defs++;if(feNoAr(d))st.miss++;});});return st;}
 function feVisSec(kind){var E=AD.fe[kind];return function(r){return r.active||r.gone||E.arch;};}
+function fePlDef(n){return n+' defect'+(n===1?'':'s');}
 function feVisDef(kind){var E=AD.fe[kind];return function(d){if(E.miss)return d.active&&feNoAr(d);return d.active||d.gone||E.arch;};}
 function feSelId(kind,pid,vis){var s=AD.fe[kind].sel[pid];if(vis.some(function(r){return r.id===s;}))return s;var a=vis.filter(function(r){return r.active;})[0]||vis[0];return a?a.id:'';}
 function feOpenId(kind,pid){var E=AD.fe[kind];if(E.open.hasOwnProperty(pid))return E.open[pid];var vis=feRows(kind,pid).filter(feVisSec(kind));return feSelId(kind,pid,vis);}
@@ -1059,7 +1060,7 @@ function feAddSecHTML(kind,m){var E=AD.fe[kind],T=FE_T[kind],ok=String(E.nv.secE
     (T.secAr?'<label class="fl"><span>Arabic <small class="optl">(optional)</small></span><input class="inp" dir="rtl" lang="ar" placeholder="الاسم بالعربية" data-fid="'+m+'fe-nv-sar" data-in="fenv" data-arg="'+kind+'|secAr" value="'+aEsc(E.nv.secAr||'')+'" data-enter="feaddsec" data-enter-arg="'+kind+'" autocomplete="off"></label>':'')+
     '<button type="button" class="adm-btn" data-act="feaddsec" data-arg="'+kind+'"'+(ok?'':' disabled')+'>+ Add section</button></div>';}
 function feSecLabel(kind,r){var n=feDefRows(kind,r).filter(function(d){return d.active;}).length;
-  return '<b>'+aEsc(r.en||'(no name)')+(feSecMiss(kind,r)&&r.active?' <span class="mdot" role="img" aria-label="Missing Arabic"></span>':'')+(r.isNew?' <span class="ntag">new</span>':'')+(r.gone?' <span class="atag">deleting</span>':!r.active?' <span class="atag">Archived</span>':'')+'</b>';}
+  return '<b><span class="fe-nmt" title="'+aEsc(r.en||'(no name)')+'">'+aEsc(r.en||'(no name)')+'</span>'+(feSecMiss(kind,r)&&r.active?' <span class="mdot" role="img" aria-label="Missing Arabic"></span>':'')+(r.isNew?' <span class="ntag">new</span>':'')+(r.gone?' <span class="atag">deleting</span>':!r.active?' <span class="atag">Archived</span>':'')+'</b>';}
 function feHTML(kind){
   var E=AD.fe[kind],T=FE_T[kind],S=AD.st,sp=aStProds(),pid=feProdId(kind),pn=pid?aProdName(pid):'';
   var h='<div class="fe-head"><div class="grow"><h2 class="fe-t">'+aEsc(T.label)+'</h2><p class="fe-d">'+aEsc(T.desc)+'</p></div><div class="fe-prod"><div class="lbl" id="fepl-'+kind+'">Product</div>';
@@ -1089,7 +1090,7 @@ function feHTML(kind){
       (r.active?'<span class="fe-hd" aria-hidden="true" title="Drag to reorder">⋮⋮</span>':'<span class="fe-hd" aria-hidden="true"></span>')+
       '<button type="button" class="fe-nm" aria-pressed="'+on+'" data-act="fesel" data-arg="'+kind+'|'+aEsc(r.id)+'" data-fid="fes-'+aEsc(r.id)+'">'+feSecLabel(kind,r)+
       (FE_T[kind].secAr?'<small'+(r.ar?' dir="rtl" lang="ar"':'')+'>'+(r.ar?aEsc(r.ar):'<span class="warnt">No Arabic</span>')+'</small>':'')+
-      '<small>'+feDefRows(kind,r).filter(function(d){return d.active;}).length+' defects</small></button>'+
+      '<small>'+fePlDef(feDefRows(kind,r).filter(function(d){return d.active;}).length)+'</small></button>'+
       (r.active&&!E.busy?feArrows(kind,r,act.map(function(x){return x.id;}),''):'')+'</div>';});
   if(!vis.length)L+='<p class="hint" style="margin:8px">No sections yet. Add one below.</p>';
   L+='</div>'+feAddSecHTML(kind,'')+'<p class="hint">The order here is the order on the form. Use ▲ ▼ or drag.</p></div>';
@@ -1111,7 +1112,7 @@ function feHTML(kind){
   var openId=feOpenId(kind,pid),A='';
   vis.forEach(function(r){var open=r.id===openId,n=feDefRows(kind,r).filter(function(d){return d.active;}).length;
     A+='<div class="card fe-acc'+(feSecDirty(kind,r)?' dirty':'')+'"><button type="button" class="fe-acch" aria-expanded="'+open+'" data-act="feopen" data-arg="'+kind+'|'+aEsc(r.id)+'" data-fid="mfeo-'+aEsc(r.id)+'"><span class="nm">'+feSecLabel(kind,r)+
-      '<small>'+n+' defects'+(FE_T[kind].secAr&&r.ar?' · <span dir="rtl" lang="ar">'+aEsc(r.ar)+'</span>':'')+'</small></span><span class="chev" aria-hidden="true">'+(open?'▲':'▼')+'</span></button>';
+      '<small>'+fePlDef(n)+(FE_T[kind].secAr&&r.ar?' · <span dir="rtl" lang="ar">'+aEsc(r.ar)+'</span>':'')+'</small></span><span class="chev" aria-hidden="true">'+(open?'▲':'▼')+'</span></button>';
     if(open){A+='<div class="fe-accb">'+feSecFields(kind,r,'m');
       if(r.active&&!E.busy){var ids=act.map(function(x){return x.id;});A+='<div class="fe-reorder"><span class="grow">Section order: '+(ids.indexOf(r.id)+1)+' of '+ids.length+'</span>'+feArrows(kind,r,ids,'m')+'</div>';}
       var defs=feDefRows(kind,r).filter(visDef);

@@ -377,18 +377,39 @@ body.ws-admin{background:#1E2723}
   .savebar .msg{flex:1 1 100%}
   .gadd{flex-wrap:wrap}
 }
-/* phone */
-@media(max-width:760px){
-  .adm-hdr{padding:0 10px;gap:8px;height:60px}
-  .adm-hdr .desk,.adm-hdr .so{display:none}
-  .adm-hdr .staging-badge{padding:4px 10px 4px 8px;letter-spacing:.12em}
+/* section label: name ellipsizes, status dot / tags stay on the same line */
+.fe-nm b,.fe-acch b{flex-wrap:nowrap;min-width:0;max-width:100%}
+.fe-nmt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fe-nm b>.mdot,.fe-nm b>.ntag,.fe-nm b>.atag,.fe-acch b>.mdot,.fe-acch b>.ntag,.fe-acch b>.atag{flex:none}
+/* nothing inside main may force the page wider than the viewport (320–1280) */
+.adm-main>*{max-width:100%}
+.fe-panes>*{min-width:0}
+/* tablet + phone (<900px): the 250px sidebar collapses into the pill nav strip */
+@media(max-width:899px){
   .adm-shell{grid-template-columns:minmax(0,1fr)} /* plain 1fr = minmax(auto,1fr): the nowrap section strip widened the page */
-  .adm-side{border-right:0;border-bottom:1px solid var(--border);padding:6px 10px;display:flex;gap:4px;overflow-x:auto;white-space:nowrap}
+  .adm-side{border-right:0;border-bottom:1px solid var(--border);padding:6px 10px;display:flex;gap:4px;overflow-x:auto;white-space:nowrap;min-width:0}
   .adm-side h2{display:none}
   .adm-side a,.adm-side span.dis{flex:none}
   .adm-side a[aria-current="page"],.adm-side a[aria-current="page"]:hover{box-shadow:inset 0 -3px 0 var(--primary-text)}
   .adm-side a .n{margin-left:4px}
-  .adm-main{padding:18px 14px 60px}
+  .adm-main{padding:22px 20px 70px}
+  .fe-panes{grid-template-columns:230px minmax(0,1fr)}
+}
+/* phone */
+@media(max-width:760px){
+  /* compact single-row sticky header (~52px ≈ 8% of a 667px screen) */
+  .adm-hdr{padding:0 8px;gap:6px;height:52px}
+  .adm-hdr .desk,.adm-hdr .so{display:none}
+  .adm-hdr .staging-badge{padding:3px 8px 3px 6px;letter-spacing:.1em;gap:5px}
+  .adm-back{padding:0 10px}
+  .adm .ws-menu{top:52px}
+  .adm-side{padding:4px 8px}
+  .adm-main{padding:14px 12px 60px}
+  /* collapse info banners to one compact line */
+  .banner{padding:8px 10px;gap:8px;font-size:14px;margin-bottom:8px;line-height:1.35}
+  .fe-head{margin:10px 0 8px;gap:10px}
+  .fe-t{font-size:21px}
+  .fe-d{font-size:14px}
   .adm h1.pt{font-size:27px}
   .ptrow .adm-btn.pri{width:100%}
   .chiprow{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
