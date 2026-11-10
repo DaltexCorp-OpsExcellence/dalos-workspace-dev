@@ -1078,7 +1078,7 @@ function feHTML(kind){
   var st=feStats(kind,pid);
   h+='<div class="chiprow" role="group" aria-label="Filter defects"><button type="button" class="chip" aria-pressed="'+(!E.miss)+'" data-act="feall" data-arg="'+kind+'" data-fid="fem0-'+kind+'">All defects <span class="c">'+st.defs+'</span></button>'+
     '<button type="button" class="chip warn" aria-pressed="'+E.miss+'" data-act="femiss" data-arg="'+kind+'" data-fid="fem-'+kind+'"><span class="mdot" aria-hidden="true"></span>Missing Arabic ('+st.miss+')</button>'+
-    '<button type="button" class="sw-row" role="switch" aria-checked="'+E.arch+'" data-act="fearch" data-arg="'+kind+'" data-fid="fea-'+kind+'"><span class="sw"></span>Show archived ('+st.arch+')</button></div>';
+    '<button type="button" class="sw-row" role="switch" aria-checked="'+E.arch+'" data-act="fearch" data-arg="'+kind+'" data-fid="fea-'+kind+'"><span class="sw"></span><span class="fe-arl">Show archived</span><span class="fe-ars" aria-hidden="true">Archived</span> ('+st.arch+')</button></div>';
   var errKeys=Object.keys(E.errs);
   if(errKeys.length){var ch=feChanges(kind);
     h+='<div class="ferr" role="alert"><b>Not saved — still listed as unsaved:</b><ul>'+errKeys.map(function(k){var c=ch.filter(function(x){return x.k===k;})[0];return '<li>'+aEsc((c?c.t+': ':'')+E.errs[k])+'</li>';}).join('')+'</ul></div>';}
@@ -1108,7 +1108,7 @@ function feHTML(kind){
     if(sel.active&&!sel.gone)R+=feAddDefHTML(kind,sel,'');
   }
   R+='</div>';
-  h+='<div class="fe-panes desk-only">'+L+R+'</div>';
+  h+='<div class="fe-panes desk-only fe-wide">'+L+R+'</div>';
   /* phone: accordion */
   var openId=feOpenId(kind,pid),A='';
   vis.forEach(function(r){var open=r.id===openId,n=feDefRows(kind,r).filter(function(d){return d.active;}).length;
@@ -1125,7 +1125,7 @@ function feHTML(kind){
       A+='</div>';}
     A+='</div>';});
   A+='<div class="card fe-acc" style="padding:12px">'+feAddSecHTML(kind,'m')+'</div>';
-  h+='<div class="mobile-only">'+A+'</div>';
+  h+='<div class="mobile-only fe-narrow">'+A+'</div>';
   /* save bar */
   var chs=feChanges(kind);
   if(chs.length){var shown=chs.slice(0,3).map(function(x){return x.t;});if(chs.length>3)shown.push('+'+(chs.length-3)+' more');

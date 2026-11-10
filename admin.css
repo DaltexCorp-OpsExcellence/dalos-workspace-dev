@@ -496,3 +496,52 @@ body.ws-admin{background:#1E2723}
   .act-ch dd{margin-bottom:8px}
 }
 @media(max-width:359px){.adm-hdr .adm-word.mob{display:none}}
+/* ── Overflow containment (Pixel recheck of 8d6d867) ─────────────────────────
+   Root cause: nothing stopped admin content from making the DOCUMENT wider than
+   the viewport (the Activity App hint was absolute + nowrap and stuck out past
+   the right edge; the 660px defect table sat in a 230px+pane split; the header row
+   had no shrinkable item). Once the document overflows, mobile / device-emulated
+   browsers zoom the page out to fit the widest content, so the layout is drawn
+   wider than the screen and every breakpoint (900 / 760) appears to fire late.
+   Fix: every ancestor of the main column can shrink, wide things scroll in their
+   own box, and the admin root clips any stray overflow so the page never widens. */
+body.ws-admin{overflow-x:hidden} /* fallback for browsers without overflow:clip */
+.adm{max-width:100%;overflow-x:clip} /* clip (not hidden) keeps the sticky header working */
+.adm-shell{width:100%;max-width:100%}
+.adm-shell>*,.adm-main,.adm-main>*,.adm .card,.fe-panes>*,.fe-right,.fe-secs,.fe-head>*,.ptrow>*,.toolbar>*,.act-f>*{min-width:0}
+.adm-main>*{max-width:100%}
+.adm img,.adm svg,.adm video{max-width:100%}
+.fe-tw,.mxs{max-width:100%;overflow-x:auto}
+/* defect table: actions column stays visible while the table scrolls inside its box */
+.fe-tbl th:last-child,.fe-tbl td:last-child{position:sticky;right:0;background:var(--surface);z-index:1}
+.fe-tbl th:last-child{background:var(--surface-2)}
+.fe-tbl tr.new td:last-child{background:#2F3730}
+.fe-tbl tr.arch td:last-child{background:#252F2A}
+.fe-tbl td:last-child:has(.rmenu){z-index:3} /* open row menu paints above later rows' sticky cells */
+/* Activity: the App hint wraps inside its own field instead of overflowing the row */
+.fl>.act-fhint{right:0;white-space:normal}
+.act-f{row-gap:44px;margin-bottom:46px}
+.act-f .search{min-width:0}
+/* "Show archived (n)" is a single line at every width */
+.chiprow .sw-row{flex:none;white-space:nowrap}
+.fe-ars{display:none}
+@media(max-width:899px){
+  /* forms editor: below the pill-nav switch use the stacked section cards (no wide table) */
+  .fe-wide{display:none!important}
+  .fe-narrow{display:block}
+  .act-f .fl{flex:1 1 160px;min-width:0}
+  .act-f .search{flex:1 1 100%}
+}
+@media(max-width:760px){
+  /* header: back link + avatar keep full 44px targets; wordmark/badge give way first */
+  .adm-hdr{min-width:0}
+  .adm-back,.ws-avwrap,.adm-av{flex:none}
+  .adm-back{min-height:44px;min-width:44px}
+  .adm-av{width:44px;height:44px}
+  .adm-hdr .adm-word.mob,.adm-hdr .staging-badge{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+@media(max-width:400px){
+  /* short label so the switch fits on one line next to the chips */
+  .fe-arl{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .fe-ars{display:inline}
+}
