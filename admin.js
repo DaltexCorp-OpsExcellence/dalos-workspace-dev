@@ -313,11 +313,13 @@ function admUsersHTML(){
   h+='<div class="card ucards">';
   slice.forEach(function(u){
     h+='<div class="ucard" role="button" tabindex="0" aria-label="Edit '+aEsc(u.name)+'" data-act="edit" data-arg="'+u.id+'"><span class="av" aria-hidden="true">'+aEsc(aIni(u.name))+'</span><div class="bd"><b>'+aEsc(u.name||'—')+(aIsTest(u.name,u.email)?'<span class="testtag">test</span>':'')+'</b><small class="small">'+aEsc(u.email)+'</small>'+
-      '<div class="ln">'+aRolePill(u.role)+'<span class="st'+(u.active?'':' off')+'">'+(u.active?'Active':'Inactive')+'</span><span style="color:var(--mu);font-size:14px">· '+aEsc(aDate(u.lastLogin))+'</span></div><div class="acc">'+aAccessWords(u)+'</div></div>'+admKebab(u,'m')+'</div>';
+      '<div class="ln">'+aRolePill(u.role)+'<span class="st'+(u.active?'':' off')+'">'+(u.active?'Active':'Inactive')+'</span>'+admLastLogin(u)+'</div><div class="acc">'+aAccessWords(u)+'</div></div>'+admKebab(u,'m')+'</div>';
   });
   h+=admPager(list.length,pages,hiddenTest)+'</div>';
   return h;
 }
+/* Phone card: a labelled item (no leading "·" — it wrapped to a new line and read as "· 23 Sept 2026"). */
+function admLastLogin(u){var d=aDate(u.lastLogin);return '<span class="ll">'+(d==='Never'?'Never logged in':'Last login '+aEsc(d))+'</span>';}
 function admPager(n,pages,hid){var f=AD.f,from=f.page*ADM_PAGE+1,to=Math.min(n,(f.page+1)*ADM_PAGE);
   return '<div class="tfoot"><span>Showing '+from+'–'+to+' of '+n+(hid?' · '+hid+' test account'+(hid===1?'':'s')+' hidden':'')+'</span>'+(pages>1?'<span class="pager"><button type="button" class="adm-btn" data-act="pg" data-arg="-1"'+(f.page===0?' disabled':'')+'>← Prev</button>Page '+(f.page+1)+' of '+pages+'<button type="button" class="adm-btn" data-act="pg" data-arg="1"'+(f.page>=pages-1?' disabled':'')+'>Next →</button></span>':'')+'</div>';}
 function admKebab(u,sfx){
