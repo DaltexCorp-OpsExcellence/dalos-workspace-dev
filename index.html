@@ -261,7 +261,41 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
 .app-landcloud .app-emblem svg path:nth-of-type(2){transform-box:fill-box;transform-origin:center;animation:cardl-breathe 3.2s ease-in-out infinite}
 @media(prefers-reduced-motion:reduce){.app-card .app-emblem svg *{animation:none!important}}.app-analytics.is-locked .lock-badge{border-color:rgba(106,168,255,.55);color:#6aa8ff}.app-analytics.is-locked .app-go{background:#6aa8ff;color:#0a120c;border:1px solid #6aa8ff}.app-analytics.is-locked:hover .app-go{background:#83b8ff;border-color:#83b8ff;box-shadow:0 8px 24px rgba(106,168,255,.4)}.app-analytics.is-pending .app-status{background:rgba(216,180,106,.16);color:#d8b46a;border-color:rgba(216,180,106,.34)}.app-analytics.is-pending .lock-badge{border-color:rgba(216,180,106,.5);color:#d8b46a}.app-analytics.is-pending .pend-note{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#d8b46a;padding:9px 2px}
 @media(max-width:760px){.app-grid{grid-template-columns:1fr;gap:14px}.app-card{min-height:0;padding:20px}}
+/* ── Avatar = account menu (name, email, role, ⚙ Admin, ⏻ Sign out) ── */
+button.dh-av{border:0;padding:0;font-family:var(--font-body);width:44px;height:44px;font-size:14px}
+.dh-av:focus-visible,.ws-menu [role=menuitem]:focus-visible,.app-admin:focus-visible{outline:none;box-shadow:0 0 0 3px #0a120c,0 0 0 5px #9fe3bb}
+.ws-avwrap{position:relative}
+.ws-menu{position:absolute;top:52px;right:0;z-index:100;width:280px;background:#14241a;border:1px solid rgba(255,255,255,.16);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55);padding:8px;animation:dh-rise .18s ease both;font-family:var(--font-body)}
+.ws-menu[hidden]{display:none}
+.ws-menu .who{padding:10px 12px 12px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:6px}
+.ws-menu .who b{display:block;font-size:15px;color:#f4f1e8;font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.ws-menu .who span{display:block;font-size:14px;color:#b9c7bc;overflow:hidden;text-overflow:ellipsis}
+.ws-menu .who .ws-rp{display:inline-block;margin-top:8px;padding:3px 10px;border-radius:999px;font-size:14px;font-weight:600;color:#9fe3bb;border:1px solid #3b7f58;background:rgba(59,127,88,.2)}
+.ws-menu [role=menuitem]{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:0 12px;border-radius:10px;color:#eef3ec;text-decoration:none;font-size:15px;border:0;background:none;cursor:pointer;font-family:inherit;text-align:left}
+.ws-menu [role=menuitem]:hover,.ws-menu [role=menuitem]:focus-visible{background:rgba(255,255,255,.08)}
+.ws-menu [role=menuitem] .k{margin-left:auto;font-size:14px;color:#98a99c}
+.ws-menu .ws-out{color:#f0a89a}
+.ws-menu hr{border:0;border-top:1px solid rgba(255,255,255,.1);margin:6px 0}
+@media(max-width:760px){.ws-menu{position:fixed;top:60px;left:10px;right:10px;width:auto}}
+/* ── 5th tile: Administration · Admin only (quieter: gold dashed border, no glow) ── */
+.app-admin{--ac:#e8bf6a;background:linear-gradient(162deg,rgba(70,62,40,.38),rgba(20,22,18,.6));border:1px dashed rgba(232,191,106,.45);animation-delay:.34s;grid-column:1/-1;min-height:0;flex-direction:row;align-items:center;gap:18px;padding:16px 22px}
+.app-admin .app-glow,.app-admin .app-sheen{display:none}
+.app-admin:hover{box-shadow:0 18px 44px rgba(0,0,0,.42);border-color:rgba(232,191,106,.7)}
+.app-admin .app-emblem{width:40px;height:40px;margin:0;flex:none;filter:none}
+.app-admin .adm-body{flex:1;min-width:0}
+.app-admin .app-name{font-size:24px}
+.app-admin .app-tag{font-size:14px;margin-top:4px;max-width:none}
+.app-admin .adm-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.app-admin .adm-chips span{font-size:14px;color:rgba(244,241,232,.75);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:1px 10px}
+.app-admin .adm-chips span:empty{display:none}
+.app-admin .app-foot{margin:0;padding:0;flex:none}
+.app-admin .app-go{font-size:14px;min-height:44px}
+.app-admin .app-head{flex-direction:column;align-items:flex-start;gap:6px;flex:none}
+.app-admin .app-status{font-size:14px;font-weight:600;letter-spacing:0;padding:2px 10px}
+@media(min-width:1400px){.app-grid.with-admin{grid-template-columns:repeat(5,1fr);max-width:1560px}.app-admin{grid-column:auto;flex-direction:column;align-items:stretch;min-height:clamp(220px,30vh,290px);padding:24px 24px 22px;gap:0}.app-admin .app-head{flex-direction:row;justify-content:space-between}.app-admin .app-emblem{margin:16px 0 13px}.app-admin .app-foot{margin-top:auto;padding-top:16px}}
+@media(max-width:760px){.app-admin{flex-direction:column;align-items:stretch;gap:10px}.app-admin .app-head{flex-direction:row;justify-content:space-between}}
 </style>
+<link rel="stylesheet" href="admin.css?v=1">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiMwYjE1MTAiLz48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSg3LjAwMCwzOC42MjEpIHNjYWxlKDAuMDE4OTE4LC0wLjAxODkxOCkiPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsMCkiIGQ9Ik0yMiAwVjEwTDQzIDE4UTc1IDMxIDc1IDY5VjU5MVE3NSA2MzEgNDMgNjQyTDIyIDY1MFY2NjBIMjg2UTM5MiA2NjAgNDY4LjUgNjIwLjVRNTQ1IDU4MSA1ODYuNSA1MDcuNVE2MjggNDM0IDYyOCAzMzFRNjI4IDIyNiA1ODMuMCAxNTIuMFE1MzggNzggNDU3LjUgMzkuMFEzNzcgMCAyNjggMFpNMjI1IDIwSDI2OFEzNDAgMjAgMzg0LjAgNDguNVE0MjggNzcgNDQ4LjUgMTQ0LjVRNDY5IDIxMiA0NjkgMzMwUTQ2OSA0NDggNDQ4LjUgNTE1LjVRNDI4IDU4MyAzODUuMCA2MTEuNVEzNDIgNjQwIDI3MiA2NDBIMjI1WiIgZmlsbD0iI2ZmZmZmZiIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDY0OCwwKSIgZD0iTTE2NiAtMTVRMTA4IC0xNSA2OC41IDE4LjBRMjkgNTEgMjkgMTEzUTI5IDE2MCA3Ny4wIDE5OS41UTEyNSAyMzkgMjI4IDI1OVEyNDQgMjYyIDI2NC4wIDI2NS41UTI4NCAyNjkgMzA2IDI3M1YzNTJRMzA2IDQyMCAyODkuNSA0NDcuNVEyNzMgNDc1IDIzOCA0NzVRMjE0IDQ3NSAyMDAuMCA0NTkuNVExODYgNDQ0IDE4MiA0MDZMMTgwIDM5NVExNzggMzUyIDE1OS4wIDMzMi4wUTE0MCAzMTIgMTEyIDMxMlE4NiAzMTIgNjkuMCAzMjguMFE1MiAzNDQgNTIgMzcxUTUyIDQxMiA4MC41IDQ0MC4wUTEwOSA0NjggMTU2LjAgNDgyLjBRMjAzIDQ5NiAyNTggNDk2UTM0NyA0OTYgMzk1LjUgNDUyLjVRNDQ0IDQwOSA0NDQgMzExVjkwUTQ0NCA0NSA0ODYgNDVINTA4TDUxNyAzN1E0OTggMTMgNDc1LjUgMC4wUTQ1MyAtMTMgNDEyIC0xM1EzNjggLTEzIDM0Mi41IDcuNVEzMTcgMjggMzA5IDYyUTI3OSAzMCAyNDcuNSA3LjVRMjE2IC0xNSAxNjYgLTE1Wk0yMjcgNDZRMjQ3IDQ2IDI2NC41IDU1LjVRMjgyIDY1IDMwNiA4NVYyNTNRMjk2IDI1MSAyODYuMCAyNDkuMFEyNzYgMjQ3IDI2MyAyNDVRMjE3IDIzMyAxODkuNSAyMDQuNVExNjIgMTc2IDE2MiAxMjhRMTYyIDg3IDE4MS4wIDY2LjVRMjAwIDQ2IDIyNyA0NloiIGZpbGw9IiNmZmZmZmYiLz48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMTY2LDApIiBkPSJNMjMgMFYxMEwzNSAxNFE3MSAyNiA3MSA2NFY1OTlRNzEgNjE5IDYzLjAgNjI5LjVRNTUgNjQwIDM1IDY0NUwyMiA2NDhWNjU4TDIwNSA3MDFMMjE3IDY5MkwyMTMgNTUyVjIxMFEyMTMgMTczIDIxMy41IDEzNi41UTIxNCAxMDAgMjE0IDY0UTIxNCA0NCAyMjIuMCAzMS41UTIzMCAxOSAyNDkgMTNMMjYyIDEwVjBaIiBmaWxsPSIjZmZmZmZmIi8+PHBhdGggdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTQ1MiwwKSIgZD0iTTMzNSAtMThRMjc0IC0xOCAyMTcuNSA0LjBRMTYxIDI2IDExNi41IDY5LjVRNzIgMTEzIDQ2LjAgMTc4LjBRMjAgMjQzIDIwIDMzMFEyMCA0MTYgNDYuMCA0ODEuMFE3MiA1NDYgMTE3LjAgNTg5LjVRMTYyIDYzMyAyMTguNSA2NTUuNVEyNzUgNjc4IDMzNSA2NzhRMzk2IDY3OCA0NTIuNSA2NTYuNVE1MDkgNjM1IDU1My41IDU5MS41UTU5OCA1NDggNjI0LjAgNDgyLjVRNjUwIDQxNyA2NTAgMzMwUTY1MCAyNDUgNjI0LjAgMTc5LjVRNTk4IDExNCA1NTMuNSA3MC41UTUwOSAyNyA0NTIuNSA0LjVRMzk2IC0xOCAzMzUgLTE4Wk0zMzUgM1EzOTAgMyA0MjQuMCAzMi41UTQ1OCA2MiA0NzMuNSAxMzMuNVE0ODkgMjA1IDQ4OSAzMzBRNDg5IDQ1NiA0NzMuNSA1MjcuNVE0NTggNTk5IDQyNC4wIDYyOC41UTM5MCA2NTggMzM1IDY1OFEyODEgNjU4IDI0Ny4wIDYyOC41UTIxMyA1OTkgMTk3LjUgNTI3LjVRMTgyIDQ1NiAxODIgMzMwUTE4MiAyMDUgMTk3LjUgMTMzLjVRMjEzIDYyIDI0Ny4wIDMyLjVRMjgxIDMgMzM1IDNaIiBmaWxsPSIjNmZjMTkxIi8+PHBhdGggdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjEyMiwwKSIgZD0iTTIzNyAtMThRMTgyIC0xOCAxMjUuMCAtNC41UTY4IDkgMzAgMzFMMzUgMTY3SDQ1TDc2IDEwMlE5MCA3NCAxMDYuMCA1Mi41UTEyMiAzMSAxNTAgMTlRMTcwIDkgMTg4LjUgNS41UTIwNyAyIDIzMCAyUTI5MSAyIDMyNi41IDM1LjBRMzYyIDY4IDM2MiAxMjBRMzYyIDE2OSAzMzguMCAxOTYuNVEzMTQgMjI0IDI2MSAyNTBMMjIwIDI2OFExMzQgMzA2IDg1LjUgMzU1LjVRMzcgNDA1IDM3IDQ4N1EzNyA1NDYgNjcuNSA1ODkuMFE5OCA2MzIgMTUyLjUgNjU1LjBRMjA3IDY3OCAyODAgNjc4UTMzMyA2NzggMzgwLjUgNjY0LjBRNDI4IDY1MCA0NjMgNjI2TDQ1NyA1MDZINDQ3TDQwNiA1ODFRMzg5IDYxNiAzNzIuMCA2MzAuNVEzNTUgNjQ1IDMzMyA2NTFRMzIwIDY1NSAzMDkuMCA2NTYuNVEyOTggNjU4IDI4MSA2NThRMjMwIDY1OCAxOTUuMCA2MjguNVExNjAgNTk5IDE2MCA1NDlRMTYwIDQ5OCAxODcuMCA0NjcuNVEyMTQgNDM3IDI2NiA0MTNMMzEyIDM5M1E0MDggMzUxIDQ1MC4wIDMwMy41UTQ5MiAyNTYgNDkyIDE4MVE0OTIgOTMgNDI1LjUgMzcuNVEzNTkgLTE4IDIzNyAtMThaIiBmaWxsPSIjNmZjMTkxIi8+PC9nPjwvc3ZnPg=="/>
 </head>
 <body>
@@ -327,7 +361,7 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
 <div class="dh-page" id="chooserStage" style="display:none">
   <div class="dh-tb">
     <div class="dh-tb-l"><div class="dh-logo"><span style="color:#fff">Dal</span><span style="color:#6fc191">OS</span><span style="color:#5d8a6d;font-family:var(--font-body);font-size:14px;font-weight:500;margin-left:4px">Workspace</span></div><span class="staging-badge" style="margin-left:12px"><span class="staging-dot"></span>Staging</span></div>
-    <div class="dh-tb-r"><div class="dh-pill" id="chSignoutPill">⏻ Sign out</div><div class="dh-av" id="chAv"></div></div>
+    <div class="dh-tb-r"><div class="dh-pill" id="chSignoutPill">⏻ Sign out</div><div class="ws-avwrap"><button type="button" class="dh-av" id="chAv" aria-label="Account menu"></button></div></div>
   </div>
   <div class="dh-body">
     <div class="dh-hero"><div class="dh-eyebrow"><span class="dh-eyebrow-line"></span><span id="chDate"></span></div><div class="dh-headline" id="chHeadline"></div></div>
@@ -368,6 +402,14 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
         <div class="app-tag">Every block, every season, and how the land got its shape.</div>
         <div class="app-foot"><span class="app-go">Open Land Cloud <b>→</b></span></div>
       </div>
+      <div class="app-card app-admin" id="tileAdmin" role="link" tabindex="0" aria-label="Administration, admin only. Users, roles, app access and app settings." style="display:none">
+        <div class="app-head"><span class="app-eyebrow">Workspace</span><span class="app-status">Admin only</span></div>
+        <div class="app-emblem"><svg viewBox="0 0 32 32" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="16" cy="16" r="4"/><path d="M16 3v4M16 25v4M3 16h4M25 16h4M6.8 6.8l2.8 2.8M22.4 22.4l2.8 2.8M6.8 25.2l2.8-2.8M22.4 9.6l2.8-2.8"/></svg></div>
+        <div class="adm-body"><div class="app-name">Administration</div>
+        <div class="app-tag">Users, roles, app access and app settings for all DalOS apps.</div>
+        <div class="adm-chips"><span id="admTileUsers"></span><span id="admTileReq"></span></div></div>
+        <div class="app-foot"><span class="app-go">Open Admin <b>→</b></span></div>
+      </div>
     </div>
     <div class="dh-ribbon">
       <div class="dh-ri"><span class="dh-rv" id="chName"></span><span class="dh-rl">signed in</span></div>
@@ -378,7 +420,10 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
   </div>
 </div>
 
+<div class="adm" id="adminStage" style="display:none"></div>
+
 <script src="dal.js?v=7"></script>
+<script src="admin.js?v=1"></script>
 <script src="celebrate.js?v=7"></script>
 <script>
 var DALOS_SUPABASE_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
@@ -491,7 +536,7 @@ function fillChooser(u){
   $('chDate').textContent=DAYS[now.getDay()]+' '+now.getDate()+' '+MONTHS[now.getMonth()]+' '+now.getFullYear();
   var hr=now.getHours();var g=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
   $('chHeadline').innerHTML=g+', '+first+'.<br>Choose your <span class="dh-accent">workspace</span>.';
-  $('chAv').textContent=initials;$('chName').textContent=name||'—';$('chRole').textContent=role||'—';
+  $('chAv').textContent=initials;$('chAv').setAttribute('aria-label','Account menu for '+(name||'you'));$('chName').textContent=name||'—';$('chRole').textContent=role||'—';
 }
 var BEAT_CREST='<svg viewBox="0 0 200 200" width="100%" height="100%"><defs><linearGradient id="dhgold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e0bd7a"/><stop offset="1" stop-color="#8fe0ad"/></linearGradient></defs><circle cx="100" cy="100" r="74" fill="none" stroke="url(#dhgold)" stroke-width="1.5"/><circle cx="100" cy="100" r="62" fill="none" stroke="url(#dhgold)" stroke-width="2"/><circle cx="100" cy="74" r="11" fill="url(#dhgold)"/><circle cx="82" cy="90" r="11" fill="url(#dhgold)"/><circle cx="118" cy="90" r="11" fill="url(#dhgold)"/><circle cx="90" cy="108" r="11" fill="url(#dhgold)"/><circle cx="110" cy="108" r="11" fill="url(#dhgold)"/><circle cx="100" cy="126" r="11" fill="url(#dhgold)"/><circle cx="76" cy="110" r="9" fill="url(#dhgold)" opacity=".8"/><circle cx="124" cy="110" r="9" fill="url(#dhgold)" opacity=".8"/><path d="M100 63 L100 48 M100 48 Q114 44 120 54" fill="none" stroke="url(#dhgold)" stroke-width="2.5" stroke-linecap="round"/></svg>';var BEAT_EMB_V='<svg viewBox="0 0 48 48" width="100%" height="100%" fill="none"><circle cx="24" cy="24" r="17" stroke="currentColor" stroke-width="1.4" opacity=".5"/><g fill="currentColor"><circle cx="24" cy="17" r="3.1"/><circle cx="19" cy="22" r="3.1"/><circle cx="29" cy="22" r="3.1"/><circle cx="21.5" cy="27" r="3.1"/><circle cx="26.5" cy="27" r="3.1"/><circle cx="24" cy="32" r="3.1"/></g><path d="M24 14 V11 Q27 10 29 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>';var BEAT_EMB_A='<svg viewBox="0 0 48 48" width="100%" height="100%"><g fill="currentColor"><rect x="8" y="27" width="7" height="13" rx="2"/><rect x="20" y="21" width="7" height="19" rx="2"/><rect x="32" y="14" width="7" height="26" rx="2"/></g><path d="M9 19 L20 14 L31 9 L40 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M34 5 L40 5 L40 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';var BEAT_EMB_C='<svg viewBox="0 0 64 64" width="100%" height="100%" fill="none"><path d="M11 44 L25 36 L37 40 L53 17" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/><g fill="currentColor"><circle cx="11" cy="44" r="2.9"/><circle cx="25" cy="36" r="2.9"/><circle cx="37" cy="40" r="2.9"/><circle cx="53" cy="17" r="4.4"/></g></svg>';var BEAT_EMB_LC='<svg viewBox="0 0 48 48" width="100%" height="100%" fill="none"><path d="M6 16 L20 4 L39 10 L44 27 L29 42 L10 36 Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-dasharray="5.5 4"/><path d="M14 19 L23 13 L34 16 L36 26 L27 34 L16 30 Z" fill="currentColor"/></svg>';
 function showBeat(opts){
@@ -522,8 +567,80 @@ function openNext(target,animate){
     setTimeout(function(){fire(1100);},420);
   } else {fire(900);}
 }
+/* ── Workspace user + #admin hash route ───────────────────────────────────
+   WS_USER is set once resolveUser() has run. #admin is admin-only by role
+   (cosmetic gate — RLS/RPC checks on the server stay the real gate); anyone
+   else hitting #admin is bounced to the chooser. */
+var WS_USER=null;
+function wsIsAdmin(){return !!(WS_USER&&WS_USER.role==='admin');}
+function wsRoute(){
+  if(!WS_USER)return;
+  var wantAdmin=/^#admin(\/|$)/.test(location.hash||'');
+  if(wantAdmin&&!wsIsAdmin()){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}wantAdmin=false;}
+  var cs=$('chooserStage'),as=$('adminStage');
+  if(wantAdmin){
+    cs.style.display='none';as.style.display='block';document.body.classList.add('ws-admin');
+    try{adminShow(WS_USER);}catch(e){console.error('[Workspace] admin failed',e);}
+  }else{
+    as.style.display='none';document.body.classList.remove('ws-admin');cs.style.display='flex';
+  }
+}
+window.addEventListener('hashchange',wsRoute);
+window.addEventListener('popstate',wsRoute);
+function wsGoAdmin(){if(location.hash.indexOf('#admin')===0){wsRoute();}else{location.hash='admin';}}
+function wsGoHome(){try{history.pushState(null,'',location.pathname+location.search);}catch(e){location.hash='';}wsRoute();var t=$('tileAdmin');if(t&&t.style.display!=='none')t.focus({preventScroll:true});}
+function wsSignOut(){sb.auth.signOut().then(function(){window.location.replace(location.pathname+location.search);});}
+/* Account menu on an avatar button: menu-button pattern (Enter/Space/↓ open,
+   ↑/↓/Home/End move, Esc closes and returns focus, Tab closes). */
+function wsBindAvatar(btn){
+  if(!btn||btn._wsMenu)return;btn._wsMenu=1;
+  var wrap=btn.parentNode,menu=document.createElement('div');
+  menu.className='ws-menu';menu.setAttribute('role','menu');menu.hidden=true;
+  menu.id=(btn.id||'av')+'Menu';btn.setAttribute('aria-controls',menu.id);
+  btn.setAttribute('aria-haspopup','menu');btn.setAttribute('aria-expanded','false');
+  wrap.appendChild(menu);
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function fill(){
+    var u=WS_USER||{},rl=(u.role||'').replace(/_/g,' ');rl=rl.charAt(0).toUpperCase()+rl.slice(1);
+    menu.setAttribute('aria-label','Account: '+(u.name||''));
+    menu.innerHTML='<div class="who"><b>'+esc(u.name||'—')+'</b><span>'+esc(u.email||'')+'</span><span class="ws-rp">'+esc(rl||'—')+'</span></div>'+
+      (wsIsAdmin()?'<a href="#admin" role="menuitem" tabindex="-1" data-mi="admin"><span aria-hidden="true">⚙</span> Admin<span class="k">Users, roles, access</span></a><hr>':'')+
+      '<button type="button" role="menuitem" tabindex="-1" class="ws-out" data-mi="signout"><span aria-hidden="true">⏻</span> Sign out</button>';
+  }
+  function items(){return [].slice.call(menu.querySelectorAll('[role=menuitem]'));}
+  function open(last){fill();menu.hidden=false;btn.setAttribute('aria-expanded','true');var it=items();(last?it[it.length-1]:it[0]).focus();document.addEventListener('mousedown',outside,true);}
+  function close(ret){if(menu.hidden)return;menu.hidden=true;btn.setAttribute('aria-expanded','false');document.removeEventListener('mousedown',outside,true);if(ret)btn.focus();}
+  function outside(e){if(!wrap.contains(e.target))close(false);}
+  btn.addEventListener('click',function(){if(menu.hidden)open(false);else close(true);});
+  btn.addEventListener('keydown',function(e){if(e.key==='ArrowDown'){e.preventDefault();open(false);}else if(e.key==='ArrowUp'){e.preventDefault();open(true);}});
+  menu.addEventListener('keydown',function(e){
+    var it=items(),i=it.indexOf(document.activeElement);
+    if(e.key==='ArrowDown'){e.preventDefault();it[(i+1)%it.length].focus();}
+    else if(e.key==='ArrowUp'){e.preventDefault();it[(i-1+it.length)%it.length].focus();}
+    else if(e.key==='Home'){e.preventDefault();it[0].focus();}
+    else if(e.key==='End'){e.preventDefault();it[it.length-1].focus();}
+    else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close(true);}
+    else if(e.key==='Tab'){close(false);}
+    else if(e.key===' '&&document.activeElement&&document.activeElement.tagName==='A'){e.preventDefault();document.activeElement.click();}
+  });
+  menu.addEventListener('click',function(e){
+    var it=e.target.closest('[data-mi]');if(!it)return;e.preventDefault();close(false);
+    if(it.getAttribute('data-mi')==='admin')wsGoAdmin();else wsSignOut();
+  });
+}
+function applyAdminTile(){
+  var t=$('tileAdmin'),g=document.querySelector('#chooserStage .app-grid');if(!t)return;
+  if(!wsIsAdmin()){t.style.display='none';if(g)g.classList.remove('with-admin');return;}
+  t.style.display='';if(g)g.classList.add('with-admin');
+  try{admTileInfo(function(i){
+    $('admTileUsers').textContent=i.users!=null?i.users+' active users':'';
+    $('admTileReq').textContent=i.requests?i.requests+' access request'+(i.requests===1?'':'s'):'';
+  });}catch(e){}
+}
 function showChooser(u,animate){
-  fillChooser(u);applyAnalyticsState();applyCommercialState(u);applyLandCloudState(u);
+  WS_USER=u;
+  fillChooser(u);applyAnalyticsState();applyCommercialState(u);applyLandCloudState(u);applyAdminTile();
+  try{wsBindAvatar($('chAv'));}catch(e){}
   try{dalBoot(u,animate);}catch(e){}
   try{celebrateBoot();}catch(e){}
   if(animate){
@@ -532,9 +649,9 @@ function showChooser(u,animate){
     var nm=first?', <span style="background:linear-gradient(120deg,#8fe0ad,#6aa8ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-style:italic">'+first+'</span>':'';
     setTimeout(function(){
       $('loginStage').style.display='none';
-      showBeat({accent:'#8fe0ad',line:'Welcome back'+nm,sub:'Loading your workspace',duration:1650,then:function(){var b=document.querySelector('.dbeat');if(b)b.remove();$('chooserStage').style.display='flex';}});
+      showBeat({accent:'#8fe0ad',line:'Welcome back'+nm,sub:'Loading your workspace',duration:1650,then:function(){var b=document.querySelector('.dbeat');if(b)b.remove();wsRoute();}});
     },420);
-  } else {$('loginStage').style.display='none';$('chooserStage').style.display='flex';}
+  } else {$('loginStage').style.display='none';wsRoute();}
 }
 /* Same transparent animated growth mark used by the Commercial app splash. */
 var CM_SPLASH_MARK='<svg width="100%" height="100%" viewBox="4 4 56 50" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 44 L25 36 L37 40 L53 17" stroke="#c9b6ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><g fill="#a98bff"><circle cx="11" cy="44" r="3"/><circle cx="25" cy="36" r="3"/><circle cx="37" cy="40" r="3"/></g><circle cx="53" cy="17" r="5.2" fill="#e2d7ff"/></svg>';
@@ -617,6 +734,8 @@ $('tileAnalytics').onclick=function(){var st=$('tileAnalytics').getAttribute('da
 $('tileCommercial').onclick=function(){if($('tileCommercial').getAttribute('data-state')==='granted'){openProduct('commercial');}};
 $('tileLandCloud').onclick=function(){if($('tileLandCloud').getAttribute('data-state')==='granted'){openProduct('landcloud');}};
 $('chSignoutPill').onclick=function(){sb.auth.signOut().then(function(){window.location.reload();});};
+$('tileAdmin').onclick=function(){wsGoAdmin();};
+$('tileAdmin').onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();wsGoAdmin();}};
 function resolveUser(au){
   return sb.from('users').select('*').eq('id',au.id).single().then(function(pr){
     if(pr.error||!pr.data) return {err:'Account not found. Contact your administrator.'};
