@@ -1235,12 +1235,13 @@ function admSchemaGen(){
    itself has no client access. SECURITY: every value from a row (names, labels,
    app, details JSON) is rendered through aEsc(); `app` is a display label only. */
 var ACT_PAGE=50;
-var ACT_TYPE={user:'user',packhouse:'packhouse',product:'product',category:'category',variety:'variety',sub_client:'sub-client',season:'season',client:'client',country:'country',farm:'farm',class:'class',carton_type:'carton type'};
+var ACT_TYPE={user:'user',packhouse:'packhouse',product:'product',category:'category',variety:'variety',sub_client:'sub-client',season:'season',client:'client',country:'country',farm:'farm',class:'class',carton_type:'carton type',defect:'defect',defect_section:'defect section',cqc_defect:'Client QC defect',cqc_defect_section:'Client QC defect section'};
 var ACT_APPS={workspace:'Workspace',vision:'Vision',analytics:'Analytics',commercial:'Commercial',land:'Land Cloud'};
 var ACT_ACTIONS=[
   ['People',[['user.','All user changes'],['user.added','User added'],['user.role_changed','Role changed'],['user.deactivated','Deactivated'],['user.reactivated','Reactivated'],['user.edited','Details edited'],['user.deleted','User deleted'],['user.packhouses','Vision packhouses'],['user.region','Commercial regions'],['user.password_reset_prepared','Password reset email'],['user.invite_email_prepared','Welcome email']]],
   ['Analytics access',[['analytics.','All Analytics access'],['analytics.granted','Granted'],['analytics.revoked','Removed'],['analytics.request','Access requests']]],
-  ['Vision settings',[['packhouse.','Packhouses'],['farm.','Farms'],['product.','Products'],['category.','Categories'],['variety.','Varieties'],['class.','Classes'],['carton_type.','Carton types'],['client.','Clients'],['sub_client.','Sub-clients'],['country.','Countries'],['season.','Seasons']]]
+  ['Vision settings',[['packhouse.','Packhouses'],['farm.','Farms'],['product.','Products'],['category.','Categories'],['variety.','Varieties'],['class.','Classes'],['carton_type.','Carton types'],['client.','Clients'],['sub_client.','Sub-clients'],['country.','Countries'],['season.','Seasons']]],
+  ['Forms',[['defect.','Defects'],['defect_section.','Defect sections'],['cqc_defect.','Client QC defects'],['cqc_defect_section.','Client QC defect sections']]]
 ];
 function actDefF(){return {q:'',action:'',actor:'',app:'',range:'all',from:'',to:'',user:''};}
 AD.act={rows:null,err:'',busy:false,loaded:0,f:actDefF(),streams:[],open:{},seq:0,sheet:false};
@@ -1337,7 +1338,8 @@ function actSentence(r){
     case 'analytics.request_edited':return a+' updated '+t+'’s Analytics request';
   }
   if(kind!=='user'&&ACT_TYPE.hasOwnProperty(kind)){var ty=aEsc(ACT_TYPE[kind]);
-    if(verb==='edited'&&ch.name&&ch.name.from!=null)return a+' renamed the '+ty+' '+B(actFmt('name',ch.name.from))+' to '+B(actFmt('name',ch.name.to))+(Object.keys(ch).length>1?actKeys(ch):'');
+    var nm=(ch.name&&ch.name.from!=null)?ch.name:(ch.name_en&&ch.name_en.from!=null)?ch.name_en:null;
+    if(verb==='edited'&&nm)return a+' renamed the '+ty+' '+B(actFmt('name',nm.from))+' to '+B(actFmt('name',nm.to))+(Object.keys(ch).length>1?actKeys(ch):'');
     var vb={added:'added',deleted:'deleted',edited:'edited',removed:'removed',restored:'restored',activated:'activated',deactivated:'deactivated'};
     if(vb.hasOwnProperty(verb))return a+' '+vb[verb]+' the '+ty+' '+t+(verb==='edited'?actKeys(ch):'');
   }
