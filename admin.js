@@ -59,7 +59,7 @@ var AD={
   f:{q:'',role:'',app:'',status:'active',test:false,page:0},
   rowMenu:null,drawer:null,dlg:null,
   mxApp:'all',aaQ:'',
-  st:{sub:'packhouses',q:'',test:false,pend:{},nv:{},busy:false}
+  st:{sub:'packhouses',q:'',test:false,pend:{},pendVar:{},nv:{},busy:false}
 };
 
 /* ── helpers ───────────────────────────────────────────────────────────── */
@@ -85,6 +85,18 @@ function aSame(a,b){return (a||[]).slice().sort().join('|')===(b||[]).slice().so
 function aSel(name,label,opts,val,extra){return '<label class="fl'+(extra||'')+'"><span>'+label+'</span><select data-fid="'+name+'" data-ch="'+name+'">'+opts.map(function(o){return '<option value="'+aEsc(o[0])+'"'+(String(o[0])===String(val)?' selected':'')+'>'+aEsc(o[1])+'</option>';}).join('')+'</select></label>';}
 function aSwitch(act,on,label){return '<button type="button" class="sw-row" role="switch" aria-checked="'+(on?'true':'false')+'" data-act="'+act+'" data-fid="'+act+'"><span class="sw"></span>'+label+'</button>';}
 function aLoading(n,label){var h='<div class="card" aria-busy="true">';for(var i=0;i<(n||4);i++)h+='<div class="skrow"><span class="c"></span><div style="flex:1"><div class="sk" style="width:'+(45+i*7%30)+'%"></div><div class="sk" style="width:'+(70+i*5%20)+'%"></div></div></div>';return h+'<div class="tfoot" role="status">'+aEsc(label||'Loading…')+'</div></div>';}
+/* Users loading state: skeleton rows shaped like the table (desktop) / cards (phone). */
+function aUsersSkel(){var w=[[52,70,38,64],[44,62,46,58],[58,74,34,70],[40,56,42,52],[50,68,40,66],[46,60,36,60]],t='',m='';
+  w.forEach(function(x){
+    t+='<div class="skrow skt"><span class="c"></span><div style="flex:0 0 24%"><div class="sk" style="width:'+x[0]+'%"></div><div class="sk" style="width:'+x[1]+'%"></div></div><div style="flex:0 0 14%"><div class="sk pill"></div></div><div style="flex:1"><div class="sk" style="width:'+x[3]+'%"></div><div class="sk" style="width:'+x[2]+'%"></div></div><div style="flex:0 0 10%"><div class="sk" style="width:80%"></div></div></div>';
+    m+='<div class="skrow skm"><span class="c"></span><div style="flex:1"><div class="sk" style="width:'+x[0]+'%"></div><div class="sk" style="width:'+x[1]+'%"></div><div class="sk pill"></div><div class="sk" style="width:'+x[3]+'%"></div></div></div>';});
+  return '<div class="card uskel" aria-busy="true"><div class="utable">'+t+'</div><div class="ucards">'+m+'</div><div class="tfoot" role="status">Loading users…</div></div>';}
+/* Every write ends in .select(): an error OR zero returned rows is a failure (RLS can
+   silently match nothing and PostgREST still answers 200). Returns the rows or throws. */
+function aChk(r,what){var pre=what?what+': ':'';
+  if(r&&r.error)throw new Error(pre+(r.error.message||'error'));
+  if(!r||!r.data||(Array.isArray(r.data)&&!r.data.length))throw new Error(pre+'nothing was changed (0 rows) — you may not have permission, or it was already changed. Reload and try again.');
+  return r.data;}
 function aEmpty(title,sub,btn){return '<div class="card empty"><div class="big" aria-hidden="true">⌕</div><b>'+aEsc(title)+'</b>'+(sub?'<p>'+aEsc(sub)+'</p>':'')+(btn||'')+'</div>';}
 function aError(title,act){return '<div class="card empty err" role="alert"><div class="big" aria-hidden="true">⚠</div><b>'+aEsc(title)+'</b><p>Check your connection and try again. Nothing was changed.</p><button type="button" class="adm-btn pri" data-act="'+act+'">↻ Retry</button></div>';}
 
@@ -97,7 +109,7 @@ function admLoadUsers(){
     AD.users=(res.data||[]).map(function(u){
       var isAll=!!ADM_ALL_PH[u.role];
       var phs=isAll?['All']:(u.user_packhouse_access&&u.user_packhouse_access.length?u.user_packhouse_access.map(function(p){return p.packhouse_id;}):['All']);
-      return {id:u.id,name:u.full_name||'',email:u.email||'',role:u.role,packhouses:phs,active:u.active,lastLogin:u.last_login||'Never'};
+      return {id:u.id,name:u.full_name||'',email:u.email||'',role:u.role,packhouses:phs,phRows:(u.user_packhouse_access||[]).length,active:u.active,lastLogin:u.last_login||'Never'};
     });
   }).catch(function(e){AD.usersErr=(e&&e.message)||'Load failed';if(!AD.users)AD.users=null;}).then(admRender);
 }
@@ -220,6 +232,8 @@ function admBuild(){
   st.addEventListener('input',admInput);
   st.addEventListener('keydown',admKey);
   document.addEventListener('mousedown',function(e){if(AD.rowMenu&&!e.target.closest('.kw')){AD.rowMenu=null;admRender();}},true);
+  /* staged settings / drawer edits: warn before the tab is closed or reloaded */
+  window.addEventListener('beforeunload',function(e){if(aStPendCount()||admChanges().length){e.preventDefault();e.returnValue='';}});
   var av=document.getElementById('admAv');
   try{wsBindAvatar(av);}catch(e){}
   AD.built=true;
@@ -267,7 +281,7 @@ function admUsersHTML(){
   var f=AD.f,h='<div class="crumb">Workspace / Admin</div>'+
     '<div class="ptrow"><div><h1 class="pt">Users</h1><p class="sub">Who can sign in to DalOS, their role, and which apps and sites they can see.</p></div><div class="hsp"></div><button type="button" class="adm-btn pri" data-act="adduser">+ Add user</button></div>';
   if(AD.users===null&&AD.usersErr)return h+aError("Couldn't load users",'retry-users');
-  if(AD.users===null)return h+aLoading(5,'Loading users…');
+  if(AD.users===null)return h+aUsersSkel();
   var base=AD.users.filter(function(u){return f.test||!aIsTest(u.name,u.email);});
   var act=base.filter(function(u){return u.active;}),inact=base.length-act.length;
   h+='<div class="chiprow" data-sk="chips" role="group" aria-label="Filter by role">';
@@ -305,7 +319,7 @@ function admUsersHTML(){
   return h;
 }
 function admPager(n,pages,hid){var f=AD.f,from=f.page*ADM_PAGE+1,to=Math.min(n,(f.page+1)*ADM_PAGE);
-  return '<div class="tfoot"><span>Showing '+from+'–'+to+' of '+n+(hid?' · '+hid+' test account'+(hid===1?'':'s')+' hidden':'')+'</span>'+(pages>1?'<span style="display:flex;gap:8px;align-items:center"><button type="button" class="adm-btn" data-act="pg" data-arg="-1"'+(f.page===0?' disabled':'')+'>← Prev</button>Page '+(f.page+1)+' of '+pages+'<button type="button" class="adm-btn" data-act="pg" data-arg="1"'+(f.page>=pages-1?' disabled':'')+'>Next →</button></span>':'')+'</div>';}
+  return '<div class="tfoot"><span>Showing '+from+'–'+to+' of '+n+(hid?' · '+hid+' test account'+(hid===1?'':'s')+' hidden':'')+'</span>'+(pages>1?'<span class="pager"><button type="button" class="adm-btn" data-act="pg" data-arg="-1"'+(f.page===0?' disabled':'')+'>← Prev</button>Page '+(f.page+1)+' of '+pages+'<button type="button" class="adm-btn" data-act="pg" data-arg="1"'+(f.page>=pages-1?' disabled':'')+'>Next →</button></span>':'')+'</div>';}
 function admKebab(u,sfx){
   var id=u.id+(sfx||''),open=AD.rowMenu===id,self=AD.me&&u.id===AD.me.id;
   var h='<div class="kw"><button type="button" class="keb" aria-haspopup="menu" aria-expanded="'+open+'" aria-label="Actions for '+aEsc(u.name)+'" data-act="kebab" data-arg="'+id+'" data-fid="keb-'+id+'">⋯</button>';
@@ -328,7 +342,7 @@ function admOpenEdit(uid){
 }
 function admChanges(){var D=AD.drawer;if(!D||D.mode!=='edit')return [];var o=D.orig,d=D.d,c=[];
   if(o.role!==d.role)c.push('Role: '+aRoleLabel(o.role)+' → '+aRoleLabel(d.role));
-  if(!aSame(o.phs,d.phs))c.push('Vision packhouses');
+  if(!aSame(o.phs,d.phs)||D.forcePh)c.push('Vision packhouses');
   if(!aSame(o.regs,d.regs))c.push('Commercial regions');
   var mo=o.mgrs.filter(function(x){return d.regs.indexOf(x)>=0;}),md=d.mgrs.filter(function(x){return d.regs.indexOf(x)>=0;});
   if(!aSame(mo,md))c.push('Region managers');
@@ -427,37 +441,55 @@ function admDraftReg(rid){var d=AD.drawer.d,cur=d.regs.slice(),all=AD.regions.ma
   else d.regs=cur.indexOf(rid)>=0?cur.filter(function(x){return x!==rid;}):cur.concat([rid]);
   d.mgrs=d.mgrs.filter(function(x){return d.regs.indexOf(x)>=0;});}
 function admSaveDrawer(){
-  var D=AD.drawer,uid=D.uid,o=D.orig,d=D.d,errs=[];
+  var D=AD.drawer,uid=D.uid,o=D.orig,d=D.d,errs=[],phLost=false,u0=aUser(uid)||{};
   D.busy=true;D.err='';admRender();
+  /* one write; resolves rows, or null after recording the failure (error or < min rows) */
+  function step(what,q,min){return Promise.resolve(q).then(function(r){
+      if(r&&r.error){errs.push(what+': '+r.error.message);return null;}
+      var n=r&&Array.isArray(r.data)?r.data.length:0;if(min==null)min=1;
+      if(n<min){errs.push(what+': nothing was changed ('+n+' row'+(n===1?'':'s')+' returned — you may not have permission)');return null;}
+      return r.data||[];
+    },function(e){errs.push(what+': '+((e&&e.message)||'network error'));return null;});}
   var p=Promise.resolve();
-  if(o.role!==d.role)p=p.then(function(){return sb.from('users').update({role:d.role}).eq('id',uid).then(function(r){if(r.error)errs.push('Role: '+r.error.message);});});
-  if(!aSame(o.phs,d.phs))p=p.then(function(){
-    var newPhs=d.phs,isAll=!!ADM_ALL_PH[d.role];
-    return sb.from('user_packhouse_access').delete().eq('user_id',uid).then(function(dr){
-      if(dr.error){errs.push('Packhouses: '+dr.error.message);return;}
+  if(o.role!==d.role)p=p.then(function(){return step('Role',sb.from('users').update({role:d.role}).eq('id',uid).select('id'));});
+  if(!aSame(o.phs,d.phs)||D.forcePh)p=p.then(function(){
+    var newPhs=d.phs,isAll=!!ADM_ALL_PH[d.role],had=u0.phRows||0;
+    /* Vision's delete-then-insert. A user with no rows legitimately deletes 0. */
+    return step('Packhouses',sb.from('user_packhouse_access').delete().eq('user_id',uid).select('packhouse_id'),had?1:0).then(function(del){
+      if(del===null)return; /* nothing deleted → old list still in place */
+      var ins=null,want=0;
       if(newPhs[0]==='All'&&!isAll){
-        return sb.from('packhouses').select('id').eq('active',true).then(function(pr){
-          if(pr.error||!pr.data){errs.push('Packhouses: '+(pr.error?pr.error.message:'no packhouses'));return;}
-          return sb.from('user_packhouse_access').insert(pr.data.map(function(x){return {user_id:uid,packhouse_id:x.id};})).then(function(r){if(r.error)errs.push('Packhouses: '+r.error.message);});
+        ins=sb.from('packhouses').select('id').eq('active',true).then(function(pr){
+          if(pr.error||!pr.data||!pr.data.length)return {error:{message:pr.error?pr.error.message:'no active packhouses found'}};
+          want=pr.data.length;
+          return sb.from('user_packhouse_access').insert(pr.data.map(function(x){return {user_id:uid,packhouse_id:x.id};})).select('packhouse_id');
         });
       }else if(newPhs[0]!=='All'){
-        return sb.from('user_packhouse_access').insert(newPhs.map(function(x){return {user_id:uid,packhouse_id:x};})).then(function(r){if(r.error)errs.push('Packhouses: '+r.error.message);});
+        want=newPhs.length;
+        ins=sb.from('user_packhouse_access').insert(newPhs.map(function(x){return {user_id:uid,packhouse_id:x};})).select('packhouse_id');
       }
+      if(!ins)return;
+      return step('Packhouses',ins,1).then(function(rows){if(rows===null||rows.length<want)phLost=true;});
     });
   });
   var toAdd=d.regs.filter(function(x){return o.regs.indexOf(x)<0;}),toDel=o.regs.filter(function(x){return d.regs.indexOf(x)<0;});
-  if(toAdd.length)p=p.then(function(){return sb.from('region_members').upsert(toAdd.map(function(rid){return {user_id:uid,region_id:rid,is_manager:false};}),{onConflict:'user_id,region_id'}).then(function(r){if(r.error)errs.push('Regions: '+r.error.message);});});
-  if(toDel.length)p=p.then(function(){return Promise.all(toDel.map(function(rid){return sb.from('region_members').delete().eq('user_id',uid).eq('region_id',rid).then(function(r){if(r&&r.error)errs.push('Regions: '+r.error.message);});}));});
+  if(toAdd.length)p=p.then(function(){return step('Regions',sb.from('region_members').upsert(toAdd.map(function(rid){return {user_id:uid,region_id:rid,is_manager:false};}),{onConflict:'user_id,region_id'}).select('region_id'),toAdd.length);});
+  if(toDel.length)p=p.then(function(){return Promise.all(toDel.map(function(rid){return step('Regions',sb.from('region_members').delete().eq('user_id',uid).eq('region_id',rid).select('region_id'));}));});
   var mgrUpd=d.regs.filter(function(rid){var want=d.mgrs.indexOf(rid)>=0,had=o.regs.indexOf(rid)>=0&&o.mgrs.indexOf(rid)>=0;return want!==had;});
-  if(mgrUpd.length)p=p.then(function(){return Promise.all(mgrUpd.map(function(rid){return sb.from('region_members').update({is_manager:d.mgrs.indexOf(rid)>=0}).eq('user_id',uid).eq('region_id',rid).then(function(r){if(r&&r.error)errs.push('Manager: '+r.error.message);});}));});
+  if(mgrUpd.length)p=p.then(function(){return Promise.all(mgrUpd.map(function(rid){return step('Region manager',sb.from('region_members').update({is_manager:d.mgrs.indexOf(rid)>=0}).eq('user_id',uid).eq('region_id',rid).select('region_id'));}));});
   p.catch(function(e){errs.push((e&&e.message)||'Network error');}).then(function(){
     return Promise.all([admLoadUsers(),admLoadRegions()]);
   }).then(function(){
-    if(!AD.drawer)return;
-    if(errs.length){AD.drawer.busy=false;AD.drawer.err='Some changes were not saved: '+errs.join(' · ');
-      var u=aUser(uid);if(u){AD.drawer.orig={role:u.role,phs:u.packhouses.slice(),regs:(AD.regMem[uid]||[]).slice(),mgrs:(AD.regMgr[uid]||[]).slice()};}
-      admRender();}
-    else{admCloseDrawer(true);aToast('Saved');}
+    if(!AD.drawer||AD.drawer.uid!==uid)return;
+    var D2=AD.drawer;
+    if(errs.length){D2.busy=false;
+      var nm=(aUser(uid)||u0).name||'This user';
+      D2.err=(phLost?'⚠ '+nm+' now has NO Vision packhouses: the old list was removed but the new one did not save. Check the packhouses below and press Save again. ':'')+'Not saved: '+errs.join(' · ');
+      D2.forcePh=phLost;
+      var u=aUser(uid);if(u){D2.orig={role:u.role,phs:u.packhouses.slice(),regs:(AD.regMem[uid]||[]).slice(),mgrs:(AD.regMgr[uid]||[]).slice()};}
+      admRender();
+      aToast(phLost?nm+' has no packhouses now. Re-save their packhouses.':'Some changes were not saved.',true);}
+    else{D2.forcePh=false;admCloseDrawer(true);aToast('Saved');}
   });
 }
 /* Vision addUser — create-user edge function */
@@ -586,10 +618,14 @@ function aSubCount(k){var c=AD.cfg;if(!c)return '';
   if(k==='varieties')return Object.keys(c.varietiesFull).reduce(function(a,p){return a+c.varietiesFull[p].length;},0);
   if(k==='subClients')return c.subClients.length;if(k==='seasons')return c.seasons.length;
   if(c[k]&&c[k].length!=null)return c[k].length;return '';}
-function aStPendCount(){var n=0;Object.keys(AD.st.pend).forEach(function(id){var p=AD.st.pend[id];if(p.crops)n++;if(p.prefix!=null)n++;});return n;}
+/* Staged (not yet saved) settings edits: S.pend[packhouseId]={crops,prefix}, S.pendVar[varietyId]=categoryId|'' */
+function aStPendCount(){var n=0;Object.keys(AD.st.pend).forEach(function(id){var p=AD.st.pend[id];if(p.crops)n++;if(p.prefix!=null)n++;});return n+Object.keys(AD.st.pendVar).length;}
+function aVarById(id){var vf=AD.cfg?AD.cfg.varietiesFull:{},r=null;Object.keys(vf).some(function(p){return vf[p].some(function(v){if(v.id===id){r=v;return true;}return false;});});return r;}
+/* products shown as chips/sections: active, and test products only with "Show test data" */
+function aStProds(){var S=AD.st,hid=0;var out=AD.cfg.products.filter(function(p){if(p.active===false)return false;if(!S.test&&aIsTest(p.name)){hid++;return false;}return true;});out.hidden=hid;return out;}
 function admSettingsHTML(){
   var S=AD.st,sub=S.sub,grp=aGroupOf(sub),label=(grp.items.filter(function(x){return x[0]===sub;})[0]||[])[1];
-  var h='<div class="crumb">Workspace / Admin / App settings</div><h1 class="pt">Vision settings</h1><p class="sub">Vision master data: sites, catalogue, clients, seasons and forms. Changes apply to Vision straight away.</p>';
+  var h='<div class="crumb">Workspace / Admin / App settings</div><h1 class="pt">Vision settings</h1><p class="sub">Vision master data: sites, catalogue, clients, seasons and forms. Packhouse products, pallet prefixes and variety categories are kept as unsaved changes until you press Save. Adding or removing an item is saved when you confirm it.</p>';
   var jump='<label class="fl"><span>Jump to section</span><select data-fid="stjump" data-ch="stjump">'+ADM_ST_GROUPS.map(function(g){return '<optgroup label="'+aEsc(g.label)+'">'+g.items.map(function(it){return '<option value="'+it[0]+'"'+(it[0]===sub?' selected':'')+'>'+aEsc(g.label+' › '+it[1])+'</option>';}).join('')+'</optgroup>';}).join('')+'</select></label>';
   h+='<div class="desk-only" style="margin-bottom:16px"><div class="tabs" role="tablist" aria-label="Vision settings group">'+ADM_ST_GROUPS.map(function(g){return '<button type="button" role="tab" aria-selected="'+(g===grp)+'" data-act="stgrp" data-arg="'+g.k+'" data-fid="stg-'+g.k+'">'+aEsc(g.label)+' · '+g.items.length+'</button>';}).join('')+'</div>'+
     '<div class="subtabs" role="tablist" aria-label="'+aEsc(grp.label)+'">'+grp.items.map(function(it){var n=aSubCount(it[0]);return '<button type="button" role="tab" aria-selected="'+(it[0]===sub)+'" data-act="stsub" data-arg="'+it[0]+'" data-fid="sts-'+it[0]+'">'+aEsc(it[1])+(n!==''?' <span>'+n+'</span>':'')+'</button>';}).join('')+'<span class="jump">'+jump+'</span></div></div>';
@@ -605,7 +641,8 @@ function admSettingsHTML(){
   if(pc){var desc=[];Object.keys(S.pend).forEach(function(id){var p=S.pend[id],ph=AD.cfg.packhouses.filter(function(x){return x.id===id;})[0];if(!ph)return;var bits=[];
       if(p.crops){var on=p.crops.filter(function(c){return ph.crops.indexOf(c)<0;}),off=ph.crops.filter(function(c){return p.crops.indexOf(c)<0;});on.forEach(function(c){bits.push(aProdName(c)+' on');});off.forEach(function(c){bits.push(aProdName(c)+' off');});}
       if(p.prefix!=null)bits.push('prefix “'+p.prefix+'”');desc.push(ph.name+': '+bits.join(', '));});
-    h+='<div class="savebar" role="region" aria-label="Unsaved changes"><span class="msg" role="status"><b>'+pc+' unsaved change'+(pc===1?'':'s')+'</b> · '+aEsc(desc.join(' · '))+'</span><button type="button" class="adm-btn" data-act="stdiscard"'+(S.busy?' disabled':'')+'>Discard</button><button type="button" class="adm-btn pri" data-act="stsave"'+(S.busy?' disabled':'')+'>'+(S.busy?'Saving…':'Save')+'</button></div>';}
+    Object.keys(S.pendVar).forEach(function(vid){var v=aVarById(vid);desc.push((v?v.name:vid)+': category changed');});
+    h+='<div class="savebar" role="region" aria-label="Unsaved changes"><span class="msg" role="status"><b>'+pc+' unsaved change'+(pc===1?'':'s')+'</b><small>'+aEsc(desc.join(' · '))+'</small></span><button type="button" class="adm-btn" data-act="stdiscard"'+(S.busy?' disabled':'')+'>Discard</button><button type="button" class="adm-btn pri" data-act="stsave"'+(S.busy?' disabled':'')+'>'+(S.busy?'Saving…':'Save')+'</button></div>';}
   return h;
 }
 function aProdName(id){var p=AD.cfg.products.filter(function(x){return x.id===id;})[0];return p?p.name:id;}
@@ -623,7 +660,7 @@ function admStBody(sub){
     h+='<details class="card" style="margin-bottom:12px"'+(S.nv.phOpen?' open':'')+'><summary style="min-height:44px;display:flex;align-items:center;padding:0 16px;cursor:pointer;font-weight:600" data-act="phopen">+ Add packhouse</summary><div style="padding:0 16px 16px">'+
       '<div class="fld"><label for="nPh">Packhouse name</label><input id="nPh" class="inp" data-fid="nPh" data-in="nv:ph" value="'+aEsc(aNv('ph'))+'" placeholder="e.g. Nour Packhouse"></div>'+
       '<div class="fld"><span class="lbl">Colour</span><div role="group" aria-label="Colour">'+['#2b5c3f','#5a3a8a','#8a3a1a','#1a4a7a','#7a5010','#8a1a1a','#2a5a8a','#4a7a2a'].map(function(x,i){return '<button type="button" class="swatch" style="background:'+x+'" aria-pressed="'+(col===x)+'" aria-label="Colour '+(i+1)+'" data-act="phcol" data-arg="'+x+'"></button>';}).join('')+'</div></div>'+
-      '<div class="fld"><span class="lbl">Products handled</span><div class="chips">'+c.products.filter(function(p){return p.active!==false;}).map(function(p){var on=np.indexOf(p.id)>=0;return '<button type="button" class="pc" aria-pressed="'+on+'" data-act="phnewprod" data-arg="'+aEsc(p.id)+'">'+aEsc(p.name)+'</button>';}).join('')+'</div>'+(np.length?'':'<p class="hint" style="color:var(--go)">Select at least one product.</p>')+'</div>'+
+      '<div class="fld"><span class="lbl">Products handled</span><div class="chips">'+aStProds().map(function(p){var on=np.indexOf(p.id)>=0;return '<button type="button" class="pc" aria-pressed="'+on+'" data-act="phnewprod" data-arg="'+aEsc(p.id)+'">'+aEsc(p.name)+'</button>';}).join('')+'</div>'+(np.length?'':'<p class="hint" style="color:var(--go)">Select at least one product.</p>')+'</div>'+
       '<button type="button" class="adm-btn pri" data-act="phadd"'+(aNv('ph').trim()&&np.length?'':' disabled')+'>+ Add packhouse</button></div></details>';
     var phs=aStFilter(c.packhouses);
     if(!phs.length)h+=aEmpty('No packhouses match','');
@@ -632,11 +669,12 @@ function admStBody(sub){
       h+='<div class="card ph"><div class="phh"><span class="sq" style="background:'+aEsc(ph.color)+'" aria-hidden="true">'+aEsc(ph.initials)+'</span><div><b>'+aEsc(ph.name)+'</b><small class="small">code '+aEsc(ph.id)+'</small></div><div class="hsp"></div><span class="st">Active</span>'+
         '<button type="button" class="adm-btn red" data-act="phdeact" data-arg="'+aEsc(ph.id)+'">Deactivate…</button></div>'+
         '<div class="row"><div><label class="lab" for="pfx-'+aEsc(ph.id)+'" style="display:block">Pallet prefix (grapes)</label><input id="pfx-'+aEsc(ph.id)+'" class="inp pfx'+(pend.prefix!=null?' chg':'')+'" data-fid="pfx-'+aEsc(ph.id)+'" data-in="pfx" data-arg="'+aEsc(ph.id)+'" value="'+aEsc(pfx)+'" placeholder="e.g. NK-"></div>'+
-        '<div style="flex:1;min-width:240px"><div class="lab">Products handled · tap to turn on or off</div><div class="chips" role="group" aria-label="Products at '+aEsc(ph.name)+'">'+
-        c.products.filter(function(p){return p.active!==false;}).map(function(p){var on=crops.indexOf(p.id)>=0,was=ph.crops.indexOf(p.id)>=0;return '<button type="button" class="pc'+(on!==was?' chg':'')+'" aria-pressed="'+on+'" data-act="phprod" data-arg="'+aEsc(ph.id)+'|'+aEsc(p.id)+'" data-fid="pp-'+aEsc(ph.id)+'-'+aEsc(p.id)+'">'+aEsc(p.name)+'</button>';}).join('')+
+        '<div style="flex:1 1 240px;min-width:0"><div class="lab">Products handled · tap to change, then Save</div><div class="chips" role="group" aria-label="Products at '+aEsc(ph.name)+'">'+
+        aStProds().map(function(p){var on=crops.indexOf(p.id)>=0,was=ph.crops.indexOf(p.id)>=0;return '<button type="button" class="pc'+(on!==was?' chg':'')+'" aria-pressed="'+on+'" data-act="phprod" data-arg="'+aEsc(ph.id)+'|'+aEsc(p.id)+'" data-fid="pp-'+aEsc(ph.id)+'-'+aEsc(p.id)+'">'+aEsc(p.name)+'</button>';}).join('')+
         '</div></div></div></div>';
     });
-    h+=aHidHint(phs.hidden)+'<p class="hint">Inactive packhouses are not listed here (same as Vision Admin). Reactivate them in Vision for now.</p>';
+    var hp=aStProds().hidden;
+    h+=aHidHint(phs.hidden)+(hp&&!S.test?'<p class="hint">'+hp+' test product'+(hp===1?' is':'s are')+' hidden from the product chips. Turn on “Show test data” to see '+(hp===1?'it':'them')+'.</p>':'')+'<p class="hint">Inactive packhouses are not listed here (same as Vision Admin). Reactivate them in Vision for now.</p>';
     return h;
   }
   if(ADM_LIST_TABLE[sub]){
@@ -651,27 +689,29 @@ function admStBody(sub){
     h+='<div class="card list">'+ps.map(function(p){return '<div class="li"><span class="dot" style="background:'+aEsc(p.color)+';width:14px;height:14px;border-radius:50%"></span><div class="grow"><b>'+aEsc(p.name)+'</b></div><span style="font-family:var(--font-mono)">'+aEsc(p.prefix)+'</span><span class="st">Active</span></div>';}).join('')+'</div>';
     return h+aHidHint(ps.hidden);
   }
-  var prodOpts=c.products.map(function(p){return [p.id,p.name];}),selP=S.nv.selProd||(c.products[0]&&c.products[0].id)||'';
+  var sp=aStProds(),prodOpts=sp.map(function(p){return [p.id,p.name];}),selP=(S.nv.selProd&&sp.some(function(p){return p.id===S.nv.selProd;}))?S.nv.selProd:((sp[0]&&sp[0].id)||'');
+  var hidProdHint=sp.hidden&&!S.test?'<p class="hint">'+sp.hidden+' test product'+(sp.hidden===1?' is':'s are')+' hidden. Turn on “Show test data” to see '+(sp.hidden===1?'it':'them')+'.</p>':'';
   if(sub==='categories'){
     h+='<div class="card addrow">'+aSel('selProd','Product',prodOpts,selP)+'<label class="fl"><span>Category name</span><input class="inp" data-fid="nv-cat" data-in="nv:cat" value="'+aEsc(aNv('cat'))+'" placeholder="e.g. Orange, Lemon" data-enter="catadd"></label><button type="button" class="adm-btn pri" data-act="catadd"'+(aNv('cat').trim()&&selP?'':' disabled')+'>+ Add</button></div>';
     var hid=0;
-    c.products.forEach(function(p){var cats=aStFilter(c.categories[p.id]||[]);hid+=cats.hidden;
+    sp.forEach(function(p){var cats=aStFilter(c.categories[p.id]||[]);hid+=cats.hidden;
       h+='<div class="card ph"><div class="grph">'+aEsc(p.name)+' · '+cats.length+'</div>'+(cats.length?'<div class="chips">'+cats.map(function(ct){return tag(ct.name,'catrm',ct.id);}).join('')+'</div>':'<p class="hint">No categories yet.</p>')+'</div>';});
-    return h+aHidHint(hid);
+    return h+aHidHint(hid)+hidProdHint;
   }
   if(sub==='varieties'){
     var cOpts=[['','— None —']].concat((c.categories[selP]||[]).map(function(x){return [x.id,x.name];}));
     h+='<div class="card addrow">'+aSel('selProd','Product',prodOpts,selP)+aSel('selCat','Category (optional)',cOpts,S.nv.selCat||'')+'<label class="fl"><span>Variety name</span><input class="inp" data-fid="nv-var" data-in="nv:var" value="'+aEsc(aNv('var'))+'" placeholder="e.g. Navel" data-enter="varadd"></label><button type="button" class="adm-btn pri" data-act="varadd"'+(aNv('var').trim()&&selP?'':' disabled')+'>+ Add</button></div>';
     var hidV=0;
-    c.products.forEach(function(p){
+    sp.forEach(function(p){
       var vs=aStFilter(c.varietiesFull[p.id]||[]),cats=c.categories[p.id]||[];hidV+=vs.hidden;
       h+='<div class="card ph"><div class="grph">'+aEsc(p.name)+' · '+vs.length+'</div>';
       if(!vs.length){h+='<p class="hint">No varieties.</p></div>';return;}
       h+='<div class="chips">'+vs.map(function(v){
-        var sel=cats.length?'<label class="sr" for="vc-'+aEsc(v.id)+'">Category for '+aEsc(v.name)+'</label><select id="vc-'+aEsc(v.id)+'" data-fid="vc-'+aEsc(v.id)+'" data-ch="varcat" data-arg="'+aEsc(v.id)+'"><option value="">— no category —</option>'+cats.map(function(ct){return '<option value="'+aEsc(ct.id)+'"'+(ct.id===v.categoryId?' selected':'')+'>'+aEsc(ct.name)+'</option>';}).join('')+'</select>':'';
+        var pv=S.pendVar.hasOwnProperty(v.id),cur=pv?S.pendVar[v.id]:(v.categoryId||'');
+        var sel=cats.length?'<label class="sr" for="vc-'+aEsc(v.id)+'">Category for '+aEsc(v.name)+'</label><select id="vc-'+aEsc(v.id)+'"'+(pv?' class="chg"':'')+' data-fid="vc-'+aEsc(v.id)+'" data-ch="varcat" data-arg="'+aEsc(v.id)+'"><option value="">— no category —</option>'+cats.map(function(ct){return '<option value="'+aEsc(ct.id)+'"'+(ct.id===cur?' selected':'')+'>'+aEsc(ct.name)+'</option>';}).join('')+'</select>':'';
         return tag(v.name,'varrm',v.id,sel);}).join('')+'</div></div>';
     });
-    return h+aHidHint(hidV);
+    return h+aHidHint(hidV)+hidProdHint;
   }
   if(sub==='subClients'){
     var parents=admSubParents(),pc=S.nv.subParent||'';
@@ -691,24 +731,51 @@ function admStBody(sub){
   return h;
 }
 /* Vision AdminCenter writes for settings */
-function aStDone(r,msg){if(r&&r.error){aToast('Save failed: '+r.error.message,true);return false;}aToast(msg||'Saved');admLoadCfg();return true;}
+/* r = response of a write that ended in .select(); error or 0 rows → red toast, no reload */
+function aStDone(r,msg){try{aChk(r);}catch(e){aToast('Save failed: '+e.message,true);return false;}aToast(msg||'Saved');admLoadCfg();return true;}
+function aStFail(e){aToast('Save failed: '+((e&&e.message)||'network error'),true);}
+function aSelProd(){var sp=aStProds(),s=AD.st.nv.selProd;return (s&&sp.some(function(p){return p.id===s;}))?s:((sp[0]&&sp[0].id)||'');}
 function admListAdd(field){
   var val=aNv(field).trim(),table=ADM_LIST_TABLE[field];if(!val||!table)return;
   AD.st.nv[field]='';admRender();
-  sb.from(table).select('id,active').eq('name',val).limit(1).then(function(ex){
-    if(ex.data&&ex.data.length>0)return sb.from(table).update({active:true}).eq('id',ex.data[0].id).then(function(r){aStDone(r,'Reactivated “'+val+'”');});
-    return sb.from(table).insert([{name:val,active:true}]).then(function(r){aStDone(r,'Added “'+val+'”');});
-  });
+  Promise.resolve(sb.from(table).select('id,active').eq('name',val).limit(1)).then(function(ex){
+    if(ex.error)throw ex.error;
+    if(ex.data&&ex.data.length>0)return sb.from(table).update({active:true}).eq('id',ex.data[0].id).select('id').then(function(r){aStDone(r,'Reactivated “'+val+'”');});
+    return sb.from(table).insert([{name:val,active:true}]).select('id').then(function(r){aStDone(r,'Added “'+val+'”');});
+  }).catch(aStFail);
 }
+/* Save bar: one update per staged packhouse / variety. Successful ones leave the
+   staged list; failed ones stay staged so Save can be pressed again. */
 function admStSave(){
   var S=AD.st,jobs=[];S.busy=true;admRender();
-  Object.keys(S.pend).forEach(function(id){var p=S.pend[id];
-    if(p.prefix!=null)jobs.push(sb.from('packhouses').update({pallet_prefix:p.prefix||null}).eq('id',id).then(function(r){return r.error?id+': '+r.error.message:null;}));
-    if(p.crops)jobs.push(sb.from('packhouses').update({product_ids:p.crops}).eq('id',id).then(function(r){return r.error?id+': '+r.error.message:null;}));
+  Object.keys(S.pend).forEach(function(id){var p=S.pend[id],upd={};
+    if(p.prefix!=null)upd.pallet_prefix=p.prefix||null;
+    if(p.crops)upd.product_ids=p.crops;
+    jobs.push(Promise.resolve(sb.from('packhouses').update(upd).eq('id',id).select('id')).then(function(r){aChk(r,id);delete S.pend[id];return null;}).catch(function(e){return (e&&e.message)||id+': network error';}));
+  });
+  Object.keys(S.pendVar).forEach(function(vid){var v=aVarById(vid),nm=v?v.name:vid;
+    jobs.push(Promise.resolve(sb.from('varieties').update({category_id:S.pendVar[vid]||null}).eq('id',vid).select('id')).then(function(r){aChk(r,nm);delete S.pendVar[vid];return null;}).catch(function(e){return (e&&e.message)||nm+': network error';}));
   });
   Promise.all(jobs).then(function(res){var errs=res.filter(Boolean);S.busy=false;
-    if(errs.length)aToast('Some changes failed: '+errs.join(' · '),true);else{S.pend={};aToast('Saved');}
-    admLoadCfg();}).catch(function(){S.busy=false;aToast('Network error — not saved.',true);admRender();});
+    if(errs.length)aToast('Not saved: '+errs.join(' · ')+(aStPendCount()?' — still listed as unsaved.':''),true);else aToast('Saved');
+    return admLoadCfg();});
+}
+/* Make one season active in ONE statement: a single bulk upsert (INSERT … ON CONFLICT (id)
+   DO UPDATE) over every season row, active = (name === chosen). Postgres applies it
+   atomically, so there is never a moment with zero (or two) active seasons. Reads the
+   current list first so a season added meanwhile is included. */
+function admSetSeason(name){
+  return Promise.resolve(sb.from('seasons').select('id,name,active')).then(function(rs){
+    if(rs.error)throw rs.error;var all=rs.data||[];
+    var hits=all.filter(function(s){return s.name===name;}).length;
+    if(hits!==1)throw new Error(hits?'There are '+hits+' seasons named “'+name+'”. Fix that in Vision first — nothing was changed.':'Season “'+name+'” no longer exists. Reload.');
+    var rows=all.filter(function(s){return s.name!==name;}).map(function(s){return {id:s.id,name:s.name,active:false};})
+      .concat(all.filter(function(s){return s.name===name;}).map(function(s){return {id:s.id,name:s.name,active:true};}));
+    return sb.from('seasons').upsert(rows,{onConflict:'id'}).select('id,name,active');
+  }).then(function(r){var out=aChk(r,'Season');
+    var on=out.filter(function(s){return s.active;});
+    if(on.length!==1||on[0].name!==name)throw new Error('Season: the database did not confirm '+name+' as the only active season. Reload and check.');
+    aToast(name+' is now the active season');return admLoadCfg();});
 }
 
 /* ── events ────────────────────────────────────────────────────────────── */
@@ -742,8 +809,8 @@ function admClick(e){
     case 'dmgr':var d=AD.drawer.d;d.mgrs=d.mgrs.indexOf(arg)>=0?d.mgrs.filter(function(x){return x!==arg;}):d.mgrs.concat([arg]);break;
     case 'deact':var u=aUser(arg);if(!u)return;AD.rowMenu=null;
       admConfirm({title:'Deactivate '+(u.name.split(' ')[0]||'user')+'?',text:'They won’t be able to sign in to any DalOS app.',list:['They can’t sign in until an admin reactivates them.','Their inspections and records stay as they are.','Their Analytics access is kept but unused while inactive.'],ok:'Deactivate',danger:true,
-        run:function(){return Promise.resolve(sb.from('users').update({active:false}).eq('id',arg)).then(function(r){if(r.error)throw r.error;return admLoadUsers();}).then(function(){aToast(u.name+' deactivated');});}});return;
-    case 'react':AD.rowMenu=null;Promise.resolve(sb.from('users').update({active:true}).eq('id',arg)).then(function(r){if(r.error)aToast('Could not reactivate: '+r.error.message,true);else aToast('Reactivated');admLoadUsers();});break;
+        run:function(){return Promise.resolve(sb.from('users').update({active:false}).eq('id',arg).select('id,active')).then(function(r){var rows=aChk(r);if(rows[0].active!==false)throw new Error('The database did not confirm the change. Reload and check.');return admLoadUsers();}).then(function(){aToast(u.name+' deactivated');});}});return;
+    case 'react':AD.rowMenu=null;Promise.resolve(sb.from('users').update({active:true}).eq('id',arg).select('id,active')).then(function(r){aChk(r);aToast('Reactivated');}).catch(function(e){aToast('Could not reactivate: '+((e&&e.message)||'network error'),true);}).then(admLoadUsers);break;
     case 'resetpw':AD.rowMenu=null;AD.dlg={kind:'resetpw',uid:arg,pw:'',ret:document.activeElement};AD._focusLayer=1;break;
     case 'rpwgo':var ru=aUser(AD.dlg.uid)||{};admEmailDlg('reset',{name:ru.name,email:ru.email,pw:AD.dlg.pw});return;
     case 'copymail':var g=AD.dlg;try{navigator.clipboard.writeText('To: '+g.to+'\nSubject: '+g.subj+'\n\n'+g.body).then(function(){aToast('Copied');},function(){aToast('Copy failed — select the text instead.',true);});}catch(_){aToast('Copy failed — select the text instead.',true);}return;
@@ -763,40 +830,40 @@ function admClick(e){
       var base=name.replace(/\s+/g,'_'),ex=c.packhouses.map(function(p){return p.id;}),id=base,n2=2;while(ex.indexOf(id)>=0){id=base+'_'+n2;n2++;}
       var col=S.nv.phCol||'#2b5c3f',ini=name.split(' ').map(function(w){return w[0]||'';}).slice(0,2).join('').toUpperCase()||name.slice(0,2).toUpperCase();
       S.nv.ph='';S.nv.phProds=[];S.nv.phCol='#2b5c3f';
-      sb.from('packhouses').insert([{id:id,name:name,color:col,initials:ini,active:true,product_ids:prods}]).then(function(r){aStDone(r,'Packhouse added');});})();break;
+      Promise.resolve(sb.from('packhouses').insert([{id:id,name:name,color:col,initials:ini,active:true,product_ids:prods}]).select('id')).then(function(r){aStDone(r,'Packhouse added');}).catch(aStFail);})();break;
     case 'phprod':(function(){var bits=arg.split('|'),id=bits[0],pid=bits[1],ph=c.packhouses.filter(function(x){return x.id===id;})[0];if(!ph)return;
       var p=S.pend[id]||{},cr=(p.crops||ph.crops).slice(),i=cr.indexOf(pid);if(i>=0)cr.splice(i,1);else cr.push(pid);
       if(aSame(cr,ph.crops))delete p.crops;else p.crops=cr;if(p.crops||p.prefix!=null)S.pend[id]=p;else delete S.pend[id];})();break;
-    case 'stdiscard':S.pend={};break;
+    case 'stdiscard':S.pend={};S.pendVar={};break;
     case 'stsave':admStSave();return;
     case 'phdeact':var dph=c.packhouses.filter(function(x){return x.id===arg;})[0];if(!dph)return;
       admConfirm({title:'Deactivate '+dph.name+'?',text:'It will disappear from Vision forms and from this list.',list:['Existing inspections keep it.','You can reactivate it from Vision Admin.'],ok:'Deactivate',danger:true,
-        run:function(){return Promise.resolve(sb.from('packhouses').update({active:false}).eq('id',arg)).then(function(r){if(r.error)throw r.error;delete S.pend[arg];aToast(dph.name+' deactivated');return admLoadCfg();});}});return;
+        run:function(){return Promise.resolve(sb.from('packhouses').update({active:false}).eq('id',arg).select('id')).then(function(r){aChk(r);delete S.pend[arg];aToast(dph.name+' deactivated');return admLoadCfg();});}});return;
     case 'listadd':admListAdd(S.sub);return;
     case 'listrm':var table=ADM_LIST_TABLE[S.sub];
       admConfirm({title:'Remove “'+arg+'”?',text:'It will no longer be offered in Vision forms. Existing records keep it.',ok:'Remove',danger:true,
-        run:function(){return Promise.resolve(sb.from(table).update({active:false}).eq('name',arg)).then(function(r){if(r.error)throw r.error;aStDone(r,'Removed');});}});return;
+        run:function(){return Promise.resolve(sb.from(table).update({active:false}).eq('name',arg).select('id')).then(function(r){aChk(r);aStDone(r,'Removed');});}});return;
     case 'prodadd':(function(){var nm=aNv('prod').trim(),pfx=aNv('prodpfx').trim().toUpperCase();if(!nm)return;
       if(pfx.length<2||pfx.length>3){aToast('Prefix must be 2–3 letters',true);return;}
       if(c.products.some(function(p){return String(p.prefix).toUpperCase()===pfx;})){aToast('Prefix “'+pfx+'” is already in use',true);return;}
       S.nv.prod='';S.nv.prodpfx='';
-      sb.from('products').insert([{name:nm,inspection_prefix:pfx,color:'#2b5c3f',active:true}]).then(function(r){aStDone(r,'Product added');});})();break;
-    case 'catadd':(function(){var nm=aNv('cat').trim(),pid=S.nv.selProd||(c.products[0]&&c.products[0].id);if(!nm||!pid)return;S.nv.cat='';
-      sb.from('categories').insert([{product_id:pid,name:nm,active:true}]).select().then(function(r){aStDone(r,'Category added');});})();break;
+      Promise.resolve(sb.from('products').insert([{name:nm,inspection_prefix:pfx,color:'#2b5c3f',active:true}]).select('id')).then(function(r){aStDone(r,'Product added');}).catch(aStFail);})();break;
+    case 'catadd':(function(){var nm=aNv('cat').trim(),pid=aSelProd();if(!nm||!pid)return;S.nv.cat='';
+      Promise.resolve(sb.from('categories').insert([{product_id:pid,name:nm,active:true}]).select('id')).then(function(r){aStDone(r,'Category added');}).catch(aStFail);})();break;
     case 'catrm':admConfirm({title:'Remove this category?',text:'Varieties in it become uncategorised.',ok:'Remove',danger:true,
-      run:function(){return Promise.resolve(sb.from('categories').update({active:false}).eq('id',arg)).then(function(r){if(r.error)throw r.error;aStDone(r,'Removed');});}});return;
-    case 'varadd':(function(){var nm=aNv('var').trim(),pid=S.nv.selProd||(c.products[0]&&c.products[0].id),cat=S.nv.selCat||null;if(!nm||!pid)return;S.nv.var='';
-      sb.auth.getUser().then(function(ur){var row={name:nm,product_id:pid,active:true};if(cat)row.category_id=cat;if(ur.data&&ur.data.user)row.created_by=ur.data.user.id;return sb.from('varieties').insert([row]);}).then(function(r){aStDone(r,'Variety added');});})();break;
+      run:function(){return Promise.resolve(sb.from('categories').update({active:false}).eq('id',arg).select('id')).then(function(r){aChk(r);aStDone(r,'Removed');});}});return;
+    case 'varadd':(function(){var nm=aNv('var').trim(),pid=aSelProd(),cat=S.nv.selCat||null;if(!nm||!pid)return;S.nv.var='';
+      Promise.resolve(sb.auth.getUser()).then(function(ur){var row={name:nm,product_id:pid,active:true};if(cat)row.category_id=cat;if(ur.data&&ur.data.user)row.created_by=ur.data.user.id;return sb.from('varieties').insert([row]).select('id');}).then(function(r){aStDone(r,'Variety added');}).catch(aStFail);})();break;
     case 'varrm':admConfirm({title:'Remove this variety?',text:'It will no longer be offered in Vision forms. Existing inspections keep it.',ok:'Remove',danger:true,
-      run:function(){return Promise.resolve(sb.from('varieties').update({active:false}).eq('id',arg)).then(function(r){if(r.error)throw r.error;aStDone(r,'Removed');});}});return;
+      run:function(){return Promise.resolve(sb.from('varieties').update({active:false}).eq('id',arg).select('id')).then(function(r){aChk(r);delete S.pendVar[arg];aStDone(r,'Removed');});}});return;
     case 'subadd':(function(){var nm=aNv('sub').trim(),cid=c.clientsIdMap[S.nv.subParent];if(!nm)return;if(!cid){aToast('Select a client first',true);return;}S.nv.sub='';
-      sb.from('sub_clients').insert([{name:nm,client_id:cid,active:true}]).select().single().then(function(r){aStDone(r,'Sub-client added');});})();break;
+      Promise.resolve(sb.from('sub_clients').insert([{name:nm,client_id:cid,active:true}]).select('id')).then(function(r){aStDone(r,'Sub-client added');}).catch(aStFail);})();break;
     case 'subrm':admConfirm({title:'Remove this sub-client?',text:'It will no longer be offered in Vision forms.',ok:'Remove',danger:true,
-      run:function(){return Promise.resolve(sb.from('sub_clients').update({active:false}).eq('id',arg)).then(function(r){if(r.error)throw r.error;aStDone(r,'Removed');});}});return;
+      run:function(){return Promise.resolve(sb.from('sub_clients').update({active:false}).eq('id',arg).select('id')).then(function(r){aChk(r);aStDone(r,'Removed');});}});return;
     case 'seasonadd':(function(){var nm=aNv('season').trim();if(!nm)return;S.nv.season='';
-      sb.from('seasons').insert([{name:nm,active:false}]).then(function(r){aStDone(r,'Season added');});})();break;
+      Promise.resolve(sb.from('seasons').insert([{name:nm,active:false}]).select('id')).then(function(r){aStDone(r,'Season added');}).catch(aStFail);})();break;
     case 'seasonact':admConfirm({title:'Make '+arg+' the active season?',text:'This switches the active season for every Vision user.',list:['New inspections are saved to this season.','Vision users see it after their next reload.'],ok:'Set as active',danger:true,
-      run:function(){return Promise.resolve(sb.from('seasons').update({active:false}).neq('name',arg)).then(function(){return sb.from('seasons').update({active:true}).eq('name',arg);}).then(function(r){if(r.error)throw r.error;aStDone(r,arg+' is now the active season');});}});return;
+      run:function(){return admSetSeason(arg);}});return;
     default:return;
   }
   admRender();
@@ -813,7 +880,8 @@ function admChange(e){
   else if(k==='selProd'){S.nv.selProd=v;S.nv.selCat='';}
   else if(k==='selCat')S.nv.selCat=v;
   else if(k==='subParent')S.nv.subParent=v;
-  else if(k==='varcat'){var vid=t.getAttribute('data-arg');sb.from('varieties').update({category_id:v||null}).eq('id',vid).then(function(r){aStDone(r,'Category updated');});return;}
+  else if(k==='varcat'){var vid=t.getAttribute('data-arg'),vv=aVarById(vid);/* staged; saved from the Save bar */
+    if(vv&&(vv.categoryId||'')===v)delete S.pendVar[vid];else S.pendVar[vid]=v;}
   admRender();
 }
 function admInput(e){

@@ -1,8 +1,16 @@
 /* ── Dal — DalOS assistant (v3) ── */
 .dal{position:fixed;right:22px;bottom:68px;z-index:60;display:flex;align-items:flex-end;gap:10px;font-family:var(--font-body);transition:opacity .4s}
 .dal.is-hidden{opacity:0;pointer-events:none}
+/* The .dal box spans the (hidden) bubble even when minimised — it must never eat clicks
+   meant for the tiles under it. Only Dal himself and the open bubble take the pointer. */
+.dal{pointer-events:none}
+.dal-char,.dal:not(.is-min):not(.is-hidden) .dal-bubble{pointer-events:auto}
+/* Account menu open → step Dal aside so he can't cover it (he sits above the page layer). */
+body.ws-menu-open .dal{visibility:hidden;pointer-events:none}
+/* Leave room under the tile grid so the last tile can always scroll clear of Dal. */
+body .dh-body{padding-bottom:176px}
 .dal-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-.dal-bubble{width:368px;background:rgba(16,28,20,.95);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(143,224,173,.3);border-radius:20px 20px 6px 20px;padding:14px 16px 12px;box-shadow:0 24px 60px rgba(0,0,0,.55);transform-origin:100% 100%;transition:opacity .25s,transform .35s cubic-bezier(.3,1.3,.5,1);margin-bottom:30px;color:#dbe6de;max-height:calc(100vh - 110px);display:flex;flex-direction:column}
+.dal-bubble{width:368px;background:rgba(16,28,20,.95);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(143,224,173,.3);border-radius:20px 20px 6px 20px;padding:14px 16px 12px;box-shadow:0 24px 60px rgba(0,0,0,.55);transform-origin:100% 100%;transition:opacity .25s,transform .35s cubic-bezier(.3,1.3,.5,1);margin-bottom:30px;color:#dbe6de;max-height:calc(100vh - 180px);display:flex;flex-direction:column}
 .dal.is-min .dal-bubble{opacity:0;transform:scale(.6) translate(20px,20px);pointer-events:none;visibility:hidden}
 .dal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-shrink:0}
 .dal-head b{font-family:var(--font-display);font-weight:400;font-size:20px;color:#f4f1e8;margin-right:8px}
@@ -117,7 +125,7 @@
 @keyframes dal-fade{from{opacity:0}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){.dal *,.app-card.dal-target::after{animation:none!important;transition:none!important}.app-card.dal-target::after{box-shadow:inset 0 0 0 2px var(--ac)}.dal.is-enter{animation:dal-fade .4s ease both}.dal.is-enter .dal-char::after{display:none}}
 /* phones: bigger targets, no zoom-on-focus, bubble becomes a bottom sheet */
-@media(max-width:760px){.dal{right:12px;bottom:12px}.dal-bubble{width:min(360px,calc(100vw - 100px))}.dal-char{width:66px;height:64px}
+@media(max-width:760px){.dal{right:12px;bottom:12px}.dal-bubble{width:min(360px,calc(100vw - 100px));max-height:calc(100vh - 120px);max-height:calc(100dvh - 120px)}body .dh-body{padding-bottom:104px}.dal-char{width:66px;height:64px}
  .dal-in{font-size:16px}.dal-x,.dal-help,.dal-ask button{width:44px;height:44px}.dal-sugg-list button,.dal-choice,.dal-pri{min-height:44px}}
 @media(max-width:430px){.dal{flex-direction:column;align-items:flex-end}
  .dal-bubble{position:fixed;left:0;right:0;bottom:0;width:auto;margin:0;border-radius:18px 18px 0 0;max-height:85dvh;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));transform-origin:50% 100%}
