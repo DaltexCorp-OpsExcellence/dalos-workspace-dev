@@ -243,7 +243,7 @@ function admBuild(){
   try{wsBindAvatar(av);}catch(e){}
   AD.built=true;
 }
-function admSecFromHash(){var m=/^#admin(?:\/([a-z]+))?/.exec(location.hash||'');var s=m&&m[1];return {users:1,perms:1,access:1,settings:1}[s]?s:'users';}
+function admSecFromHash(){var m=/^#admin(?:\/([a-z]+))?/.exec(location.hash||'');var s=m&&m[1];return {users:1,perms:1,access:1,activity:1,settings:1}[s]?s:'users';}
 /* Called by index.html wsRoute() whenever #admin is shown for an admin. */
 function adminShow(user){
   AD.me=user;
@@ -252,6 +252,8 @@ function adminShow(user){
   var prev=AD.sec;AD.sec=admSecFromHash();
   if(AD.users===null&&!AD._usersStarted){AD._usersStarted=1;admLoadUsers();admLoadRegions();admLoadAA();admLoadCfg();}
   AD.rowMenu=null;
+  if(AD.sec!=='activity')AD.act.sheet=false;
+  if(AD.sec==='activity'&&!AD.act.loaded)actReset();
   admRender();
   if(prev!==AD.sec){var mm=document.getElementById('admMain');if(mm)mm.focus({preventScroll:true});window.scrollTo(0,0);}
 }
@@ -265,19 +267,21 @@ function admRender(){
     L('users','👤','Users','<span class="n">'+nUsers+'</span>')+
     L('perms','▦','Roles &amp; permissions','<span class="n">'+Object.keys(ADM_ROLES).length+'</span>')+
     L('access','🔑','App access',pend?'<span class="badge" style="margin-left:auto" aria-label="'+pend+' waiting">'+pend+'</span>':'')+
-    '<span class="dis" aria-disabled="true"><span aria-hidden="true">🕘</span> Activity log <span class="later">coming later</span></span>'+
+    L('activity','🕘','Activity log')+
     '<h2>App settings</h2>'+
     L('settings','❦','Vision','<span class="n">'+ADM_ST_GROUPS.reduce(function(a,g){return a+g.items.length;},0)+'</span>'));
   var h='';
   if(AD.sec==='users')h=admUsersHTML();
   else if(AD.sec==='perms')h=admPermsHTML();
   else if(AD.sec==='access')h=admAccessHTML();
+  else if(AD.sec==='activity')h=admActivityHTML();
   else h=admSettingsHTML();
   aPaint(document.getElementById('admMain'),h);
   aPaint(document.getElementById('admLayer'),admLayerHTML());
   var mx=document.querySelector('#admMain .mx');
   if(mx){var sc=mx.querySelector('.mxs');var upd=function(){mx.classList.toggle('atend',sc.scrollLeft+sc.clientWidth>=sc.scrollWidth-4);};sc.addEventListener('scroll',upd,{passive:true});upd();}
   var rm=document.querySelector('#admMain .rmenu');if(rm&&AD._focusMenu){AD._focusMenu=0;var b=rm.querySelector('button');if(b)b.focus();}
+  if(AD._focusAct){AD._focusAct=0;var af=document.querySelector('#admMain .act-f.open [data-autofocus]');if(af&&af.offsetParent)af.focus();}
   if(AD._focusLayer){AD._focusLayer=0;var lf=document.querySelector('#admLayer [data-autofocus]');if(lf)lf.focus();}
 }
 
@@ -408,6 +412,7 @@ function admDrawerHTML(){
   h+='<div class="fld"><span class="lbl">Status</span><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span class="st'+(u.active?'':' off')+'">'+(u.active?'Active':'Inactive')+'</span>'+
     (self?'':u.active?'<button type="button" class="adm-btn red" data-act="deact" data-arg="'+u.id+'">⊘ Deactivate…</button>':'<button type="button" class="adm-btn" data-act="react" data-arg="'+u.id+'">↺ Reactivate</button>')+
     '<button type="button" class="adm-btn ghost" data-act="resetpw" data-arg="'+u.id+'">🔒 Reset password</button></div></div>';
+  h+='<div class="fld"><button type="button" class="act-lnk" data-act="actuser" data-arg="'+aEsc(u.id)+'">🕘 Recent activity →</button><div class="hint" style="margin-top:0">Changes made by or to '+aEsc((u.name||'').split(' ')[0]||'this user')+'.</div></div>';
   h+='</div><div class="df"><span class="msg" role="status">'+(ch.length?ch.length+' unsaved change'+(ch.length===1?'':'s'):'No changes')+'</span>'+
     '<button type="button" class="adm-btn" data-act="ddiscard" data-fid="ddiscard"'+(ch.length&&!D.busy?'':' disabled')+'>Discard</button>'+
     '<button type="button" class="adm-btn pri" data-act="dsave" data-fid="dsave"'+(ch.length&&!D.busy?'':' disabled')+'>'+(D.busy?'Saving…':'Save')+'</button></div></aside>';
@@ -512,8 +517,10 @@ function admAddSave(){
   }).then(function(res){
     if(!res.ok)throw new Error('Error: '+((res.data&&res.data.error)||'Unknown error'));
     var snap={name:v.name.trim(),email:v.email.trim(),role:aRoleLabel(v.role),pw:v.pw,method:v.method};
-    AD.drawer=null;admLoadUsers();
-    if(snap.method==='direct')admEmailDlg('invite',snap);else aToast('Invite sent to '+snap.email);
+    AD.drawer=null;var ld=admLoadUsers();
+    if(snap.method==='direct'){
+      ld.then(function(){var em=snap.email.toLowerCase(),nu=(AD.users||[]).filter(function(x){return String(x.email).toLowerCase()===em;})[0];if(nu)actLog('user.invite_email_prepared',nu.id,{method:'prepared_email'});});
+      admEmailDlg('invite',snap);}else aToast('Invite sent to '+snap.email);
   }).catch(function(e){if(AD.drawer){AD.drawer.busy=false;AD.drawer.err=(e&&e.message)||'Failed';admRender();}});
 }
 
@@ -1220,6 +1227,186 @@ function admSchemaGen(){
   }).catch(function(e){if(w&&!w.closed)w.close();aToast('Could not load schema: '+((e&&e.message)||'error'),true);})
   .then(function(){AD.schemaBusy=false;admRender();});}
 
+/* ── Activity log (read-only) ──────────────────────────────────────────────
+   Source: admin-only RPC list_admin_activity(p_from,p_to,p_actor,p_target_type,
+   p_target_id,p_action_prefix,p_q,p_limit,p_offset) → newest first. The table
+   itself has no client access. SECURITY: every value from a row (names, labels,
+   app, details JSON) is rendered through aEsc(); `app` is a display label only. */
+var ACT_PAGE=50;
+var ACT_TYPE={user:'user',packhouse:'packhouse',product:'product',category:'category',variety:'variety',sub_client:'sub-client',season:'season',client:'client',country:'country',farm:'farm',class:'class',carton_type:'carton type'};
+var ACT_APPS={workspace:'Workspace',vision:'Vision',analytics:'Analytics',commercial:'Commercial',land:'Land Cloud'};
+var ACT_ACTIONS=[
+  ['People',[['user.','All user changes'],['user.added','User added'],['user.role_changed','Role changed'],['user.deactivated','Deactivated'],['user.reactivated','Reactivated'],['user.edited','Details edited'],['user.deleted','User deleted'],['user.packhouses','Vision packhouses'],['user.region','Commercial regions'],['user.password_reset_prepared','Password reset email'],['user.invite_email_prepared','Welcome email']]],
+  ['Analytics access',[['analytics.','All Analytics access'],['analytics.granted','Granted'],['analytics.revoked','Removed'],['analytics.request','Requests']]],
+  ['Vision settings',[['packhouse.','Packhouses'],['farm.','Farms'],['product.','Products'],['category.','Categories'],['variety.','Varieties'],['class.','Classes'],['carton_type.','Carton types'],['client.','Clients'],['sub_client.','Sub-clients'],['country.','Countries'],['season.','Seasons']]]
+];
+function actDefF(){return {q:'',action:'',actor:'',app:'',range:'all',from:'',to:'',user:''};}
+AD.act={rows:null,err:'',busy:false,loaded:0,f:actDefF(),streams:[],open:{},seq:0,sheet:false};
+
+/* Cairo calendar helpers (DST-safe: the offset is read back from Intl) */
+function actParts(d){var p={};try{new Intl.DateTimeFormat('en-GB',{timeZone:'Africa/Cairo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(d).forEach(function(x){p[x.type]=x.value;});}catch(e){return null;}if(p.hour==='24')p.hour='00';return p;}
+function actDayKey(d){var p=actParts(d);return p?p.year+'-'+p.month+'-'+p.day:d.toISOString().slice(0,10);}
+function actAddDays(key,n){var a=key.split('-').map(Number);return new Date(Date.UTC(a[0],a[1]-1,a[2]+n)).toISOString().slice(0,10);}
+function actMidnight(key){var a=key.split('-').map(Number),want=Date.UTC(a[0],a[1]-1,a[2]),g=want;
+  for(var i=0;i<2;i++){var p=actParts(new Date(g));if(!p)break;g-=Date.UTC(+p.year,+p.month-1,+p.day,+p.hour,+p.minute)-want;}return new Date(g);}
+function actWhen(iso){var d=new Date(iso);if(isNaN(d.getTime()))return String(iso||'');var p=actParts(d);if(!p)return aDate(iso,true);
+  var k=p.year+'-'+p.month+'-'+p.day,today=actDayKey(new Date()),hm=p.hour+':'+p.minute;
+  if(k===today)return 'Today '+hm;if(k===actAddDays(today,-1))return 'Yesterday '+hm;return aDate(iso)+', '+hm;}
+function actRange(){var f=AD.act.f,t=actDayKey(new Date()),r={};
+  if(f.range==='today')r.from=actMidnight(t);
+  else if(f.range==='7')r.from=actMidnight(actAddDays(t,-6));
+  else if(f.range==='30')r.from=actMidnight(actAddDays(t,-29));
+  else if(f.range==='custom'){if(f.from)r.from=actMidnight(f.from);if(f.to)r.to=actMidnight(actAddDays(f.to,1));}
+  return r;}
+
+/* "By or about a user" can't be one RPC call (actor OR target), so it runs two
+   streams and merges them; rows are only shown down to the point both streams
+   have loaded, so Load more never inserts older-looking rows above newer ones. */
+function actStreams(){var f=AD.act.f,r=actRange();
+  var base={p_from:r.from?r.from.toISOString():null,p_to:r.to?r.to.toISOString():null,p_action_prefix:f.action||null,p_q:f.q.trim()||null,p_actor:f.actor||null};
+  if(!f.user)return [base];
+  var s=[];
+  if(!f.actor||f.actor===f.user)s.push(Object.assign({},base,{p_actor:f.user}));
+  s.push(Object.assign({},base,{p_target_type:'user',p_target_id:f.user}));
+  return s;}
+function actReset(){var A=AD.act;clearTimeout(A._qt);A.seq++;A.loaded=1;A.rows=null;A.err='';A.open={};
+  A.streams=actStreams().map(function(p){return {p:p,off:0,more:true,rows:[],total:null};});actFetch();}
+function actFetch(){var A=AD.act,seq=A.seq,todo=A.streams.filter(function(s){return s.more;});
+  A.busy=true;A.err='';admRender();
+  Promise.all(todo.map(function(s){
+    return Promise.resolve(sb.rpc('list_admin_activity',Object.assign({},s.p,{p_limit:ACT_PAGE,p_offset:s.off}))).then(function(r){if(r&&r.error)throw r.error;return [s,(r&&r.data)||[]];});
+  })).then(function(res){if(seq!==A.seq)return;
+    res.forEach(function(x){var s=x[0],d=x[1];s.rows=s.rows.concat(d);s.off+=d.length;if(d.length&&d[0].total_count!=null)s.total=Number(d[0].total_count);s.more=d.length===ACT_PAGE&&(s.total==null||s.off<s.total);});
+    A.rows=actMerge();
+  }).catch(function(e){if(seq!==A.seq)return;A.err=(e&&e.message)||'Load failed';})
+  .then(function(){if(seq!==A.seq)return;A.busy=false;admRender();});}
+function actTs(r){return new Date(r.occurred_at).getTime();}
+function actMerge(){var A=AD.act,seen={},all=[],cut=-Infinity;
+  A.streams.forEach(function(s){s.rows.forEach(function(r){if(!seen[r.id]){seen[r.id]=1;all.push(r);}});if(s.more&&s.rows.length)cut=Math.max(cut,actTs(s.rows[s.rows.length-1]));});
+  all.sort(function(a,b){return actTs(b)-actTs(a)||Number(b.id)-Number(a.id);});
+  return all.filter(function(r){return actTs(r)>=cut;});}
+function actCloseSheet(){AD.act.sheet=false;admRender();var b=document.querySelector('#admMain [data-fid="actsheet"]');if(b&&b.offsetParent)b.focus();}
+function actMore(){return AD.act.streams.some(function(s){return s.more;});}
+/* App isn't an RPC parameter → filtered client-side within the loaded rows. Display only. */
+function actVisible(){var f=AD.act.f;return (AD.act.rows||[]).filter(function(r){return !f.app||(f.app==='none'?!r.app:r.app===f.app);});}
+function actFilterCount(){var f=AD.act.f;return (f.q.trim()?1:0)+(f.action?1:0)+(f.actor?1:0)+(f.app?1:0)+(f.range!=='all'?1:0)+(f.user?1:0);}
+/* Fire-and-forget client event. Whitelisted scalar keys only (method / email_to) — never a password. */
+function actLog(action,uid,det){try{Promise.resolve(sb.rpc('log_admin_event',{p_action:action,p_target_type:'user',p_target_id:String(uid),p_details:det||{}})).then(function(r){if(r&&r.error&&window.console)console.warn('log_admin_event:',r.error.message);},function(){});}catch(e){}}
+
+/* ── sentences ── */
+function actActor(r){if(r.actor_name)return r.actor_name;if(!r.actor_id)return 'System';var u=aUser(r.actor_id);return (u&&u.name)||'Unknown user';}
+function actKeyLabel(k){return String(k).replace(/_/g,' ');}
+function actFmt(k,v){if(v==null||v==='')return 'empty';if(v===true)return 'yes';if(v===false)return 'no';
+  if(k==='role'&&typeof v==='string')return aRoleLabel(v);
+  if(Array.isArray(v)&&v.every(function(x){return x==null||typeof x!=='object';}))return v.length?v.join(', '):'none';
+  if(typeof v==='object')return JSON.stringify(v);return String(v);}
+function actKeys(ch){var k=Object.keys(ch||{});if(!k.length)return '';return ' ('+aEsc(k.slice(0,3).map(actKeyLabel).join(', ')+(k.length>3?' +'+(k.length-3)+' more':''))+')';}
+function actSentence(r){
+  var B=function(x){return '<b>'+aEsc(x)+'</b>';},a=B(actActor(r)),t=B(r.target_label||r.target_id||'—');
+  var d=(r.details&&typeof r.details==='object')?r.details:{},ch=(d.changes&&typeof d.changes==='object')?d.changes:{};
+  var act=String(r.action||''),kind=act.split('.')[0],verb=act.split('.')[1]||'';
+  var self=!!r.actor_id&&r.target_type==='user'&&String(r.actor_id)===String(r.target_id);
+  var reg=B(d.region_name||d.region_id||'?');
+  var phs=Array.isArray(d.packhouses)?d.packhouses.map(function(p){return p&&(p.name||p.id);}).filter(Boolean):[];
+  var phw=phs.length>3?B(phs.length+' packhouses'):phs.length?phs.map(B).join(', '):'packhouses';
+  switch(act){
+    case 'user.added':return a+' added '+t+(d.new&&d.new.role?' as '+B(aRoleLabel(d.new.role)):'');
+    case 'user.deleted':return a+' deleted '+t;
+    case 'user.deactivated':return a+' deactivated '+t;
+    case 'user.reactivated':return a+' reactivated '+t;
+    case 'user.role_changed':return a+' changed '+t+'’s role'+(ch.role?' from '+B(actFmt('role',ch.role.from))+' to '+B(actFmt('role',ch.role.to)):'');
+    case 'user.edited':return a+' edited '+t+actKeys(ch);
+    case 'user.region_added':return a+' added '+t+' to the '+reg+' region';
+    case 'user.region_removed':return a+' removed '+t+' from the '+reg+' region';
+    case 'user.region_manager_set':return a+' made '+t+' a manager of the '+reg+' region';
+    case 'user.region_manager_unset':return a+' removed '+t+' as manager of the '+reg+' region';
+    case 'user.region_edited':return a+' changed '+t+'’s '+reg+' region membership';
+    case 'user.packhouses_added':return a+' gave '+t+' Vision access to '+phw;
+    case 'user.packhouses_removed':return a+' removed '+t+'’s Vision access to '+phw;
+    case 'user.password_reset_prepared':return a+' prepared a password-reset email for '+t;
+    case 'user.invite_email_prepared':return a+' prepared a welcome email for '+t;
+    case 'analytics.granted':return a+' granted Analytics access to '+t;
+    case 'analytics.revoked':return a+' removed '+t+'’s Analytics access';
+    case 'analytics.access_edited':return a+' changed '+t+'’s Analytics access'+actKeys(ch);
+    case 'analytics.requested':return self||!r.actor_id?t+' asked for Analytics access':a+' requested Analytics access for '+t;
+    case 'analytics.request_approved':return a+' approved '+t+'’s Analytics request';
+    case 'analytics.request_declined':return a+' declined '+t+'’s Analytics request';
+    case 'analytics.request_deleted':return self?t+' withdrew their Analytics request':a+' deleted '+t+'’s Analytics request';
+    case 'analytics.request_edited':return a+' updated '+t+'’s Analytics request';
+  }
+  if(kind!=='user'&&ACT_TYPE.hasOwnProperty(kind)){var ty=aEsc(ACT_TYPE[kind]);
+    if(verb==='edited'&&ch.name&&ch.name.from!=null)return a+' renamed the '+ty+' '+B(actFmt('name',ch.name.from))+' to '+B(actFmt('name',ch.name.to))+(Object.keys(ch).length>1?actKeys(ch):'');
+    var vb={added:'added',deleted:'deleted',edited:'edited',removed:'removed',restored:'restored',activated:'activated',deactivated:'deactivated'};
+    if(vb.hasOwnProperty(verb))return a+' '+vb[verb]+' the '+ty+' '+t+(verb==='edited'?actKeys(ch):'');
+  }
+  return a+' · '+aEsc(act)+' · '+t;
+}
+function actDl(obj,fmt){var h='<dl class="act-ch">';Object.keys(obj).forEach(function(k){h+='<dt>'+aEsc(actKeyLabel(k))+'</dt><dd>'+fmt(k,obj[k])+'</dd>';});return h+'</dl>';}
+function actDetailHTML(r){
+  var d=(r.details&&typeof r.details==='object'&&!Array.isArray(r.details))?r.details:{},h='',done={changes:1,new:1,old:1,packhouses:1,actor_inferred:1};
+  if(d.changes&&typeof d.changes==='object'){
+    h+='<div class="act-sh">What changed</div>'+actDl(d.changes,function(k,c){
+      if(c&&typeof c==='object'&&c.changed===true&&!('from' in c))return '<span class="act-hid">changed (value not recorded)</span>';
+      c=(c&&typeof c==='object')?c:{};
+      return '<span class="act-from">'+aEsc(actFmt(k,c.from))+'</span> <span aria-hidden="true">→</span><span class="sr"> to </span> <span class="act-to">'+aEsc(actFmt(k,c.to))+'</span>';});
+  }
+  var snap=d.new||d.old;
+  if(snap&&typeof snap==='object')h+='<div class="act-sh">'+(d.new?'Created with':'Record before it was deleted')+'</div>'+actDl(snap,function(k,v){return aEsc(actFmt(k,v));});
+  if(Array.isArray(d.packhouses))h+='<div class="act-sh">Packhouses</div><p class="act-p">'+aEsc(d.packhouses.map(function(p){return p&&typeof p==='object'?(p.name||p.id):p;}).join(', ')||'none')+'</p>';
+  var rest={};Object.keys(d).forEach(function(k){if(!done[k])rest[k]=d[k];});
+  if(Object.keys(rest).length)h+='<div class="act-sh">Other details</div>'+actDl(rest,function(k,v){return aEsc(actFmt(k,v));});
+  if(!h)h='<p class="act-p">No further details were recorded.</p>';
+  h+='<p class="act-meta">'+aEsc(aDate(r.occurred_at,true))+' · '+aEsc(r.action)+' · source '+aEsc(r.source||'—')+(r.app?' · app '+aEsc(r.app):'')+(d.actor_inferred===true?' · actor inferred':'')+'</p>';
+  return h;
+}
+function actRowHTML(r){
+  var id=String(r.id),open=!!AD.act.open[id],nm=actActor(r),inf=!!(r.details&&r.details.actor_inferred===true),app=r.app?String(r.app):'';
+  var cls=ACT_APPS.hasOwnProperty(app)?app:'x';
+  return '<li class="act-row'+(open?' open':'')+'"><button type="button" class="act-btn" aria-expanded="'+open+'"'+(open?' aria-controls="actd-'+aEsc(id)+'"':'')+' data-act="actrow" data-arg="'+aEsc(id)+'" data-fid="actrow-'+aEsc(id)+'">'+
+    '<span class="av'+(r.actor_id?'':' sys')+'" aria-hidden="true">'+(r.actor_id?aEsc(aIni(nm)):'⚙')+'</span>'+
+    '<span class="act-bd"><span class="act-s">'+actSentence(r)+'</span><span class="act-m"><time datetime="'+aEsc(r.occurred_at)+'" title="'+aEsc(aDate(r.occurred_at,true))+'">'+aEsc(actWhen(r.occurred_at))+'</time>'+
+      (app?'<span class="act-app a-'+cls+'">'+aEsc(cls==='x'?app:ACT_APPS[app])+'</span>':'')+
+      (inf?'<span class="act-inf" title="The person was worked out from the record, not from their sign-in.">actor inferred</span>':'')+'</span></span>'+
+    '<span class="act-chev" aria-hidden="true">'+(open?'▴':'▾')+'</span></button>'+
+    (open?'<div class="act-det" id="actd-'+aEsc(id)+'">'+actDetailHTML(r)+'</div>':'')+'</li>';
+}
+function admActivityHTML(){
+  var A=AD.act,f=A.f,nf=actFilterCount();
+  var h='<div class="crumb">Workspace / Admin</div><div class="ptrow"><div><h1 class="pt">Activity log</h1><p class="sub">Who changed users, roles, access and settings, and when. Read-only.</p></div><div class="hsp"></div>'+
+    '<button type="button" class="adm-btn" data-act="actreload"'+(A.busy?' disabled':'')+'>↻ Refresh</button></div>';
+  /* filters: inline toolbar on desktop, a bottom sheet on phone (same fields) */
+  h+='<div class="act-fbar"><button type="button" class="adm-btn" data-act="actsheet" data-fid="actsheet" aria-expanded="'+A.sheet+'" aria-controls="actF">Filters'+(nf?' <span class="badge">'+nf+'</span>':'')+'</button>'+(nf?'<button type="button" class="adm-btn ghost" data-act="actclear">Clear</button>':'')+'</div>';
+  if(A.sheet)h+='<div class="scrim act-scrim" data-act="actsheetx"></div>';
+  var who=[['','Anyone']].concat((AD.users||[]).slice().sort(function(x,y){return (x.name||x.email).localeCompare(y.name||y.email);}).map(function(u){return [u.id,(u.name||u.email)+(u.active?'':' (inactive)')];}));
+  var actSel='<label class="fl"><span>Action</span><select data-fid="actaction" data-ch="actaction"><option value="">Any action</option>'+ACT_ACTIONS.map(function(g){return '<optgroup label="'+aEsc(g[0])+'">'+g[1].map(function(o){return '<option value="'+aEsc(o[0])+'"'+(o[0]===f.action?' selected':'')+'>'+aEsc(o[1])+'</option>';}).join('')+'</optgroup>';}).join('')+'</select></label>';
+  h+='<div class="act-f'+(A.sheet?' open':'')+'" id="actF" role="group" aria-label="Filter activity">'+
+    '<div class="act-fh"><h2>Filters</h2><button type="button" class="keb" data-act="actsheetx" aria-label="Close filters" data-autofocus>✕</button></div>'+
+    '<label class="fl search"><span>Search</span><input class="inp" type="search" data-fid="actq" data-in="actq" value="'+aEsc(f.q)+'" placeholder="Person or what was changed" autocomplete="off"></label>'+
+    actSel+aSel('actactor','Who',who,f.actor)+
+    aSel('actapp','App',[['','Any app']].concat(Object.keys(ACT_APPS).map(function(k){return [k,ACT_APPS[k]];})).concat([['none','Not recorded']]),f.app)+
+    aSel('actrange','When',[['all','Any time'],['today','Today'],['7','Last 7 days'],['30','Last 30 days'],['custom','Custom dates…']],f.range);
+  if(f.range==='custom')h+='<label class="fl"><span>From</span><input class="inp" type="date" data-fid="actfrom" data-ch="actfrom" value="'+aEsc(f.from)+'"></label><label class="fl"><span>To</span><input class="inp" type="date" data-fid="actto" data-ch="actto" value="'+aEsc(f.to)+'"></label>';
+  h+='<div class="act-fa"><button type="button" class="adm-btn" data-act="actclear"'+(nf?'':' disabled')+'>Clear filters</button><button type="button" class="adm-btn pri act-done" data-act="actsheetx">Show results</button></div></div>';
+  if(f.user){var fu=aUser(f.user);h+='<div class="act-uchip" role="status"><span>Showing activity by or about <b>'+aEsc(fu?(fu.name||fu.email):'this user')+'</b></span><button type="button" class="adm-btn ghost" data-act="actuserx">✕ Show everyone</button></div>';}
+  var note='<p class="hint act-note">Activity is recorded from 10 Nov 2026.</p>';
+  if(A.rows===null&&A.err)return h+aError("Couldn't load activity",'actreload')+note;
+  if(A.rows===null)return h+aLoading(6,'Loading activity…')+note;
+  var vis=actVisible(),more=actMore();
+  if(!vis.length&&!(more&&f.app)){
+    if(!nf)return h+aEmpty('No activity yet','Changes to users, access and Vision settings will show up here.')+note;
+    return h+aEmpty('No activity matches these filters','Try a wider date range or clear the filters.','<button type="button" class="adm-btn" data-act="actclear">Clear filters</button>')+note;
+  }
+  var one=A.streams.length===1?A.streams[0]:null;
+  var foot=f.app?vis.length+' of '+A.rows.length+' loaded entries match the App filter'+(more?' · load more to search further':'')
+    :'Showing '+A.rows.length+(one&&one.total!=null?' of '+one.total:'');
+  h+='<div class="card">';
+  if(vis.length)h+='<ol class="act-list" aria-label="Activity, newest first">'+vis.map(actRowHTML).join('')+'</ol>';
+  else h+='<div class="empty" style="padding:24px"><p style="margin:0">None of the '+A.rows.length+' loaded entries match the App filter.</p></div>';
+  if(A.err)h+='<div class="ferr" role="alert" style="margin:10px 14px">Couldn’t load more: '+aEsc(A.err)+'</div>';
+  h+='<div class="tfoot"><span role="status">'+aEsc(foot)+'</span>'+(more?'<button type="button" class="adm-btn" data-act="actmore" data-fid="actmore"'+(A.busy?' disabled':'')+'>'+(A.busy?'Loading…':A.err?'↻ Retry':'Load more')+'</button>':'')+'</div></div>';
+  return h+note;
+}
+
 /* ── events ────────────────────────────────────────────────────────────── */
 function admClick(e){
   var t=e.target.closest('[data-act]');if(!t||t.disabled)return;
@@ -1254,7 +1441,7 @@ function admClick(e){
         run:function(){return Promise.resolve(sb.from('users').update({active:false}).eq('id',arg).select('id,active')).then(function(r){var rows=aChk(r);if(rows[0].active!==false)throw new Error('The database did not confirm the change. Reload and check.');return admLoadUsers();}).then(function(){aToast(u.name+' deactivated');});}});return;
     case 'react':AD.rowMenu=null;Promise.resolve(sb.from('users').update({active:true}).eq('id',arg).select('id,active')).then(function(r){aChk(r);aToast('Reactivated');}).catch(function(e){aToast('Could not reactivate: '+((e&&e.message)||'network error'),true);}).then(admLoadUsers);break;
     case 'resetpw':AD.rowMenu=null;AD.dlg={kind:'resetpw',uid:arg,pw:'',ret:document.activeElement};AD._focusLayer=1;break;
-    case 'rpwgo':var ru=aUser(AD.dlg.uid)||{};admEmailDlg('reset',{name:ru.name,email:ru.email,pw:AD.dlg.pw});return;
+    case 'rpwgo':var ru=aUser(AD.dlg.uid)||{};if(ru.id)actLog('user.password_reset_prepared',ru.id,{method:'prepared_email'});admEmailDlg('reset',{name:ru.name,email:ru.email,pw:AD.dlg.pw});return;
     case 'copymail':var g=AD.dlg;try{navigator.clipboard.writeText('To: '+g.to+'\nSubject: '+g.subj+'\n\n'+g.body).then(function(){aToast('Copied');},function(){aToast('Copy failed — select the text instead.',true);});}catch(_){aToast('Copy failed — select the text instead.',true);}return;
     case 'dlgx':admCloseDlg();return;
     case 'dlgok':var G=AD.dlg;G.busy=true;G.err='';admRender();Promise.resolve().then(G.run).then(function(){if(AD.dlg===G)admCloseDlg();},function(err){G.busy=false;G.err=(err&&err.message)||'Failed — nothing changed.';admRender();});return;
@@ -1327,6 +1514,17 @@ function admClick(e){
         run:function(){AD.gr.adds={};AD.gr.rms={};AD.gr.saveErr='';return Promise.resolve();}});})();return;
     case 'grretry':grLoad();break;
     case 'schemagen':admSchemaGen();return;
+    case 'actrow':if(AD.act.open[arg])delete AD.act.open[arg];else AD.act.open[arg]=1;break;
+    case 'actmore':actFetch();return;
+    case 'actreload':actReset();return;
+    case 'actclear':AD.act.f=actDefF();actReset();return;
+    case 'actsheet':AD.act.sheet=!AD.act.sheet;if(AD.act.sheet)AD._focusAct=1;break;
+    case 'actsheetx':actCloseSheet();return;
+    case 'actuserx':AD.act.f.user='';actReset();return;
+    case 'actuser':if(admChanges().length){aToast('Save or discard your changes first.',true);return;}
+      AD.drawer=null;AD.dlg=null;AD.act.f=actDefF();AD.act.f.user=arg;AD.act.sheet=false;
+      if(location.hash!=='#admin/activity')location.hash='admin/activity';
+      actReset();return;
     case 'seasonact':admConfirm({title:'Make '+arg+' the active season?',text:'This switches the active season for every Vision user.',list:['New inspections are saved to this season.','Vision users see it after their next reload.'],ok:'Set as active',danger:true,
       run:function(){return admSetSeason(arg);}});return;
     default:return;
@@ -1338,6 +1536,8 @@ function admChange(e){
   if(k==='urole'){AD.f.role=v;AD.f.page=0;}
   else if(k==='uapp'){AD.f.app=v;AD.f.page=0;}
   else if(k==='ustatus'){AD.f.status=v;AD.f.page=0;}
+  else if(k==='actapp')AD.act.f.app=v;
+  else if(k==='actaction'||k==='actactor'||k==='actrange'||k==='actfrom'||k==='actto'){AD.act.f[{actaction:'action',actactor:'actor',actrange:'range',actfrom:'from',actto:'to'}[k]]=v;actReset();return;}
   else if(k==='drRole'){AD.drawer.d.role=v;/* region/packhouse rows untouched on role change — same as Vision */}
   else if(k==='add-role')AD.drawer.v.role=v;
   else if(k==='add-ph')AD.drawer.v.ph=v;
@@ -1355,6 +1555,7 @@ function admInput(e){
   var t=e.target,k=t.getAttribute('data-in');if(!k)return;var v=t.value,S=AD.st;
   if(k==='uq'){AD.f.q=v;AD.f.page=0;}
   else if(k==='aaq')AD.aaQ=v;
+  else if(k==='actq'){AD.act.f.q=v;clearTimeout(AD.act._qt);AD.act._qt=setTimeout(actReset,350);}
   else if(k==='stq')S.q=v;
   else if(k==='rpw'){AD.dlg.pw=v;}
   else if(k==='fe')feInput(t.getAttribute('data-arg'),v);
@@ -1371,6 +1572,7 @@ function admInput(e){
 function admKey(e){
   if(e.key==='Escape'){
     if(AD.dlg){e.preventDefault();admCloseDlg();return;}
+    if(AD.act.sheet&&AD.sec==='activity'){e.preventDefault();actCloseSheet();return;}
     if(AD.rowMenu){var id=AD.rowMenu;AD.rowMenu=null;admRender();var b=document.querySelector('[data-fid="keb-'+id+'"]');if(b)b.focus();return;}
     if(AD.drawer){e.preventDefault();admCloseDrawer(false);return;}
   }

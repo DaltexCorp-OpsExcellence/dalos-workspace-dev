@@ -404,3 +404,62 @@ body.ws-admin{background:#1E2723}
   .list .meta{text-align:left;width:100%;padding-left:50px}
   .list .acts{padding-left:50px}
 }
+/* ── Activity log (read-only) ── */
+.act-lnk{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 4px;border:0;background:none;color:var(--primary-text)!important;font-size:14px;font-weight:600;text-decoration:underline;text-underline-offset:3px;border-radius:8px}
+.act-lnk:hover{color:var(--chip-on-text)!important}
+.act-f{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px}
+.act-f .fl{flex:0 1 180px;min-width:150px}
+.act-f .search{flex:1 1 240px}
+.act-fa{display:flex;gap:8px;align-items:flex-end}
+.act-fh,.act-fbar,.act-done,.act-scrim{display:none}
+.act-uchip{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:4px 4px 4px 14px;border-radius:12px;background:var(--primary-tint);border:1px solid var(--chip-on-border);color:var(--chip-on-text);margin-bottom:12px;font-size:14px}
+.act-uchip>span{flex:1;min-width:0}
+.act-uchip b{color:var(--text)}
+.act-list{list-style:none;margin:0;padding:0}
+.act-row{border-bottom:1px solid var(--border)}
+.act-row:first-child>.act-btn{border-top-left-radius:var(--r);border-top-right-radius:var(--r)}
+.act-btn{display:flex;align-items:flex-start;gap:12px;width:100%;min-height:64px;padding:12px 14px;border:0;background:none;text-align:left;color:var(--text)}
+.act-btn:hover{background:var(--hover)}
+.act-row.open>.act-btn{background:var(--surface-2)}
+.act-btn .av{width:36px;height:36px}
+.av.sys{background:var(--surface-2);color:var(--muted);box-shadow:inset 0 0 0 1px var(--border-strong)}
+.act-bd{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.act-s{font-size:15px;line-height:1.45;overflow-wrap:anywhere}
+.act-s b{font-weight:600;color:var(--text)}
+.act-m{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.act-app{font-size:14px;font-weight:600;border:1px solid;border-radius:999px;padding:0 8px;line-height:1.5}
+.a-workspace,.a-x{color:var(--p-qc-t);background:var(--p-qc-b);border-color:var(--p-qc-l)}
+.a-vision{color:var(--p-admin-t);background:var(--p-admin-b);border-color:var(--p-admin-l)}
+.a-analytics{color:var(--p-cqc-t);background:var(--p-cqc-b);border-color:var(--p-cqc-l)}
+.a-commercial{color:var(--p-mkt-t);background:var(--p-mkt-b);border-color:var(--p-mkt-l)}
+.a-land{color:var(--p-agro-t);background:var(--p-agro-b);border-color:var(--p-agro-l)}
+.act-inf{font-size:14px;color:var(--muted);font-style:italic;opacity:.85}
+.act-chev{width:24px;color:var(--muted);flex:none;align-self:center;text-align:center}
+.act-det{padding:2px 14px 14px 62px;background:var(--surface-2);border-top:1px solid var(--border)}
+.act-sh{font-size:14px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 6px}
+.act-ch{display:grid;grid-template-columns:minmax(110px,max-content) minmax(0,1fr);gap:6px 16px;margin:0;font-size:14px}
+.act-ch dt{color:var(--muted)}
+.act-ch dd{margin:0;overflow-wrap:anywhere;color:var(--text)}
+.act-from{color:#FFC2BB}
+.act-to{color:var(--primary-text);font-weight:600}
+.act-hid{color:var(--muted);font-style:italic}
+.act-p{margin:0;font-size:14px;overflow-wrap:anywhere}
+.act-meta{margin:12px 0 0;font-size:14px;color:var(--muted);overflow-wrap:anywhere}
+.act-note{margin-top:12px}
+@media(max-width:760px){
+  .act-fbar{display:flex;gap:8px;margin-bottom:12px}
+  .act-f{display:none}
+  .act-scrim{display:block}
+  .act-f.open{display:flex;flex-direction:column;align-items:stretch;flex-wrap:nowrap;position:fixed;left:0;right:0;bottom:0;max-height:85vh;max-height:85dvh;overflow-y:auto;overscroll-behavior:contain;background:var(--surface);border-top:1px solid var(--border-strong);border-radius:16px 16px 0 0;padding:12px 16px calc(16px + env(safe-area-inset-bottom));z-index:61;box-shadow:var(--menu-shadow);margin:0}
+  .act-f.open .fl,.act-f.open .search{flex:none;min-width:0}
+  .act-fh{display:flex;align-items:center}
+  .act-fh h2{margin:0;flex:1;font-size:18px;font-weight:600}
+  .act-done{display:inline-flex}
+  .act-fa{margin-top:4px}
+  .act-fa .adm-btn{flex:1}
+  .act-btn{padding:12px}
+  .act-btn .av{display:none}
+  .act-det{padding:2px 12px 12px}
+  .act-ch{grid-template-columns:minmax(0,1fr);gap:2px}
+  .act-ch dd{margin-bottom:8px}
+}
