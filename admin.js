@@ -46,10 +46,11 @@ var ADM_ST_GROUPS=[
   {k:'sites',label:'Sites',items:[['packhouses','Packhouses'],['farms','Farms']]},
   {k:'catalogue',label:'Catalogue',items:[['products','Products'],['categories','Categories'],['varieties','Varieties'],['classes','Classes'],['cartonTypes','Carton types']]},
   {k:'clients',label:'Clients',items:[['clients','Clients'],['subClients','Sub-clients'],['countries','Countries']]},
-  {k:'season',label:'Season & forms',items:[['seasons','Seasons'],['inspection','Inspection form'],['clientqc','Client QC form'],['schemadoc','Schema doc'],['specifics','Specifics']]}
+  {k:'season',label:'Season & forms',items:[['seasons','Seasons'],['inspection','Inspection form'],['clientqc','Client QC form'],['grapes','Grapes options']]},
+  {k:'tools',label:'Tools',items:[['schemadoc','Schema doc']]}
 ];
 var ADM_LIST_TABLE={clients:'clients',countries:'countries',farms:'farms',classes:'classes',cartonTypes:'carton_types'};
-var ADM_IN_VISION={inspection:'Inspection form',clientqc:'Client QC form',schemadoc:'Schema doc',specifics:'Specifics'};
+var ADM_IN_VISION={}; /* every Vision settings editor now lives in Workspace */
 
 var AD={
   me:null,built:false,sec:'users',
@@ -231,9 +232,13 @@ function admBuild(){
   st.addEventListener('change',admChange);
   st.addEventListener('input',admInput);
   st.addEventListener('keydown',admKey);
+  st.addEventListener('dragstart',admDragStart);
+  st.addEventListener('dragover',admDragOver);
+  st.addEventListener('drop',admDrop);
+  st.addEventListener('dragend',function(){AD._drag=null;});
   document.addEventListener('mousedown',function(e){if(AD.rowMenu&&!e.target.closest('.kw')){AD.rowMenu=null;admRender();}},true);
   /* staged settings / drawer edits: warn before the tab is closed or reloaded */
-  window.addEventListener('beforeunload',function(e){if(aStPendCount()||admChanges().length){e.preventDefault();e.returnValue='';}});
+  window.addEventListener('beforeunload',function(e){if(aStPendCount()||admChanges().length||feChanges('insp').length||feChanges('cqc').length||grCount()){e.preventDefault();e.returnValue='';}});
   var av=document.getElementById('admAv');
   try{wsBindAvatar(av);}catch(e){}
   AD.built=true;
@@ -262,7 +267,7 @@ function admRender(){
     L('access','🔑','App access',pend?'<span class="badge" style="margin-left:auto" aria-label="'+pend+' waiting">'+pend+'</span>':'')+
     '<span class="dis" aria-disabled="true"><span aria-hidden="true">🕘</span> Activity log <span class="later">coming later</span></span>'+
     '<h2>App settings</h2>'+
-    L('settings','❦','Vision','<span class="n">15</span>'));
+    L('settings','❦','Vision','<span class="n">'+ADM_ST_GROUPS.reduce(function(a,g){return a+g.items.length;},0)+'</span>'));
   var h='';
   if(AD.sec==='users')h=admUsersHTML();
   else if(AD.sec==='perms')h=admPermsHTML();
@@ -629,13 +634,17 @@ function admSettingsHTML(){
   var S=AD.st,sub=S.sub,grp=aGroupOf(sub),label=(grp.items.filter(function(x){return x[0]===sub;})[0]||[])[1];
   var h='<div class="crumb">Workspace / Admin / App settings</div><h1 class="pt">Vision settings</h1><p class="sub">Vision master data: sites, catalogue, clients, seasons and forms. Packhouse products, pallet prefixes and variety categories are kept as unsaved changes until you press Save. Adding or removing an item is saved when you confirm it.</p>';
   var jump='<label class="fl"><span>Jump to section</span><select data-fid="stjump" data-ch="stjump">'+ADM_ST_GROUPS.map(function(g){return '<optgroup label="'+aEsc(g.label)+'">'+g.items.map(function(it){return '<option value="'+it[0]+'"'+(it[0]===sub?' selected':'')+'>'+aEsc(g.label+' › '+it[1])+'</option>';}).join('')+'</optgroup>';}).join('')+'</select></label>';
-  h+='<div class="desk-only" style="margin-bottom:16px"><div class="tabs" role="tablist" aria-label="Vision settings group">'+ADM_ST_GROUPS.map(function(g){return '<button type="button" role="tab" aria-selected="'+(g===grp)+'" data-act="stgrp" data-arg="'+g.k+'" data-fid="stg-'+g.k+'">'+aEsc(g.label)+' · '+g.items.length+'</button>';}).join('')+'</div>'+
-    '<div class="subtabs" role="tablist" aria-label="'+aEsc(grp.label)+'">'+grp.items.map(function(it){var n=aSubCount(it[0]);return '<button type="button" role="tab" aria-selected="'+(it[0]===sub)+'" data-act="stsub" data-arg="'+it[0]+'" data-fid="sts-'+it[0]+'">'+aEsc(it[1])+(n!==''?' <span>'+n+'</span>':'')+'</button>';}).join('')+'<span class="jump">'+jump+'</span></div></div>';
+  h+='<div class="desk-only" style="margin-bottom:16px"><div class="tabs" role="tablist" aria-label="Vision settings group">'+ADM_ST_GROUPS.map(function(g){return (g.k==='tools'?'<span class="tdiv" aria-hidden="true"></span>':'')+'<button type="button" role="tab" aria-selected="'+(g===grp)+'" data-act="stgrp" data-arg="'+g.k+'" data-fid="stg-'+g.k+'">'+aEsc(g.label)+' · '+g.items.length+'</button>';}).join('')+'</div>'+
+    '<div class="subtabs" role="tablist" aria-label="'+aEsc(grp.label)+'">'+grp.items.map(function(it){var n=aSubCount(it[0]);return '<button type="button" role="tab" aria-selected="'+(it[0]===sub)+'" data-act="stsub" data-arg="'+it[0]+'" data-fid="sts-'+it[0]+'">'+aEsc(it[1])+(n!==''?' <span>'+n+'</span>':'')+(it[0]==='grapes'?'<span class="hintag">Grapes only</span>':'')+'</button>';}).join('')+'<span class="jump">'+jump+'</span></div></div>';
   h+='<div class="mobile-only" style="margin-bottom:14px">'+jump.replace('data-fid="stjump"','data-fid="stjump-m"')+'</div>';
   if(ADM_IN_VISION[sub])return h+admStInVision(sub);
+  if(sub==='schemadoc')return h+admSchemaHTML();
+  if(sub==='grapes')return h+grHTML();
   if(!AD.cfg&&AD.cfgErr)return h+aError("Couldn't load Vision settings",'retry-cfg');
   if(!AD.cfg)return h+aLoading(4,'Loading Vision settings…');
   if(AD.cfgErr)h+='<div class="ferr" role="alert">Couldn’t refresh: '+aEsc(AD.cfgErr)+'</div>';
+  if(sub==='inspection')return h+feHTML('insp');
+  if(sub==='clientqc')return h+feHTML('cqc');
   h+='<div class="toolbar"><label class="fl search"><span>Search '+aEsc(label.toLowerCase())+'</span><input class="inp" type="search" data-fid="stq" data-in="stq" value="'+aEsc(S.q)+'" autocomplete="off"></label>'+aSwitch('sttest',S.test,'Show test data')+'</div>';
   var body=admStBody(sub);
   h+=body;
@@ -780,6 +789,437 @@ function admSetSeason(name){
     aToast(name+' is now the active season');return admLoadCfg();});
 }
 
+/* ── Season & forms: Inspection / Client QC form editors ───────────────────
+   Same tables Vision's System config writes (vision.js ~9480-9750), but every edit
+   is staged in a Save bar. Sections, names, severity and threshold are stored on
+   each row, so they are PER PRODUCT. Delete = archive (active=false), never a hard
+   delete. Client QC: cqc_defect_sections has only `name` (no Arabic), cqc_defects
+   has no threshold, and its order is cqc_defect_sections.display_order.
+   Staged ids for not-yet-saved rows start with "~" (never a uuid).            */
+var FE_T={
+  insp:{label:'Inspection form',secT:'defect_sections',defT:'defects',rel:'defects',secName:'name_en',secAr:true,thr:true,
+    desc:'Used by inspectors at the packhouse. Sections and defects appear on the inspection screen in this order.',past:'inspections',
+    /* Vision addDefectToSection */
+    key:function(en){return en.trim().toLowerCase().replace(/[\s\/\(\)]+/g,'_').replace(/[^a-z0-9_]/g,'');}},
+  cqc:{label:'Client QC form',secT:'cqc_defect_sections',defT:'cqc_defects',rel:'cqc_defects',secName:'name',secAr:false,thr:false,
+    desc:'Used for client QC reports. Sections and defects appear on the Client QC report in this order.',past:'client QC reports',
+    /* Vision cqcAddDef */
+    key:function(en){return en.trim().toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/__+/g,'_');}}
+};
+var FE_SEV=['Minor','Major','Critical'];
+function feNew(){return {prod:'',data:{},load:{},err:{},se:{},de:{},ord:{},ns:[],nd:[],errs:{},sel:{},open:{},arch:false,miss:false,nv:{},busy:false,seq:0};}
+AD.fe={insp:feNew(),cqc:feNew()};
+function feTmp(id){return String(id).charAt(0)==='~';}
+function feCmp(a,b){var x=typeof a.order==='number'?a.order:1e9,y=typeof b.order==='number'?b.order:1e9;return x-y||String(a.en).localeCompare(String(b.en));}
+function feLoad(kind,pid){
+  var E=AD.fe[kind],T=FE_T[kind];if(!pid)return Promise.resolve();
+  E.load[pid]=true;E.err[pid]='';
+  var cols='id,product_id,'+T.secName+(T.secAr?',name_ar':'')+',color,display_order,active,'+T.rel+'(id,section_id,key,name_en,name_ar,severity,'+(T.thr?'default_threshold,':'')+'display_order,active)';
+  /* archived rows included on purpose (Show archived / Restore) */
+  return Promise.resolve(sb.from(T.secT).select(cols).eq('product_id',pid)).then(function(r){
+    if(r.error)throw r.error;
+    E.data[pid]=(r.data||[]).map(function(s){
+      return {id:s.id,pid:pid,en:s[T.secName]||'',ar:T.secAr?(s.name_ar||''):'',order:s.display_order,active:s.active!==false,
+        defs:(s[T.rel]||[]).map(function(d){return {id:d.id,pid:pid,secId:s.id,key:d.key,en:d.name_en||'',ar:d.name_ar||'',sev:d.severity||'',
+          thr:T.thr?(d.default_threshold==null?'':String(d.default_threshold)):'',order:d.display_order,active:d.active!==false};}).sort(feCmp)};
+    }).sort(feCmp);
+    fePrune(kind);
+  }).catch(function(e){E.err[pid]=(e&&e.message)||'Load failed';}).then(function(){E.load[pid]=false;admRender();});
+}
+function feSec(kind,id){var D=AD.fe[kind].data;for(var p in D){for(var i=0;i<D[p].length;i++)if(D[p][i].id===id)return D[p][i];}return null;}
+function feDef(kind,id){var D=AD.fe[kind].data;for(var p in D){for(var i=0;i<D[p].length;i++){var ds=D[p][i].defs;for(var j=0;j<ds.length;j++)if(ds[j].id===id)return ds[j];}}return null;}
+function feV(kind,w,o,f){var e=AD.fe[kind][w][o.id];return e&&e.hasOwnProperty(f)?e[f]:o[f];}
+/* live typing: raw string compare (so "8." isn't snapped back to "8") */
+function feSame(o,f,v,numeric){
+  if(f==='active')return o.active===v;
+  if(f==='thr'&&numeric){var a=parseFloat(o.thr),b=parseFloat(v);if(!isNaN(a)&&!isNaN(b)&&String(v).trim()!=='')return a===b;}
+  return String(o[f]==null?'':o[f])===String(v==null?'':v);}
+function feSet(kind,w,id,f,v){
+  var E=AD.fe[kind],o=w==='se'?feSec(kind,id):feDef(kind,id);if(!o)return;
+  var e=E[w][id]||{};if(feSame(o,f,v))delete e[f];else e[f]=v;
+  if(Object.keys(e).length)E[w][id]=e;else delete E[w][id];
+  delete E.errs[w+':'+id];}
+function fePrune(kind){var E=AD.fe[kind];
+  ['se','de'].forEach(function(w){Object.keys(E[w]).forEach(function(id){var o=w==='se'?feSec(kind,id):feDef(kind,id);
+    if(!o){delete E[w][id];return;}var e=E[w][id];
+    Object.keys(e).forEach(function(f){if(feSame(o,f,e[f],true))delete e[f];});
+    if(!Object.keys(e).length)delete E[w][id];});});}
+function feInput(arg,v){var a=arg.split('|'),kind=a[0],w=a[1],id=a[2],f=a[3],E=AD.fe[kind];
+  if(w==='se'||w==='de'){feSet(kind,w,id,f,v);return;}
+  var list=w==='ns'?E.ns:E.nd;list.forEach(function(n){if(n.tmp===id){n[f]=v;delete E.errs[w+':'+id];}});}
+function feProdId(kind){var E=AD.fe[kind],sp=aStProds();if(E.prod&&sp.some(function(p){return p.id===E.prod;}))return E.prod;return (sp[0]&&sp[0].id)||'';}
+/* section order: staged list (ids + "~" ids of new sections) or the DB order */
+function feOrderBase(kind,pid){var E=AD.fe[kind];return (E.data[pid]||[]).map(function(s){return s.id;}).concat(E.ns.filter(function(n){return n.pid===pid;}).map(function(n){return n.tmp;}));}
+function feOrder(kind,pid){var base=feOrderBase(kind,pid),o=AD.fe[kind].ord[pid];if(!o)return base;
+  var out=o.filter(function(id){return base.indexOf(id)>=0;});base.forEach(function(id){if(out.indexOf(id)<0)out.push(id);});return out;}
+function feSetOrder(kind,pid,list){var E=AD.fe[kind];if(list.join('|')===feOrderBase(kind,pid).join('|'))delete E.ord[pid];else E.ord[pid]=list;delete E.errs['ord:'+pid];}
+function feRows(kind,pid){var E=AD.fe[kind],D=E.data[pid]||[];
+  return feOrder(kind,pid).map(function(id){
+    var s=D.filter(function(x){return x.id===id;})[0];
+    if(s){var act=feV(kind,'se',s,'active');return {id:id,isNew:false,s:s,pid:pid,en:feV(kind,'se',s,'en'),ar:feV(kind,'se',s,'ar'),active:act,gone:s.active&&!act};}
+    var n=E.ns.filter(function(x){return x.tmp===id;})[0];
+    return n?{id:id,isNew:true,n:n,pid:pid,en:n.en,ar:n.ar,active:true,gone:false}:null;
+  }).filter(Boolean);}
+function feDefRows(kind,r){var E=AD.fe[kind],out=[];
+  if(!r.isNew)r.s.defs.forEach(function(d){var act=feV(kind,'de',d,'active');out.push({id:d.id,isNew:false,d:d,en:feV(kind,'de',d,'en'),ar:feV(kind,'de',d,'ar'),sev:feV(kind,'de',d,'sev'),thr:feV(kind,'de',d,'thr'),active:act,gone:d.active&&!act});});
+  E.nd.forEach(function(n){if(n.secId===r.id)out.push({id:n.tmp,isNew:true,n:n,en:n.en,ar:n.ar,sev:'Minor',thr:'0',active:true,gone:false});});
+  return out;}
+function feNoAr(x){return !String(x.ar||'').trim();}
+function feSecMiss(kind,r){return (FE_T[kind].secAr&&feNoAr(r))||feDefRows(kind,r).some(function(d){return d.active&&feNoAr(d);});}
+function feSecDirty(kind,r){var E=AD.fe[kind];if(r.isNew||E.se[r.id])return true;return feDefRows(kind,r).some(function(d){return d.isNew||E.de[d.id];});}
+function feStats(kind,pid){var T=FE_T[kind],st={defs:0,miss:0,arch:0};
+  feRows(kind,pid).forEach(function(r){if(!r.active){st.arch++;return;}if(T.secAr&&feNoAr(r))st.miss++;
+    feDefRows(kind,r).forEach(function(d){if(!d.active){st.arch++;return;}st.defs++;if(feNoAr(d))st.miss++;});});return st;}
+function feVisSec(kind){var E=AD.fe[kind];return function(r){return r.active||r.gone||E.arch;};}
+function feVisDef(kind){var E=AD.fe[kind];return function(d){if(E.miss)return d.active&&feNoAr(d);return d.active||d.gone||E.arch;};}
+function feSelId(kind,pid,vis){var s=AD.fe[kind].sel[pid];if(vis.some(function(r){return r.id===s;}))return s;var a=vis.filter(function(r){return r.active;})[0]||vis[0];return a?a.id:'';}
+function feOpenId(kind,pid){var E=AD.fe[kind];if(E.open.hasOwnProperty(pid))return E.open[pid];var vis=feRows(kind,pid).filter(feVisSec(kind));return feSelId(kind,pid,vis);}
+function feProdDirty(kind,pid){var E=AD.fe[kind];
+  if(E.ord[pid]||E.ns.some(function(n){return n.pid===pid;})||E.nd.some(function(n){return n.pid===pid;}))return true;
+  return Object.keys(E.se).some(function(id){var s=feSec(kind,id);return s&&s.pid===pid;})||Object.keys(E.de).some(function(id){var d=feDef(kind,id);return d&&d.pid===pid;});}
+function feDesc(o,e){var b=[];
+  if(e.active===false)return '“'+o.en+'” deleted';
+  if(e.active===true)b.push('restored');
+  if(e.hasOwnProperty('en'))b.push('renamed to “'+e.en+'”');
+  if(e.hasOwnProperty('ar'))b.push(String(e.ar).trim()?'Arabic name changed':'Arabic name cleared');
+  if(e.hasOwnProperty('sev'))b.push('severity '+(o.sev||'—')+' → '+e.sev);
+  if(e.hasOwnProperty('thr'))b.push('threshold '+(o.thr===''?'—':o.thr)+'% → '+e.thr+'%');
+  return '“'+o.en+'”: '+b.join(', ');}
+function feChanges(kind){var E=AD.fe[kind],out=[];
+  E.ns.forEach(function(n){out.push({k:'ns:'+n.tmp,t:'New section “'+(n.en||'…')+'” ('+aProdName(n.pid)+')'});});
+  E.nd.forEach(function(n){out.push({k:'nd:'+n.tmp,t:'New defect “'+(n.en||'…')+'” ('+aProdName(n.pid)+')'});});
+  Object.keys(E.se).forEach(function(id){var s=feSec(kind,id);if(s)out.push({k:'se:'+id,t:'Section '+feDesc(s,E.se[id])+' ('+aProdName(s.pid)+')'});});
+  Object.keys(E.de).forEach(function(id){var d=feDef(kind,id);if(d)out.push({k:'de:'+id,t:feDesc(d,E.de[id])+' ('+aProdName(d.pid)+')'});});
+  Object.keys(E.ord).forEach(function(pid){out.push({k:'ord:'+pid,t:'Section order ('+aProdName(pid)+')'});});
+  return out;}
+function feMove(kind,id,dir){var pid=feProdId(kind),list=feOrder(kind,pid),act=feRows(kind,pid).filter(function(r){return r.active;}).map(function(r){return r.id;});
+  var i=act.indexOf(id),j=i+dir;if(i<0||j<0||j>=act.length)return;
+  var a=list.indexOf(id),b=list.indexOf(act[j]);list[a]=act[j];list[b]=id;feSetOrder(kind,pid,list);}
+function feMoveTo(src,dst){var s=src.split('|'),d=dst.split('|');if(s[0]!==d[0]||s[1]===d[1])return;var kind=s[0],pid=feProdId(kind),list=feOrder(kind,pid);
+  var from=list.indexOf(s[1]),to=list.indexOf(d[1]);if(from<0||to<0)return;list.splice(from,1);list.splice(to,0,s[1]);feSetOrder(kind,pid,list);admRender();}
+function admDragStart(e){var r=e.target&&e.target.closest&&e.target.closest('[data-drag]');if(!r)return;AD._drag=r.getAttribute('data-drag');try{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',AD._drag);}catch(_){}}
+function admDragOver(e){if(!AD._drag)return;var r=e.target.closest&&e.target.closest('[data-drag]');if(r)e.preventDefault();}
+function admDrop(e){var src=AD._drag;AD._drag=null;if(!src)return;var r=e.target.closest&&e.target.closest('[data-drag]');if(!r)return;e.preventDefault();feMoveTo(src,r.getAttribute('data-drag'));}
+function feDelete(kind,w,id){
+  var E=AD.fe[kind],T=FE_T[kind];AD.rowMenu=null;
+  if(w==='ns'){E.ns=E.ns.filter(function(n){return n.tmp!==id;});E.nd=E.nd.filter(function(n){return n.secId!==id;});delete E.errs['ns:'+id];admRender();return;}
+  if(w==='nd'){E.nd=E.nd.filter(function(n){return n.tmp!==id;});delete E.errs['nd:'+id];admRender();return;}
+  var o=w==='se'?feSec(kind,id):feDef(kind,id);if(!o)return;
+  var nm=feV(kind,w,o,'en')||o.en,pn=aProdName(o.pid);
+  admConfirm({title:'Delete “'+nm+'”?',text:'Past inspections keep their records.',
+    list:[(w==='se'?'The section and its defects won’t appear on new ':'It won’t appear on new ')+T.past+' for '+pn+'.',
+      'It is archived, not erased: turn on “Show archived” to restore it.',
+      'This is added to your unsaved changes. Nothing is deleted until you press Save.'],
+    ok:'Delete',danger:true,run:function(){feSet(kind,w,id,'active',false);return Promise.resolve();}});
+}
+function feAddSec(kind){
+  var E=AD.fe[kind],T=FE_T[kind],pid=feProdId(kind),en=String(E.nv.secEn||'').trim(),ar=String(E.nv.secAr||'').trim();if(!en||!pid)return;
+  if(feRows(kind,pid).some(function(r){return r.active&&String(r.en).trim().toLowerCase()===en.toLowerCase();})){aToast('“'+en+'” is already a section for '+aProdName(pid)+'.',true);return;}
+  var tmp='~s'+(++E.seq);E.ns.push({tmp:tmp,pid:pid,en:en,ar:T.secAr?ar:''});E.nv.secEn='';E.nv.secAr='';E.sel[pid]=tmp;E.open[pid]=tmp;E.miss=false;
+}
+function feAddDef(kind,secId){
+  var E=AD.fe[kind],pid=feProdId(kind),en=String(E.nv.defEn||'').trim(),ar=String(E.nv.defAr||'').trim();if(!en||!pid)return;
+  var r=feRows(kind,pid).filter(function(x){return x.id===secId;})[0];if(!r)return;
+  if(feDefRows(kind,r).some(function(d){return d.active&&String(d.en).trim().toLowerCase()===en.toLowerCase();})){aToast('“'+en+'” is already in '+r.en+'.',true);return;}
+  E.nd.push({tmp:'~d'+(++E.seq),pid:pid,secId:secId,en:en,ar:ar});E.nv.defEn='';E.nv.defAr='';E.miss=false;
+}
+/* Save: new sections → new defects → edits → order. Each write ends in .select()
+   and 0 rows is an error (aChk). Failed items stay staged with their error. */
+function feSave(kind){
+  var E=AD.fe[kind],T=FE_T[kind];if(E.busy)return;
+  E.busy=true;E.errs={};AD.rowMenu=null;admRender();
+  var map={},pids={},ordSnap={},nsOrd={},ndOrd={},mx={},dmx={};
+  Object.keys(E.ord).forEach(function(pid){ordSnap[pid]=feOrder(kind,pid);pids[pid]=1;});
+  E.ns.forEach(function(n){pids[n.pid]=1;
+    if(ordSnap[n.pid]){nsOrd[n.tmp]=ordSnap[n.pid].indexOf(n.tmp);return;}
+    if(mx[n.pid]==null){mx[n.pid]=-1;(E.data[n.pid]||[]).forEach(function(s){if(typeof s.order==='number'&&s.order>mx[n.pid])mx[n.pid]=s.order;});}
+    nsOrd[n.tmp]=++mx[n.pid];});
+  E.nd.forEach(function(n){pids[n.pid]=1;
+    if(dmx[n.secId]==null){dmx[n.secId]=-1;var s=feSec(kind,n.secId);(s?s.defs:[]).forEach(function(d){if(typeof d.order==='number'&&d.order>dmx[n.secId])dmx[n.secId]=d.order;});}
+    ndOrd[n.tmp]=++dmx[n.secId];});
+  function rd(q){return Promise.resolve(q).then(function(r){if(r.error)throw r.error;return r.data||[];});}
+  function wr(q,what){return Promise.resolve(q).then(function(r){return aChk(r,what);});}
+  function fail(k){return function(e){E.errs[k]=(e&&e.message)||'Failed';};}
+  var p=Promise.resolve();
+  /* new sections — Vision addSection: restore an archived one with the same name, else insert */
+  E.ns.slice().forEach(function(n){p=p.then(function(){
+    var en=String(n.en).trim(),ar=String(n.ar||'').trim();
+    if(!en)throw new Error('Section name (EN) is empty.');
+    return rd(sb.from(T.secT).select('id,active').eq(T.secName,en).eq('product_id',n.pid)).then(function(rows){
+      if(rows.some(function(x){return x.active;}))throw new Error('A section named “'+en+'” already exists for '+aProdName(n.pid)+'.');
+      if(rows[0]){var u={active:true,display_order:nsOrd[n.tmp]};if(T.secAr&&ar)u.name_ar=ar;
+        return wr(sb.from(T.secT).update(u).eq('id',rows[0].id).select('id'),'Section “'+en+'”');}
+      var row={product_id:n.pid,color:'#3a7a4a',active:true,display_order:nsOrd[n.tmp]};row[T.secName]=en;if(T.secAr)row.name_ar=ar||null;
+      return wr(sb.from(T.secT).insert([row]).select('id'),'Section “'+en+'”');
+    }).then(function(rows){map[n.tmp]=rows[0].id;E.ns=E.ns.filter(function(x){return x.tmp!==n.tmp;});
+      E.nd.forEach(function(d){if(d.secId===n.tmp)d.secId=rows[0].id;});
+      if(E.sel[n.pid]===n.tmp)E.sel[n.pid]=rows[0].id;if(E.open[n.pid]===n.tmp)E.open[n.pid]=rows[0].id;});
+  }).catch(fail('ns:'+n.tmp));});
+  /* new defects — Vision addDefectToSection: restore by key+section_id, else insert (Minor, threshold 0).
+     The new key is also kept unique across the whole table: Vision maps defect key → id globally on save. */
+  p=p.then(function(){var q=Promise.resolve();
+    E.nd.slice().forEach(function(n){q=q.then(function(){
+      if(feTmp(n.secId))throw new Error('Its new section wasn’t saved, so this defect wasn’t either.');
+      var en=String(n.en).trim(),ar=String(n.ar||'').trim();if(!en)throw new Error('Defect name (EN) is empty.');
+      var base=T.key(en)||'defect',sid=n.secId;
+      return rd(sb.from(T.defT).select('id,active').eq('key',base).eq('section_id',sid)).then(function(rows){
+        if(rows.some(function(x){return x.active;}))throw new Error('“'+en+'” already exists in this section.');
+        if(rows[0])return wr(sb.from(T.defT).update({active:true,name_en:en,name_ar:ar||null}).eq('id',rows[0].id).select('id'),'Defect “'+en+'”');
+        return rd(sb.from(T.defT).select('key').like('key',base+'%')).then(function(ks){
+          var used={};ks.forEach(function(k){used[k.key]=1;});var fk=base,i=2;while(used[fk]){fk=base+'_'+i;i++;}
+          var row={section_id:sid,key:fk,name_en:en,name_ar:ar||null,severity:'Minor',active:true,display_order:ndOrd[n.tmp]};if(T.thr)row.default_threshold=0;
+          return wr(sb.from(T.defT).insert([row]).select('id'),'Defect “'+en+'”');});
+      }).then(function(){E.nd=E.nd.filter(function(x){return x.tmp!==n.tmp;});});
+    }).catch(fail('nd:'+n.tmp));});
+    return q;});
+  /* edits to existing rows: one update per row */
+  p=p.then(function(){var jobs=[];
+    Object.keys(E.se).forEach(function(id){var s=feSec(kind,id),e=E.se[id];if(!s)return;pids[s.pid]=1;var u={};
+      if(e.hasOwnProperty('en')){var v=String(e.en).trim();if(!v){E.errs['se:'+id]='Section name (EN) can’t be empty.';return;}u[T.secName]=v;}
+      if(T.secAr&&e.hasOwnProperty('ar'))u.name_ar=String(e.ar).trim()||null;
+      if(e.hasOwnProperty('active'))u.active=e.active;
+      jobs.push(wr(sb.from(T.secT).update(u).eq('id',id).select('id'),'Section “'+s.en+'”').then(function(){delete E.se[id];}).catch(fail('se:'+id)));});
+    Object.keys(E.de).forEach(function(id){var d=feDef(kind,id),e=E.de[id];if(!d)return;pids[d.pid]=1;var u={};
+      if(e.hasOwnProperty('en')){var v=String(e.en).trim();if(!v){E.errs['de:'+id]='Defect name (EN) can’t be empty.';return;}u.name_en=v;}
+      if(e.hasOwnProperty('ar'))u.name_ar=String(e.ar).trim()||null;
+      if(e.hasOwnProperty('sev')){if(FE_SEV.indexOf(e.sev)<0&&kind==='insp'){E.errs['de:'+id]='Severity must be Minor, Major or Critical.';return;}u.severity=e.sev;}
+      if(T.thr&&e.hasOwnProperty('thr')){var t=String(e.thr).trim(),x=Number(t);if(t===''||!isFinite(x)||x<0){E.errs['de:'+id]='Threshold must be a number, 0 or more.';return;}u.default_threshold=x;}
+      if(e.hasOwnProperty('active'))u.active=e.active;
+      jobs.push(wr(sb.from(T.defT).update(u).eq('id',id).select('id'),'Defect “'+d.en+'”').then(function(){delete E.de[id];}).catch(fail('de:'+id)));});
+    return Promise.all(jobs);});
+  /* section order → <section table>.display_order (Client QC: cqc_defect_sections, never defect_sections) */
+  p=p.then(function(){return Promise.all(Object.keys(ordSnap).map(function(pid){
+    var list=ordSnap[pid].map(function(id){return feTmp(id)?(map[id]||null):id;});
+    var ups=list.map(function(id,i){if(!id)return null;var s=feSec(kind,id);if(!s||s.order===i)return null;
+      return wr(sb.from(T.secT).update({display_order:i}).eq('id',id).select('id'),'Order of “'+s.en+'”');}).filter(Boolean);
+    return Promise.all(ups).then(function(){delete E.ord[pid];},function(e){E.errs['ord:'+pid]=(e&&e.message)||'Failed';
+      E.ord[pid]=list.map(function(id,i){return id||ordSnap[pid][i];});});
+  }));});
+  p.catch(function(e){E.errs._=(e&&e.message)||'Network error';}).then(function(){
+    return Promise.all(Object.keys(pids).map(function(pid){return feLoad(kind,pid);}));
+  }).then(function(){E.busy=false;var n=Object.keys(E.errs).length;
+    if(n)aToast(n+' change'+(n===1?' was':'s were')+' not saved. '+(n===1?'It is':'They are')+' still listed as unsaved.',true);else aToast('Saved');
+    admRender();});
+}
+/* ── form editor: render ── */
+function feKeb(key,label,items){var open=AD.rowMenu===key;
+  var h='<div class="kw"><button type="button" class="keb" aria-haspopup="menu" aria-expanded="'+open+'" aria-label="'+aEsc(label)+'" data-act="kebab" data-arg="'+aEsc(key)+'" data-fid="keb-'+aEsc(key)+'">⋯</button>';
+  if(open)h+='<div class="rmenu" role="menu" aria-label="'+aEsc(label)+'">'+items+'</div>';return h+'</div>';}
+function feSevCls(v){return v==='Critical'?'s-cri':v==='Major'?'s-maj':'s-min';}
+function feErrLine(kind,k){var m=AD.fe[kind].errs[k];return m?'<div class="fe-rerr" role="alert">⚠ Not saved: '+aEsc(m)+'</div>':'';}
+function feArrows(kind,r,act,m){var i=act.indexOf(r.id),nm=aEsc(r.en||'section');
+  return '<button type="button" class="ib" aria-label="Move '+nm+' up" data-act="feup" data-arg="'+kind+'|'+aEsc(r.id)+'" data-fid="'+m+'feu-'+aEsc(r.id)+'"'+(i<=0?' disabled':'')+'>▲</button>'+
+    '<button type="button" class="ib" aria-label="Move '+nm+' down" data-act="fedn" data-arg="'+kind+'|'+aEsc(r.id)+'" data-fid="'+m+'fed-'+aEsc(r.id)+'"'+(i<0||i>=act.length-1?' disabled':'')+'>▼</button>';}
+function feSecFields(kind,r,m){
+  var E=AD.fe[kind],T=FE_T[kind],w=r.isNew?'ns':'se',dis=!r.active||E.busy,base=kind+'|'+w+'|'+aEsc(r.id),ed=E.se[r.id]||{};
+  var h='<div class="fe-shead"><label class="fl"><span>Section name (EN)</span><input class="inp'+(ed.hasOwnProperty('en')?' chg':'')+'" data-fid="'+m+'fe-'+aEsc(r.id)+'-en" data-in="fe" data-arg="'+base+'|en" value="'+aEsc(r.en)+'" autocomplete="off"'+(dis?' disabled':'')+'></label>';
+  if(T.secAr)h+='<label class="fl"><span>Arabic name <small class="optl">(optional)</small></span><input class="inp'+(ed.hasOwnProperty('ar')?' chg':'')+(feNoAr(r)?' miss':'')+'" dir="rtl" lang="ar" placeholder="الاسم بالعربية" data-fid="'+m+'fe-'+aEsc(r.id)+'-ar" data-in="fe" data-arg="'+base+'|ar" value="'+aEsc(r.ar)+'" autocomplete="off"'+(dis?' disabled':'')+'></label>';
+  if(r.gone)h+='<div class="fe-sact"><span class="atag">Will be deleted on Save</span><button type="button" class="adm-btn" data-act="ferest" data-arg="'+kind+'|se|'+aEsc(r.id)+'">Undo</button></div>';
+  else if(!r.active)h+='<div class="fe-sact"><span class="atag">Archived</span><button type="button" class="adm-btn" data-act="ferest" data-arg="'+kind+'|se|'+aEsc(r.id)+'"'+(E.busy?' disabled':'')+'>Restore</button></div>';
+  else h+=feKeb(m+'fes|'+kind+'|'+r.id,'Actions for section '+(r.en||''),r.isNew?
+    '<button type="button" role="menuitem" class="red" data-act="fedel" data-arg="'+kind+'|ns|'+aEsc(r.id)+'">🗑 Remove new section</button>':
+    '<button type="button" role="menuitem" class="red" data-act="fedel" data-arg="'+kind+'|se|'+aEsc(r.id)+'">🗑 Delete section…</button>');
+  h+='</div>';
+  if(r.isNew)h+='<div class="fe-note acc">New section · not saved yet</div>';
+  if(!r.active&&!r.gone)h+='<p class="hint">This section is archived, so it isn’t on new '+T.past+'. Restore it to edit.</p>';
+  return h+feErrLine(kind,(r.isNew?'ns:':'se:')+r.id);}
+/* one defect → its controls (shared by the desktop table and phone cards) */
+function feDefCtl(kind,d,m){
+  var E=AD.fe[kind],T=FE_T[kind],w=d.isNew?'nd':'de',dis=!d.active||E.busy,base=kind+'|'+w+'|'+aEsc(d.id),ed=E.de[d.id]||{},nm=aEsc(d.en||'defect'),fid=m+'fe-'+aEsc(d.id);
+  var c={};
+  c.en='<input class="inp'+(ed.hasOwnProperty('en')?' chg':'')+'" aria-label="Defect name (EN)" data-fid="'+fid+'-en" data-in="fe" data-arg="'+base+'|en" value="'+aEsc(d.en)+'" autocomplete="off"'+(dis?' disabled':'')+'>';
+  c.ar='<input class="inp'+(ed.hasOwnProperty('ar')?' chg':'')+(feNoAr(d)?' miss':'')+'" dir="rtl" lang="ar" aria-label="Arabic name for '+nm+'" placeholder="الاسم بالعربية" data-fid="'+fid+'-ar" data-in="fe" data-arg="'+base+'|ar" value="'+aEsc(d.ar)+'" autocomplete="off"'+(dis?' disabled':'')+'>';
+  var opts=FE_SEV.slice();if(d.sev&&opts.indexOf(d.sev)<0)opts.push(d.sev);
+  c.sev='<select class="sev '+feSevCls(d.sev)+(ed.hasOwnProperty('sev')?' chg':'')+'" aria-label="Severity for '+nm+'" data-fid="'+fid+'-sev" data-ch="fe" data-arg="'+base+'|sev"'+(dis||d.isNew?' disabled':'')+'>'+opts.map(function(o){return '<option value="'+aEsc(o)+'"'+(o===d.sev?' selected':'')+'>'+aEsc(o)+'</option>';}).join('')+'</select>';
+  if(T.thr){var bad=String(d.thr).trim()===''||!isFinite(Number(d.thr))||Number(d.thr)<0;
+    c.thr='<span class="thr"><input class="inp'+(ed.hasOwnProperty('thr')?' chg':'')+(bad&&!d.isNew?' bad':'')+'" inputmode="decimal" aria-label="Threshold percent for '+nm+'" data-fid="'+fid+'-thr" data-in="fe" data-arg="'+base+'|thr" value="'+aEsc(d.thr)+'" autocomplete="off"'+(dis||d.isNew?' disabled':'')+'><span aria-hidden="true">%</span></span>';}
+  else c.thr='<span class="thr"><input class="inp" disabled value="—" aria-label="No threshold: Client QC has no thresholds today"><span aria-hidden="true">%</span></span>';
+  if(d.gone)c.act='<button type="button" class="adm-btn" aria-label="Undo delete of '+nm+'" data-act="ferest" data-arg="'+kind+'|de|'+aEsc(d.id)+'">Undo</button>';
+  else if(!d.active)c.act='<button type="button" class="adm-btn" aria-label="Restore '+nm+'" data-act="ferest" data-arg="'+kind+'|de|'+aEsc(d.id)+'"'+(E.busy?' disabled':'')+'>Restore</button>';
+  else c.act=feKeb(m+'fed|'+kind+'|'+d.id,'Actions for '+(d.en||'defect'),d.isNew?
+    '<button type="button" role="menuitem" class="red" data-act="fedel" data-arg="'+kind+'|nd|'+aEsc(d.id)+'">🗑 Remove new defect</button>':
+    '<button type="button" role="menuitem" class="red" data-act="fedel" data-arg="'+kind+'|de|'+aEsc(d.id)+'">🗑 Delete…</button>');
+  c.note=d.isNew?'<div class="fe-note acc">New · not saved yet. Severity and threshold can be set after saving.</div>':d.gone?'<div class="fe-note acc">Will be deleted on Save</div>':!d.active?'<div class="fe-note">Archived</div>':'';
+  c.err=feErrLine(kind,w+':'+d.id);
+  c.cls=(d.isNew?' new':'')+(d.gone||!d.active?' arch':'')+(ed&&Object.keys(ed).length?' chg':'');
+  return c;}
+function feAddDefHTML(kind,r,m){var E=AD.fe[kind],ok=String(E.nv.defEn||'').trim()&&!E.busy,arg=kind+'|'+aEsc(r.id);
+  return '<div class="fe-adddef"><label class="fl"><span>Add a defect to '+aEsc(r.en||'this section')+'</span><input class="inp" placeholder="Defect name (EN)" data-fid="'+m+'fe-nv-den" data-in="fenv" data-arg="'+kind+'|defEn" value="'+aEsc(E.nv.defEn||'')+'" data-enter="feadddef" data-enter-arg="'+arg+'" autocomplete="off"></label>'+
+    '<label class="fl"><span>Arabic <small class="optl">(optional)</small></span><input class="inp" dir="rtl" lang="ar" placeholder="الاسم بالعربية" data-fid="'+m+'fe-nv-dar" data-in="fenv" data-arg="'+kind+'|defAr" value="'+aEsc(E.nv.defAr||'')+'" data-enter="feadddef" data-enter-arg="'+arg+'" autocomplete="off"></label>'+
+    '<button type="button" class="adm-btn" data-act="feadddef" data-arg="'+arg+'"'+(ok?'':' disabled')+'>+ Add defect</button></div>';}
+function feAddSecHTML(kind,m){var E=AD.fe[kind],T=FE_T[kind],ok=String(E.nv.secEn||'').trim()&&!E.busy;
+  return '<div class="fe-addsec"><label class="fl"><span>New section name (EN)</span><input class="inp" placeholder="e.g. Storage" data-fid="'+m+'fe-nv-sen" data-in="fenv" data-arg="'+kind+'|secEn" value="'+aEsc(E.nv.secEn||'')+'" data-enter="feaddsec" data-enter-arg="'+kind+'" autocomplete="off"></label>'+
+    (T.secAr?'<label class="fl"><span>Arabic <small class="optl">(optional)</small></span><input class="inp" dir="rtl" lang="ar" placeholder="الاسم بالعربية" data-fid="'+m+'fe-nv-sar" data-in="fenv" data-arg="'+kind+'|secAr" value="'+aEsc(E.nv.secAr||'')+'" data-enter="feaddsec" data-enter-arg="'+kind+'" autocomplete="off"></label>':'')+
+    '<button type="button" class="adm-btn" data-act="feaddsec" data-arg="'+kind+'"'+(ok?'':' disabled')+'>+ Add section</button></div>';}
+function feSecLabel(kind,r){var n=feDefRows(kind,r).filter(function(d){return d.active;}).length;
+  return '<b>'+aEsc(r.en||'(no name)')+(feSecMiss(kind,r)&&r.active?' <span class="mdot" role="img" aria-label="Missing Arabic"></span>':'')+(r.isNew?' <span class="ntag">new</span>':'')+(r.gone?' <span class="atag">deleting</span>':!r.active?' <span class="atag">Archived</span>':'')+'</b>';}
+function feHTML(kind){
+  var E=AD.fe[kind],T=FE_T[kind],S=AD.st,sp=aStProds(),pid=feProdId(kind),pn=pid?aProdName(pid):'';
+  var h='<div class="fe-head"><div class="grow"><h2 class="fe-t">'+aEsc(T.label)+'</h2><p class="fe-d">'+aEsc(T.desc)+'</p></div><div class="fe-prod"><div class="lbl" id="fepl-'+kind+'">Product</div>';
+  h+='<div class="seg desk-only" role="radiogroup" aria-labelledby="fepl-'+kind+'">'+sp.map(function(p){var on=p.id===pid;
+    return '<button type="button" role="radio" aria-checked="'+on+'" data-act="feprod" data-arg="'+kind+'|'+aEsc(p.id)+'" data-fid="fep-'+kind+'-'+aEsc(p.id)+'">'+aEsc(p.name)+(feProdDirty(kind,p.id)?' <span class="mdot" role="img" aria-label="unsaved changes"></span>':'')+'</button>';}).join('')+'</div>';
+  h+='<div class="mobile-only"><select aria-labelledby="fepl-'+kind+'" data-fid="fepm-'+kind+'" data-ch="feprod" data-arg="'+kind+'">'+sp.map(function(p){return '<option value="'+aEsc(p.id)+'"'+(p.id===pid?' selected':'')+'>'+aEsc(p.name)+(feProdDirty(kind,p.id)?' • unsaved':'')+'</option>';}).join('')+'</select></div>';
+  h+='<div class="fe-test">'+(sp.hidden&&!S.test?'<span class="hint" style="margin:0">'+sp.hidden+' test product'+(sp.hidden===1?'':'s')+' hidden</span>':'')+aSwitch('sttest',S.test,'Show test data')+'</div></div></div>';
+  if(!pid)return h+aEmpty('No products','Add a product under Catalogue first.');
+  if(!E.data[pid]&&E.err[pid])return h+'<div class="card empty err" role="alert"><div class="big" aria-hidden="true">⚠</div><b>Couldn’t load the '+aEsc(T.label.toLowerCase())+' for '+aEsc(pn)+'</b><p>'+aEsc(E.err[pid])+'. Nothing was changed.</p><button type="button" class="adm-btn pri" data-act="feretry" data-arg="'+kind+'|'+aEsc(pid)+'">↻ Retry</button></div>';
+  if(!E.data[pid]){if(!E.load[pid])feLoad(kind,pid);return h+aLoading(5,'Loading '+T.label.toLowerCase()+'…');}
+  h+='<div class="banner" role="note"><span aria-hidden="true">ⓘ</span><div>Changes apply to <b>'+aEsc(pn)+'</b> only.</div></div>';
+  if(kind==='cqc')h+='<div class="banner warn" role="note"><span aria-hidden="true">⚠</span><div>Client QC section names have no Arabic field, and Client QC has no thresholds today. Vision’s Client QC form doesn’t hide deleted (archived) defects yet, so they keep showing there until Vision is fixed.</div></div>';
+  if(E.err[pid])h+='<div class="ferr" role="alert">Couldn’t refresh: '+aEsc(E.err[pid])+'</div>';
+  var st=feStats(kind,pid);
+  h+='<div class="chiprow" role="group" aria-label="Filter defects"><button type="button" class="chip" aria-pressed="'+(!E.miss)+'" data-act="feall" data-arg="'+kind+'" data-fid="fem0-'+kind+'">All defects <span class="c">'+st.defs+'</span></button>'+
+    '<button type="button" class="chip warn" aria-pressed="'+E.miss+'" data-act="femiss" data-arg="'+kind+'" data-fid="fem-'+kind+'"><span class="mdot" aria-hidden="true"></span>Missing Arabic ('+st.miss+')</button>'+
+    '<button type="button" class="sw-row" role="switch" aria-checked="'+E.arch+'" data-act="fearch" data-arg="'+kind+'" data-fid="fea-'+kind+'"><span class="sw"></span>Show archived ('+st.arch+')</button></div>';
+  var errKeys=Object.keys(E.errs);
+  if(errKeys.length){var ch=feChanges(kind);
+    h+='<div class="ferr" role="alert"><b>Not saved — still listed as unsaved:</b><ul>'+errKeys.map(function(k){var c=ch.filter(function(x){return x.k===k;})[0];return '<li>'+aEsc((c?c.t+': ':'')+E.errs[k])+'</li>';}).join('')+'</ul></div>';}
+  var rows=feRows(kind,pid),vis=rows.filter(feVisSec(kind)),act=vis.filter(function(r){return r.active;}),selId=feSelId(kind,pid,vis),sel=vis.filter(function(r){return r.id===selId;})[0];
+  var visDef=feVisDef(kind);
+  /* desktop: two panes */
+  var L='<div class="card fe-secs"><h3 class="fe-h">Sections · '+act.length+'</h3>'+feErrLine(kind,'ord:'+pid)+'<div role="list" aria-label="Sections in form order">';
+  vis.forEach(function(r){var on=r.id===selId;
+    L+='<div class="fe-sec'+(on?' on':'')+(r.active?'':' arch')+(feSecDirty(kind,r)?' dirty':'')+'" role="listitem"'+(r.active&&!E.busy?' draggable="true" data-drag="'+kind+'|'+aEsc(r.id)+'"':'')+'>'+
+      (r.active?'<span class="fe-hd" aria-hidden="true" title="Drag to reorder">⋮⋮</span>':'<span class="fe-hd" aria-hidden="true"></span>')+
+      '<button type="button" class="fe-nm" aria-pressed="'+on+'" data-act="fesel" data-arg="'+kind+'|'+aEsc(r.id)+'" data-fid="fes-'+aEsc(r.id)+'">'+feSecLabel(kind,r)+
+      (FE_T[kind].secAr?'<small'+(r.ar?' dir="rtl" lang="ar"':'')+'>'+(r.ar?aEsc(r.ar):'<span class="warnt">No Arabic</span>')+'</small>':'')+
+      '<small>'+feDefRows(kind,r).filter(function(d){return d.active;}).length+' defects</small></button>'+
+      (r.active&&!E.busy?feArrows(kind,r,act.map(function(x){return x.id;}),''):'')+'</div>';});
+  if(!vis.length)L+='<p class="hint" style="margin:8px">No sections yet. Add one below.</p>';
+  L+='</div>'+feAddSecHTML(kind,'')+'<p class="hint">The order here is the order on the form. Use ▲ ▼ or drag.</p></div>';
+  var R='<div class="card fe-right">';
+  if(!sel)R+='<p class="hint">Pick a section on the left, or add one.</p>';
+  else{
+    R+=feSecFields(kind,sel,'');
+    var defs=feDefRows(kind,sel).filter(visDef);
+    R+='<div class="fe-tw"><table class="fe-tbl"><caption class="sr">Defects in '+aEsc(sel.en)+'</caption><thead><tr><th scope="col">Defect (EN)</th><th scope="col" style="width:24%">Arabic</th><th scope="col" style="width:150px">Severity</th><th scope="col" style="width:132px">Threshold %'+(FE_T[kind].thr?'':'<small>Client QC has no thresholds today</small>')+'</th><th scope="col" style="width:64px"><span class="sr">Actions</span></th></tr></thead><tbody>';
+    defs.forEach(function(d){var c=feDefCtl(kind,d,'');
+      R+='<tr class="'+c.cls+'"><td>'+c.en+c.note+c.err+'</td><td>'+c.ar+'</td><td>'+c.sev+'</td><td>'+c.thr+'</td><td>'+c.act+'</td></tr>';});
+    if(!defs.length)R+='<tr><td colspan="5" class="hint" style="padding:14px 8px">'+(E.miss?'No defects missing Arabic in this section.':'No defects in this section yet.')+'</td></tr>';
+    R+='</tbody></table></div>';
+    if(sel.active&&!sel.gone)R+=feAddDefHTML(kind,sel,'');
+  }
+  R+='</div>';
+  h+='<div class="fe-panes desk-only">'+L+R+'</div>';
+  /* phone: accordion */
+  var openId=feOpenId(kind,pid),A='';
+  vis.forEach(function(r){var open=r.id===openId,n=feDefRows(kind,r).filter(function(d){return d.active;}).length;
+    A+='<div class="card fe-acc'+(feSecDirty(kind,r)?' dirty':'')+'"><button type="button" class="fe-acch" aria-expanded="'+open+'" data-act="feopen" data-arg="'+kind+'|'+aEsc(r.id)+'" data-fid="mfeo-'+aEsc(r.id)+'"><span class="nm">'+feSecLabel(kind,r)+
+      '<small>'+n+' defects'+(FE_T[kind].secAr&&r.ar?' · <span dir="rtl" lang="ar">'+aEsc(r.ar)+'</span>':'')+'</small></span><span class="chev" aria-hidden="true">'+(open?'▲':'▼')+'</span></button>';
+    if(open){A+='<div class="fe-accb">'+feSecFields(kind,r,'m');
+      if(r.active&&!E.busy){var ids=act.map(function(x){return x.id;});A+='<div class="fe-reorder"><span class="grow">Section order: '+(ids.indexOf(r.id)+1)+' of '+ids.length+'</span>'+feArrows(kind,r,ids,'m')+'</div>';}
+      var defs=feDefRows(kind,r).filter(visDef);
+      defs.forEach(function(d){var c=feDefCtl(kind,d,'m');
+        A+='<div class="dcard'+c.cls+'"><div class="dtop"><div class="fl"><span aria-hidden="true">Defect (EN)</span>'+c.en+'</div>'+c.act+'</div>'+c.note+
+          '<div class="fl"><span aria-hidden="true">Arabic</span>'+c.ar+'</div><div class="dgrid"><div class="fl"><span aria-hidden="true">Severity</span>'+c.sev+'</div><div class="fl"><span aria-hidden="true">Threshold %</span>'+c.thr+'</div></div>'+c.err+'</div>';});
+      if(!defs.length)A+='<p class="hint">'+(E.miss?'No defects missing Arabic in this section.':'No defects in this section yet.')+'</p>';
+      if(r.active&&!r.gone)A+=feAddDefHTML(kind,r,'m');
+      A+='</div>';}
+    A+='</div>';});
+  A+='<div class="card fe-acc" style="padding:12px">'+feAddSecHTML(kind,'m')+'</div>';
+  h+='<div class="mobile-only">'+A+'</div>';
+  /* save bar */
+  var chs=feChanges(kind);
+  if(chs.length){var shown=chs.slice(0,3).map(function(x){return x.t;});if(chs.length>3)shown.push('+'+(chs.length-3)+' more');
+    h+='<div class="savebar" role="region" aria-label="Unsaved changes"><span class="msg" role="status"><b>'+chs.length+' unsaved change'+(chs.length===1?'':'s')+'</b><small>'+aEsc(shown.join(' · '))+'</small></span>'+
+      '<button type="button" class="adm-btn" data-act="fediscard" data-arg="'+kind+'"'+(E.busy?' disabled':'')+'>Discard</button><button type="button" class="adm-btn pri" data-act="fesave" data-arg="'+kind+'"'+(E.busy?' disabled':'')+'>'+(E.busy?'Saving…':'Save')+'</button></div>';}
+  return h;
+}
+
+/* ── Grapes options (products.specifics where id='grapes') ─────────────────
+   Staged adds/removes. Save re-reads the row and merges only this user's adds
+   and removes, so a concurrent edit to other values isn't overwritten.       */
+var GR_KEYS=[['so2','SO2','SO2 pad options on the grapes inspection.'],['jiffy_pad','Jiffy Pad','Jiffy pad options on the grapes inspection.'],['punnet_type','Punnet Type','Punnet options on the grapes inspection.'],['package_type','Package Type','Package options on the grapes inspection.']];
+AD.gr={row:null,err:'',loading:false,adds:{},rms:{},nv:{},saveErr:'',busy:false};
+function grLoad(){var G=AD.gr;G.loading=true;G.err='';admRender();
+  return Promise.resolve(sb.from('products').select('id,specifics').eq('id','grapes')).then(function(r){
+    if(r.error)throw r.error;if(!r.data||!r.data.length)throw new Error('The grapes product was not found');
+    G.row=r.data[0].specifics||{};
+  }).catch(function(e){G.err=(e&&e.message)||'Load failed';}).then(function(){G.loading=false;admRender();});}
+function grList(k){var r=AD.gr.row;return r&&Array.isArray(r[k])?r[k].map(String):[];}
+function grCount(){var G=AD.gr,n=0;GR_KEYS.forEach(function(x){n+=(G.adds[x[0]]||[]).length+(G.rms[x[0]]||[]).length;});return n;}
+function grToggle(act,k,v){var G=AD.gr,ad=G.adds[k]||[],rm=G.rms[k]||[];
+  if(act==='grundo')G.rms[k]=rm.filter(function(x){return x!==v;});
+  else if(ad.indexOf(v)>=0)G.adds[k]=ad.filter(function(x){return x!==v;});
+  else if(rm.indexOf(v)<0)G.rms[k]=rm.concat([v]);
+  G.saveErr='';}
+function grAdd(k){var G=AD.gr,v=String(G.nv[k]||'').trim();if(!v)return;var lab=GR_KEYS.filter(function(x){return x[0]===k;})[0][1];
+  var rm=G.rms[k]||[],ad=G.adds[k]||[],cur=grList(k);
+  if(rm.indexOf(v)>=0){G.rms[k]=rm.filter(function(x){return x!==v;});G.nv[k]='';return;}
+  var low=v.toLowerCase();
+  if(cur.concat(ad).some(function(x){return x.toLowerCase()===low;})){aToast('“'+v+'” is already a '+lab+' option.',true);return;}
+  G.adds[k]=ad.concat([v]);G.nv[k]='';G.saveErr='';}
+function grSave(){var G=AD.gr;if(G.busy)return;G.busy=true;G.saveErr='';admRender();
+  Promise.resolve(sb.from('products').select('id,specifics').eq('id','grapes')).then(function(r){
+    if(r.error)throw r.error;if(!r.data||!r.data.length)throw new Error('The grapes product was not found');
+    var cur=r.data[0].specifics||{},next={};Object.keys(cur).forEach(function(k){next[k]=cur[k];});
+    GR_KEYS.forEach(function(x){var k=x[0],rm=G.rms[k]||[],ad=G.adds[k]||[];if(!rm.length&&!ad.length)return;
+      var list=(Array.isArray(cur[k])?cur[k]:[]).filter(function(v){return rm.indexOf(String(v))<0;});
+      ad.forEach(function(v){if(!list.some(function(y){return String(y)===v;}))list.push(v);});
+      next[k]=list;});
+    return sb.from('products').update({specifics:next}).eq('id','grapes').select('id,specifics');
+  }).then(function(r){var rows=aChk(r,'Grapes options');G.row=rows[0].specifics||{};G.adds={};G.rms={};aToast('Saved');})
+  .catch(function(e){G.saveErr=(e&&e.message)||'Network error';aToast('Not saved: '+G.saveErr+' Your changes are still listed as unsaved.',true);})
+  .then(function(){G.busy=false;admRender();});}
+function grHTML(){var G=AD.gr;
+  var h='<div class="fe-head"><div class="grow"><h2 class="fe-t">Grapes options <span class="hintag">Grapes only</span></h2><p class="fe-d">Drop-down options inspectors pick on grapes inspections (was “Specifics” in Vision). Removing an option doesn’t change past inspections: each sample keeps its own copy.</p></div></div>';
+  if(!G.row&&G.err)return h+'<div class="card empty err" role="alert"><div class="big" aria-hidden="true">⚠</div><b>Couldn’t load the grapes options</b><p>'+aEsc(G.err)+'. Nothing was changed.</p><button type="button" class="adm-btn pri" data-act="grretry">↻ Retry</button></div>';
+  if(!G.row){if(!G.loading){G.loading=true;setTimeout(grLoad,0);}return h+aLoading(4,'Loading grapes options…');}
+  if(G.saveErr)h+='<div class="ferr" role="alert">Not saved: '+aEsc(G.saveErr)+' Your changes are still listed below.</div>';
+  h+='<div class="ggrid">';
+  GR_KEYS.forEach(function(x){var k=x[0],cur=grList(k),ad=G.adds[k]||[],rm=G.rms[k]||[],n=cur.length-rm.length+ad.length,ok=String(G.nv[k]||'').trim()&&!G.busy;
+    h+='<div class="card gcard"><h3>'+aEsc(x[1])+' <span class="cnt">'+n+'</span></h3><p>'+aEsc(x[2])+'</p><ul class="gopts" aria-label="'+aEsc(x[1])+' options">';
+    cur.forEach(function(v){var gone=rm.indexOf(v)>=0,arg=aEsc(k+'|'+v);
+      h+='<li class="gopt'+(gone?' rm':'')+'"><span class="t"><span>'+aEsc(v)+'</span>'+(gone?'<span class="atag">removed on Save</span>':'')+'</span>'+
+        (gone?'<button type="button" class="adm-btn" aria-label="Undo removing '+aEsc(v)+'" data-act="grundo" data-arg="'+arg+'"'+(G.busy?' disabled':'')+'>Undo</button>':
+          '<button type="button" class="adm-btn red" aria-label="Remove '+aEsc(v)+' from '+aEsc(x[1])+'" data-act="grrm" data-arg="'+arg+'"'+(G.busy?' disabled':'')+'>Remove</button>')+'</li>';});
+    ad.forEach(function(v){h+='<li class="gopt new"><span class="t"><span>'+aEsc(v)+'</span><span class="ntag">new</span></span><button type="button" class="adm-btn" aria-label="Remove new option '+aEsc(v)+'" data-act="grrm" data-arg="'+aEsc(k+'|'+v)+'"'+(G.busy?' disabled':'')+'>Remove</button></li>';});
+    if(!cur.length&&!ad.length)h+='<li class="hint">No options yet.</li>';
+    h+='</ul><div class="gadd"><label class="fl"><span>Add '+aEsc(x[1])+' option</span><input class="inp" data-fid="gr-'+k+'" data-in="grnv" data-arg="'+k+'" value="'+aEsc(G.nv[k]||'')+'" data-enter="gradd" data-enter-arg="'+k+'" autocomplete="off"></label><button type="button" class="adm-btn" data-act="gradd" data-arg="'+k+'"'+(ok?'':' disabled')+'>+ Add</button></div></div>';});
+  h+='</div>';
+  var n=grCount();
+  if(n){var bits=[];GR_KEYS.forEach(function(x){(G.adds[x[0]]||[]).forEach(function(v){bits.push(x[1]+': added “'+v+'”');});(G.rms[x[0]]||[]).forEach(function(v){bits.push(x[1]+': removed “'+v+'”');});});
+    var shown=bits.slice(0,3);if(bits.length>3)shown.push('+'+(bits.length-3)+' more');
+    h+='<div class="savebar" role="region" aria-label="Unsaved changes"><span class="msg" role="status"><b>'+n+' unsaved change'+(n===1?'':'s')+'</b><small>'+aEsc(shown.join(' · '))+'</small></span><button type="button" class="adm-btn" data-act="grdiscard"'+(G.busy?' disabled':'')+'>Discard</button><button type="button" class="adm-btn pri" data-act="grsave"'+(G.busy?' disabled':'')+'>'+(G.busy?'Saving…':'Save')+'</button></div>';}
+  return h;}
+
+/* ── Tools › Schema doc (read-only; Vision cfgTab 'schemadoc' → rpc get_schema_columns) ── */
+function admSchemaHTML(){
+  return '<div class="card fe-tool"><h2 class="fe-t">Schema doc</h2><p class="fe-d">A live HTML document of every DalOS database table, generated from the current database. Useful for audits and for developers.</p>'+
+    '<div class="fe-toolrow"><button type="button" class="adm-btn pri" data-act="schemagen"'+(AD.schemaBusy?' disabled':'')+'>'+(AD.schemaBusy?'Generating…':'Generate schema doc ↗')+'</button><span class="hint" style="margin:0">Opens in a new tab · print to PDF</span></div>'+
+    '<div class="fe-inc"><b>What’s included</b><ul><li>All tables with every column, type, nullable and default</li><li>Live: always reflects the database at the time you generate it</li><li>Opens as HTML: use your browser’s Print to save it as a PDF</li></ul></div></div>'+
+    '<p class="hint">Read-only tool. It doesn’t change any data, so there’s no Save bar here.</p>';}
+function admSchemaDoc(data){
+  var tbls={};data.forEach(function(c){(tbls[c.table_name]=tbls[c.table_name]||[]).push(c);});
+  var now=new Date(),tn=Object.keys(tbls).sort(),ds;
+  try{ds=new Intl.DateTimeFormat('en-GB',{timeZone:'Africa/Cairo',day:'2-digit',month:'long',year:'numeric'}).format(now);}catch(_){ds=now.toISOString().slice(0,10);}
+  var h='<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>DalOS Schema</title><style>'+
+    '*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:13px;color:#1a1a1a;padding:40px 48px}'+
+    'h1{font-size:26px;color:#2e5d3a;margin-bottom:4px}.sub{font-size:13px;color:#666;margin-bottom:24px}'+
+    'h2{font-size:15px;color:#2e5d3a;margin:24px 0 4px;border-bottom:2px solid #2e5d3a;padding-bottom:3px}'+
+    'table{width:100%;border-collapse:collapse;margin-bottom:4px;font-size:12px}th{background:#2e5d3a;color:#fff;text-align:left;padding:5px 10px;font-weight:600}'+
+    'td{padding:4px 10px;border-bottom:1px solid #eee}tr:nth-child(even) td{background:#f9f9f9}'+
+    '.cn{font-family:Courier New,monospace;font-weight:600}.ct{font-family:Courier New,monospace;color:#7d3c98}.nn{color:#aaa}'+
+    '.meta{display:flex;gap:24px;margin-bottom:24px;padding:12px 16px;background:#f0f5f1;border-radius:8px;border-left:4px solid #2e5d3a}'+
+    '.ml{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.08em}.mv{font-size:14px;font-weight:700;color:#2e5d3a}@media print{.np{display:none}}'+
+    '</style></head><body><h1>DalOS Vision</h1><div class="sub">Database Schema · Generated '+aEsc(ds)+' · Live from Supabase · <em>Confidential — DaltexCorp Internal</em></div>'+
+    '<div class="meta"><div><div class="ml">Tables</div><div class="mv">'+tn.length+'</div></div><div><div class="ml">Project</div><div class="mv">DalOS Vision</div></div><div><div class="ml">Database</div><div class="mv">Supabase PostgreSQL</div></div></div>'+
+    '<button class="np" onclick="window.print()" style="margin-bottom:20px;padding:7px 18px;background:#2e5d3a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">Print / Save as PDF</button>';
+  tn.forEach(function(t){h+='<h2>'+aEsc(t)+'</h2><table><thead><tr><th style="width:26%">Column</th><th style="width:18%">Type</th><th style="width:11%">Nullable</th><th>Default</th></tr></thead><tbody>';
+    tbls[t].forEach(function(c){var nul=c.is_nullable==='YES';h+='<tr><td><span class="cn">'+aEsc(c.column_name)+'</span></td><td><span class="ct">'+aEsc(c.data_type)+'</span></td><td><span class="'+(nul?'nn':'')+'">'+(nul?'nullable':'NOT NULL')+'</span></td><td style="color:#888;font-size:11px">'+(c.column_default!=null?aEsc(c.column_default):'—')+'</td></tr>';});
+    h+='</tbody></table>';});
+  return h+'</body></html>';}
+function admSchemaGen(){
+  if(AD.schemaBusy)return;var w=null;try{w=window.open('','_blank');if(w)w.document.write('<p style="font-family:sans-serif;padding:24px">Generating schema doc…</p>');}catch(_){}
+  AD.schemaBusy=true;admRender();
+  Promise.resolve(sb.rpc('get_schema_columns')).then(function(res){
+    if(res.error)throw res.error;if(!res.data||!res.data.length)throw new Error('No data returned');
+    var url=URL.createObjectURL(new Blob([admSchemaDoc(res.data)],{type:'text/html'}));
+    if(w&&!w.closed)w.location.href=url;
+    else{var a=document.createElement('a'),d=new Date();a.href=url;a.download='DalOS_Schema_'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'.html';document.body.appendChild(a);a.click();a.remove();}
+    setTimeout(function(){URL.revokeObjectURL(url);},60000);aToast('Schema doc ready');
+  }).catch(function(e){if(w&&!w.closed)w.close();aToast('Could not load schema: '+((e&&e.message)||'error'),true);})
+  .then(function(){AD.schemaBusy=false;admRender();});}
+
 /* ── events ────────────────────────────────────────────────────────────── */
 function admClick(e){
   var t=e.target.closest('[data-act]');if(!t||t.disabled)return;
@@ -864,6 +1304,29 @@ function admClick(e){
       run:function(){return Promise.resolve(sb.from('sub_clients').update({active:false}).eq('id',arg).select('id')).then(function(r){aChk(r);aStDone(r,'Removed');});}});return;
     case 'seasonadd':(function(){var nm=aNv('season').trim();if(!nm)return;S.nv.season='';
       Promise.resolve(sb.from('seasons').insert([{name:nm,active:false}]).select('id')).then(function(r){aStDone(r,'Season added');}).catch(aStFail);})();break;
+    case 'feprod':var fa=arg.split('|');AD.fe[fa[0]].prod=fa[1];AD.rowMenu=null;break;
+    case 'fesel':case 'feopen':(function(){var a=arg.split('|'),E=AD.fe[a[0]],pid=feProdId(a[0]);
+      if(act==='feopen')E.open[pid]=(feOpenId(a[0],pid)===a[1])?'':a[1];else E.open[pid]=a[1];E.sel[pid]=a[1];})();break;
+    case 'feup':case 'fedn':var fu=arg.split('|');feMove(fu[0],fu[1],act==='feup'?-1:1);break;
+    case 'femiss':AD.fe[arg].miss=!AD.fe[arg].miss;break;
+    case 'feall':AD.fe[arg].miss=false;break;
+    case 'fearch':AD.fe[arg].arch=!AD.fe[arg].arch;break;
+    case 'fedel':var fd=arg.split('|');feDelete(fd[0],fd[1],fd[2]);return;
+    case 'ferest':var fr=arg.split('|');AD.rowMenu=null;feSet(fr[0],fr[1],fr[2],'active',true);break;
+    case 'feaddsec':feAddSec(arg);break;
+    case 'feadddef':var fn=arg.split('|');feAddDef(fn[0],fn[1]);break;
+    case 'fesave':feSave(arg);return;
+    case 'fediscard':(function(){var k=arg,n=feChanges(k).length;
+      admConfirm({title:'Discard '+n+' unsaved change'+(n===1?'':'s')+'?',text:'Your edits to the '+FE_T[k].label.toLowerCase()+' will be lost. Nothing has been saved.',ok:'Discard',danger:true,
+        run:function(){var E=AD.fe[k];E.se={};E.de={};E.ord={};E.ns=[];E.nd=[];E.errs={};return Promise.resolve();}});})();return;
+    case 'feretry':var ft=arg.split('|');AD.fe[ft[0]].err[ft[1]]='';feLoad(ft[0],ft[1]);break;
+    case 'grrm':case 'grundo':(function(){var i=arg.indexOf('|');grToggle(act,arg.slice(0,i),arg.slice(i+1));})();break;
+    case 'gradd':grAdd(arg);break;
+    case 'grsave':grSave();return;
+    case 'grdiscard':(function(){var n=grCount();admConfirm({title:'Discard '+n+' unsaved change'+(n===1?'':'s')+'?',text:'Your edits to the grapes options will be lost. Nothing has been saved.',ok:'Discard',danger:true,
+        run:function(){AD.gr.adds={};AD.gr.rms={};AD.gr.saveErr='';return Promise.resolve();}});})();return;
+    case 'grretry':grLoad();break;
+    case 'schemagen':admSchemaGen();return;
     case 'seasonact':admConfirm({title:'Make '+arg+' the active season?',text:'This switches the active season for every Vision user.',list:['New inspections are saved to this season.','Vision users see it after their next reload.'],ok:'Set as active',danger:true,
       run:function(){return admSetSeason(arg);}});return;
     default:return;
@@ -882,6 +1345,8 @@ function admChange(e){
   else if(k==='selProd'){S.nv.selProd=v;S.nv.selCat='';}
   else if(k==='selCat')S.nv.selCat=v;
   else if(k==='subParent')S.nv.subParent=v;
+  else if(k==='fe')feInput(t.getAttribute('data-arg'),v);
+  else if(k==='feprod'){AD.fe[t.getAttribute('data-arg')].prod=v;AD.rowMenu=null;}
   else if(k==='varcat'){var vid=t.getAttribute('data-arg'),vv=aVarById(vid);/* staged; saved from the Save bar */
     if(vv&&(vv.categoryId||'')===v)delete S.pendVar[vid];else S.pendVar[vid]=v;}
   admRender();
@@ -892,6 +1357,9 @@ function admInput(e){
   else if(k==='aaq')AD.aaQ=v;
   else if(k==='stq')S.q=v;
   else if(k==='rpw'){AD.dlg.pw=v;}
+  else if(k==='fe')feInput(t.getAttribute('data-arg'),v);
+  else if(k==='fenv'){var na=t.getAttribute('data-arg').split('|');AD.fe[na[0]].nv[na[1]]=v;}
+  else if(k==='grnv')AD.gr.nv[t.getAttribute('data-arg')]=v;
   else if(k==='add-name')AD.drawer.v.name=v;
   else if(k==='add-email')AD.drawer.v.email=v;
   else if(k==='add-pw')AD.drawer.v.pw=v;
@@ -906,7 +1374,7 @@ function admKey(e){
     if(AD.rowMenu){var id=AD.rowMenu;AD.rowMenu=null;admRender();var b=document.querySelector('[data-fid="keb-'+id+'"]');if(b)b.focus();return;}
     if(AD.drawer){e.preventDefault();admCloseDrawer(false);return;}
   }
-  if(e.key==='Enter'&&e.target.getAttribute('data-enter')){e.preventDefault();var b2=document.querySelector('#admMain [data-act="'+e.target.getAttribute('data-enter')+'"]');if(b2&&!b2.disabled)b2.click();return;}
+  if(e.key==='Enter'&&e.target.getAttribute('data-enter')){e.preventDefault();var ea=e.target.getAttribute('data-enter-arg'),b2=document.querySelector('#admMain [data-act="'+e.target.getAttribute('data-enter')+'"]'+(ea!=null?'[data-arg="'+(window.CSS&&CSS.escape?CSS.escape(ea):ea)+'"]':''));if(b2&&!b2.disabled)b2.click();return;}
   if(e.key==='Enter'&&e.target.classList.contains('ucard')){admOpenEdit(e.target.getAttribute('data-arg'));return;}
   var rm=e.target.closest('.rmenu');
   if(rm&&(e.key==='ArrowDown'||e.key==='ArrowUp'||e.key==='Home'||e.key==='End')){e.preventDefault();var it=[].slice.call(rm.querySelectorAll('button:not(:disabled)')),i=it.indexOf(e.target);
