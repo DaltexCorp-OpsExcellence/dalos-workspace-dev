@@ -263,7 +263,7 @@ body{font-family:var(--font-body);background:#0a120c;color:#eef0ea}
 @media(max-width:760px){.app-grid{grid-template-columns:1fr;gap:14px}.app-card{min-height:0;padding:20px}}
 /* ── Avatar = account menu (name, email, role, ⚙ Admin, ⏻ Sign out) ── */
 button.dh-av{border:0;padding:0;font-family:var(--font-body);width:44px;height:44px;font-size:14px}
-.dh-av:focus-visible,.ws-menu [role=menuitem]:focus-visible,.app-admin:focus-visible{outline:none;box-shadow:0 0 0 3px #0a120c,0 0 0 5px #9fe3bb}
+.dh-av:focus-visible,.ws-menu [role=menuitem]:focus-visible{outline:none;box-shadow:0 0 0 3px #0a120c,0 0 0 5px #9fe3bb}
 .ws-avwrap{position:relative}
 .ws-menu{position:absolute;top:52px;right:0;z-index:100;width:280px;background:#14241a;border:1px solid rgba(255,255,255,.16);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.55);padding:8px;animation:dh-rise .18s ease both;font-family:var(--font-body)}
 .ws-menu[hidden]{display:none}
@@ -277,23 +277,20 @@ button.dh-av{border:0;padding:0;font-family:var(--font-body);width:44px;height:4
 .ws-menu .ws-out{color:#f0a89a}
 .ws-menu hr{border:0;border-top:1px solid rgba(255,255,255,.1);margin:6px 0}
 @media(max-width:760px){.ws-menu{position:fixed;top:60px;left:10px;right:10px;width:auto}}
-/* ── 5th tile: Administration · Admin only (quieter: gold dashed border, no glow) ── */
-.app-admin{--ac:#e8bf6a;background:linear-gradient(162deg,rgba(70,62,40,.38),rgba(20,22,18,.6));border:1px dashed rgba(232,191,106,.45);animation-delay:.34s;grid-column:1/-1;min-height:0;flex-direction:row;align-items:center;gap:18px;padding:16px 22px}
-.app-admin .app-glow,.app-admin .app-sheen{display:none}
-.app-admin:hover{box-shadow:0 18px 44px rgba(0,0,0,.42);border-color:rgba(232,191,106,.7)}
-.app-admin .app-emblem{width:40px;height:40px;margin:0;flex:none;filter:none}
-.app-admin .adm-body{flex:1;min-width:0}
-.app-admin .app-name{font-size:24px}
-.app-admin .app-tag{font-size:14px;margin-top:4px;max-width:none}
-.app-admin .adm-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.app-admin .adm-chips span{font-size:14px;color:rgba(244,241,232,.75);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:1px 10px}
-.app-admin .adm-chips span:empty{display:none}
-.app-admin .app-foot{margin:0;padding:0;flex:none}
-.app-admin .app-go{font-size:14px;min-height:44px}
-.app-admin .app-head{flex-direction:column;align-items:flex-start;gap:6px;flex:none}
-.app-admin .app-status{font-size:14px;font-weight:600;letter-spacing:0;padding:2px 10px}
-@media(min-width:1400px){.app-grid.with-admin{grid-template-columns:repeat(5,1fr);max-width:1560px}.app-admin{grid-column:auto;flex-direction:column;align-items:stretch;min-height:clamp(220px,30vh,290px);padding:24px 24px 22px;gap:0}.app-admin .app-head{flex-direction:row;justify-content:space-between}.app-admin .app-emblem{margin:16px 0 13px}.app-admin .app-foot{margin-top:auto;padding-top:16px}}
-@media(max-width:760px){.app-admin{flex-direction:column;align-items:stretch;gap:10px}.app-admin .app-head{flex-direction:row;justify-content:space-between}}
+/* ── Admin strip under the app row · Admin only (quieter: gold border, no glow).
+   Lives in the grid as its own full-width row, left-aligned and sized to content. ── */
+.app-admin-strip{--ac:#e8bf6a;grid-column:1/-1;justify-self:start;max-width:100%;margin-top:12px;display:flex;align-items:center;flex-wrap:wrap;gap:12px 18px;min-height:66px;padding:10px 12px 10px 20px;border-radius:16px;background:linear-gradient(162deg,rgba(70,62,40,.38),rgba(20,22,18,.6));border:1px solid rgba(232,191,106,.45);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);cursor:pointer;transition:box-shadow .3s,border-color .3s;animation:dh-rise .6s .34s ease both;opacity:0}
+.app-admin-strip:hover{box-shadow:0 18px 44px rgba(0,0,0,.42);border-color:rgba(232,191,106,.7)}
+.app-admin-strip .ads-ico{width:24px;height:24px;flex:none;color:var(--ac)}
+.app-admin-strip .ads-name{font-family:var(--font-display);font-size:26px;line-height:1.05;color:#f4f1e8}
+.app-admin-strip .ads-badge{font-size:14px;font-weight:600;padding:2px 10px;border-radius:20px;background:color-mix(in srgb,var(--ac) 18%,transparent);color:var(--ac);border:1px solid color-mix(in srgb,var(--ac) 30%,transparent)}
+.app-admin-strip .ads-go{display:inline-flex;align-items:center;gap:8px;min-height:44px;margin-left:12px;padding:0 16px;border-radius:11px;font-family:var(--font-body);font-size:15px;font-weight:700;color:var(--ac);background:color-mix(in srgb,var(--ac) 8%,transparent);border:1px solid color-mix(in srgb,var(--ac) 55%,transparent);cursor:pointer;transition:.2s}
+.app-admin-strip:hover .ads-go,.app-admin-strip .ads-go:focus-visible{background:var(--ac);color:#0a120c;border-color:var(--ac)}
+.app-admin-strip .ads-go b{transition:transform .2s}
+.app-admin-strip:hover .ads-go b{transform:translateX(4px)}
+.app-admin-strip .ads-go:focus-visible{outline:none;box-shadow:0 0 0 3px #0a120c,0 0 0 5px #9fe3bb}
+@media(max-width:760px){.app-admin-strip{margin-top:4px;padding:10px 12px 10px 16px;gap:10px 14px}.app-admin-strip .ads-go{margin-left:0}}
+@media(prefers-reduced-motion:reduce){.app-admin-strip{animation:none;opacity:1}.app-admin-strip:hover .ads-go b{transform:none}}
 </style>
 <link rel="stylesheet" href="admin.css?v=8">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiMwYjE1MTAiLz48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSg3LjAwMCwzOC42MjEpIHNjYWxlKDAuMDE4OTE4LC0wLjAxODkxOCkiPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsMCkiIGQ9Ik0yMiAwVjEwTDQzIDE4UTc1IDMxIDc1IDY5VjU5MVE3NSA2MzEgNDMgNjQyTDIyIDY1MFY2NjBIMjg2UTM5MiA2NjAgNDY4LjUgNjIwLjVRNTQ1IDU4MSA1ODYuNSA1MDcuNVE2MjggNDM0IDYyOCAzMzFRNjI4IDIyNiA1ODMuMCAxNTIuMFE1MzggNzggNDU3LjUgMzkuMFEzNzcgMCAyNjggMFpNMjI1IDIwSDI2OFEzNDAgMjAgMzg0LjAgNDguNVE0MjggNzcgNDQ4LjUgMTQ0LjVRNDY5IDIxMiA0NjkgMzMwUTQ2OSA0NDggNDQ4LjUgNTE1LjVRNDI4IDU4MyAzODUuMCA2MTEuNVEzNDIgNjQwIDI3MiA2NDBIMjI1WiIgZmlsbD0iI2ZmZmZmZiIvPjxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDY0OCwwKSIgZD0iTTE2NiAtMTVRMTA4IC0xNSA2OC41IDE4LjBRMjkgNTEgMjkgMTEzUTI5IDE2MCA3Ny4wIDE5OS41UTEyNSAyMzkgMjI4IDI1OVEyNDQgMjYyIDI2NC4wIDI2NS41UTI4NCAyNjkgMzA2IDI3M1YzNTJRMzA2IDQyMCAyODkuNSA0NDcuNVEyNzMgNDc1IDIzOCA0NzVRMjE0IDQ3NSAyMDAuMCA0NTkuNVExODYgNDQ0IDE4MiA0MDZMMTgwIDM5NVExNzggMzUyIDE1OS4wIDMzMi4wUTE0MCAzMTIgMTEyIDMxMlE4NiAzMTIgNjkuMCAzMjguMFE1MiAzNDQgNTIgMzcxUTUyIDQxMiA4MC41IDQ0MC4wUTEwOSA0NjggMTU2LjAgNDgyLjBRMjAzIDQ5NiAyNTggNDk2UTM0NyA0OTYgMzk1LjUgNDUyLjVRNDQ0IDQwOSA0NDQgMzExVjkwUTQ0NCA0NSA0ODYgNDVINTA4TDUxNyAzN1E0OTggMTMgNDc1LjUgMC4wUTQ1MyAtMTMgNDEyIC0xM1EzNjggLTEzIDM0Mi41IDcuNVEzMTcgMjggMzA5IDYyUTI3OSAzMCAyNDcuNSA3LjVRMjE2IC0xNSAxNjYgLTE1Wk0yMjcgNDZRMjQ3IDQ2IDI2NC41IDU1LjVRMjgyIDY1IDMwNiA4NVYyNTNRMjk2IDI1MSAyODYuMCAyNDkuMFEyNzYgMjQ3IDI2MyAyNDVRMjE3IDIzMyAxODkuNSAyMDQuNVExNjIgMTc2IDE2MiAxMjhRMTYyIDg3IDE4MS4wIDY2LjVRMjAwIDQ2IDIyNyA0NloiIGZpbGw9IiNmZmZmZmYiLz48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMTY2LDApIiBkPSJNMjMgMFYxMEwzNSAxNFE3MSAyNiA3MSA2NFY1OTlRNzEgNjE5IDYzLjAgNjI5LjVRNTUgNjQwIDM1IDY0NUwyMiA2NDhWNjU4TDIwNSA3MDFMMjE3IDY5MkwyMTMgNTUyVjIxMFEyMTMgMTczIDIxMy41IDEzNi41UTIxNCAxMDAgMjE0IDY0UTIxNCA0NCAyMjIuMCAzMS41UTIzMCAxOSAyNDkgMTNMMjYyIDEwVjBaIiBmaWxsPSIjZmZmZmZmIi8+PHBhdGggdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTQ1MiwwKSIgZD0iTTMzNSAtMThRMjc0IC0xOCAyMTcuNSA0LjBRMTYxIDI2IDExNi41IDY5LjVRNzIgMTEzIDQ2LjAgMTc4LjBRMjAgMjQzIDIwIDMzMFEyMCA0MTYgNDYuMCA0ODEuMFE3MiA1NDYgMTE3LjAgNTg5LjVRMTYyIDYzMyAyMTguNSA2NTUuNVEyNzUgNjc4IDMzNSA2NzhRMzk2IDY3OCA0NTIuNSA2NTYuNVE1MDkgNjM1IDU1My41IDU5MS41UTU5OCA1NDggNjI0LjAgNDgyLjVRNjUwIDQxNyA2NTAgMzMwUTY1MCAyNDUgNjI0LjAgMTc5LjVRNTk4IDExNCA1NTMuNSA3MC41UTUwOSAyNyA0NTIuNSA0LjVRMzk2IC0xOCAzMzUgLTE4Wk0zMzUgM1EzOTAgMyA0MjQuMCAzMi41UTQ1OCA2MiA0NzMuNSAxMzMuNVE0ODkgMjA1IDQ4OSAzMzBRNDg5IDQ1NiA0NzMuNSA1MjcuNVE0NTggNTk5IDQyNC4wIDYyOC41UTM5MCA2NTggMzM1IDY1OFEyODEgNjU4IDI0Ny4wIDYyOC41UTIxMyA1OTkgMTk3LjUgNTI3LjVRMTgyIDQ1NiAxODIgMzMwUTE4MiAyMDUgMTk3LjUgMTMzLjVRMjEzIDYyIDI0Ny4wIDMyLjVRMjgxIDMgMzM1IDNaIiBmaWxsPSIjNmZjMTkxIi8+PHBhdGggdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjEyMiwwKSIgZD0iTTIzNyAtMThRMTgyIC0xOCAxMjUuMCAtNC41UTY4IDkgMzAgMzFMMzUgMTY3SDQ1TDc2IDEwMlE5MCA3NCAxMDYuMCA1Mi41UTEyMiAzMSAxNTAgMTlRMTcwIDkgMTg4LjUgNS41UTIwNyAyIDIzMCAyUTI5MSAyIDMyNi41IDM1LjBRMzYyIDY4IDM2MiAxMjBRMzYyIDE2OSAzMzguMCAxOTYuNVEzMTQgMjI0IDI2MSAyNTBMMjIwIDI2OFExMzQgMzA2IDg1LjUgMzU1LjVRMzcgNDA1IDM3IDQ4N1EzNyA1NDYgNjcuNSA1ODkuMFE5OCA2MzIgMTUyLjUgNjU1LjBRMjA3IDY3OCAyODAgNjc4UTMzMyA2NzggMzgwLjUgNjY0LjBRNDI4IDY1MCA0NjMgNjI2TDQ1NyA1MDZINDQ3TDQwNiA1ODFRMzg5IDYxNiAzNzIuMCA2MzAuNVEzNTUgNjQ1IDMzMyA2NTFRMzIwIDY1NSAzMDkuMCA2NTYuNVEyOTggNjU4IDI4MSA2NThRMjMwIDY1OCAxOTUuMCA2MjguNVExNjAgNTk5IDE2MCA1NDlRMTYwIDQ5OCAxODcuMCA0NjcuNVEyMTQgNDM3IDI2NiA0MTNMMzEyIDM5M1E0MDggMzUxIDQ1MC4wIDMwMy41UTQ5MiAyNTYgNDkyIDE4MVE0OTIgOTMgNDI1LjUgMzcuNVEzNTkgLTE4IDIzNyAtMThaIiBmaWxsPSIjNmZjMTkxIi8+PC9nPjwvc3ZnPg=="/>
@@ -402,13 +399,11 @@ button.dh-av{border:0;padding:0;font-family:var(--font-body);width:44px;height:4
         <div class="app-tag">Every block, every season, and how the land got its shape.</div>
         <div class="app-foot"><span class="app-go">Open Land Cloud <b>→</b></span></div>
       </div>
-      <div class="app-card app-admin" id="tileAdmin" role="link" tabindex="0" aria-label="Administration, admin only. Users, roles, app access and app settings." style="display:none">
-        <div class="app-head"><span class="app-eyebrow">Workspace</span><span class="app-status">Admin only</span></div>
-        <div class="app-emblem"><svg viewBox="0 0 32 32" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="16" cy="16" r="4"/><path d="M16 3v4M16 25v4M3 16h4M25 16h4M6.8 6.8l2.8 2.8M22.4 22.4l2.8 2.8M6.8 25.2l2.8-2.8M22.4 9.6l2.8-2.8"/></svg></div>
-        <div class="adm-body"><div class="app-name">Administration</div>
-        <div class="app-tag">Users, roles, app access and app settings for all DalOS apps.</div>
-        <div class="adm-chips"><span id="admTileUsers"></span><span id="admTileReq"></span></div></div>
-        <div class="app-foot"><span class="app-go">Open Admin <b>→</b></span></div>
+      <div class="app-admin-strip" id="adminStrip" style="display:none">
+        <svg class="ads-ico" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="16" cy="16" r="4"/><path d="M16 3v4M16 25v4M3 16h4M25 16h4M6.8 6.8l2.8 2.8M22.4 22.4l2.8 2.8M6.8 25.2l2.8-2.8M22.4 9.6l2.8-2.8"/></svg>
+        <span class="ads-name">Administration</span>
+        <span class="ads-badge">Admin only</span>
+        <button type="button" class="ads-go" id="adminStripGo" aria-label="Open Admin (admin only)">Open Admin <b aria-hidden="true">→</b></button>
       </div>
     </div>
     <div class="dh-ribbon">
@@ -588,7 +583,7 @@ function wsRoute(){
 window.addEventListener('hashchange',wsRoute);
 window.addEventListener('popstate',wsRoute);
 function wsGoAdmin(){if(location.hash.indexOf('#admin')===0){wsRoute();}else{location.hash='admin';}}
-function wsGoHome(){try{history.pushState(null,'',location.pathname+location.search);}catch(e){location.hash='';}wsRoute();var t=$('tileAdmin');if(t&&t.style.display!=='none')t.focus({preventScroll:true});}
+function wsGoHome(){try{history.pushState(null,'',location.pathname+location.search);}catch(e){location.hash='';}wsRoute();var s=$('adminStrip'),t=$('adminStripGo');if(s&&t&&s.style.display!=='none')t.focus({preventScroll:true});}
 function wsSignOut(){sb.auth.signOut().then(function(){window.location.replace(location.pathname+location.search);});}
 /* Account menu on an avatar button: menu-button pattern (Enter/Space/↓ open,
    ↑/↓/Home/End move, Esc closes and returns focus, Tab closes). */
@@ -628,14 +623,10 @@ function wsBindAvatar(btn){
     if(it.getAttribute('data-mi')==='admin')wsGoAdmin();else wsSignOut();
   });
 }
+/* Admin strip under the app row — admin-only via wsIsAdmin() (cosmetic; server checks stay the real gate). */
 function applyAdminTile(){
-  var t=$('tileAdmin'),g=document.querySelector('#chooserStage .app-grid');if(!t)return;
-  if(!wsIsAdmin()){t.style.display='none';if(g)g.classList.remove('with-admin');return;}
-  t.style.display='';if(g)g.classList.add('with-admin');
-  try{admTileInfo(function(i){
-    $('admTileUsers').textContent=i.users!=null?i.users+' active users':'';
-    $('admTileReq').textContent=i.requests?i.requests+' access request'+(i.requests===1?'':'s'):'';
-  });}catch(e){}
+  var s=$('adminStrip');if(!s)return;
+  s.style.display=wsIsAdmin()?'':'none';
 }
 function showChooser(u,animate){
   WS_USER=u;
@@ -734,8 +725,8 @@ $('tileAnalytics').onclick=function(){var st=$('tileAnalytics').getAttribute('da
 $('tileCommercial').onclick=function(){if($('tileCommercial').getAttribute('data-state')==='granted'){openProduct('commercial');}};
 $('tileLandCloud').onclick=function(){if($('tileLandCloud').getAttribute('data-state')==='granted'){openProduct('landcloud');}};
 $('chSignoutPill').onclick=function(){sb.auth.signOut().then(function(){window.location.reload();});};
-$('tileAdmin').onclick=function(){wsGoAdmin();};
-$('tileAdmin').onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();wsGoAdmin();}};
+/* Whole strip is clickable; the native <button> gives Enter/Space + focus ring. */
+$('adminStrip').onclick=function(){if(wsIsAdmin())wsGoAdmin();};
 function resolveUser(au){
   return sb.from('users').select('*').eq('id',au.id).single().then(function(pr){
     if(pr.error||!pr.data) return {err:'Account not found. Contact your administrator.'};
