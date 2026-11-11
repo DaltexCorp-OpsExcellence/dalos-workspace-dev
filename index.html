@@ -572,7 +572,7 @@ function openNext(target,animate){
    giveAccess). Both are cosmetic gates — RLS/RPC checks on the server stay the
    real gate; anyone else hitting #admin is bounced to the chooser. */
 var WS_USER=null;
-function wsIsAdmin(){return !!(WS_USER&&WS_USER.role==='admin');}
+function wsIsAdmin(){return !!(WS_USER&&WS_USER.active!==false&&WS_USER.role==='admin');}
 function wsCanViewAdmin(){return !!(WS_USER&&WS_USER.active!==false&&(WS_USER.role==='admin'||WS_USER.role==='power_user'));}
 function wsRoute(){
   if(!WS_USER)return;
