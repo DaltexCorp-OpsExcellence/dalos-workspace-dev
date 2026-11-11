@@ -277,18 +277,21 @@ button.dh-av{border:0;padding:0;font-family:var(--font-body);width:44px;height:4
 .ws-menu .ws-out{color:#f0a89a}
 .ws-menu hr{border:0;border-top:1px solid rgba(255,255,255,.1);margin:6px 0}
 @media(max-width:760px){.ws-menu{position:fixed;top:60px;left:10px;right:10px;width:auto}}
-/* ── Admin strip under the app row · Admin only (quieter: gold border, no glow).
+/* ── Admin strip under the app row · Admins & power users (quieter: gold border, no glow).
    Lives in the grid as its own full-width row, left-aligned and sized to content. ── */
 .app-admin-strip{--ac:#e8bf6a;grid-column:1/-1;justify-self:start;max-width:100%;margin-top:12px;display:flex;align-items:center;flex-wrap:wrap;gap:12px 18px;min-height:66px;padding:10px 12px 10px 20px;border-radius:16px;background:linear-gradient(162deg,rgba(70,62,40,.38),rgba(20,22,18,.6));border:1px solid rgba(232,191,106,.45);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);cursor:pointer;transition:box-shadow .3s,border-color .3s;animation:dh-rise .6s .34s ease both;opacity:0}
 .app-admin-strip:hover{box-shadow:0 18px 44px rgba(0,0,0,.42);border-color:rgba(232,191,106,.7)}
 .app-admin-strip .ads-ico{width:24px;height:24px;flex:none;color:var(--ac)}
 .app-admin-strip .ads-name{font-family:var(--font-display);font-size:26px;line-height:1.05;color:#f4f1e8}
 .app-admin-strip .ads-badge{font-size:14px;font-weight:600;padding:2px 10px;border-radius:20px;background:color-mix(in srgb,var(--ac) 18%,transparent);color:var(--ac);border:1px solid color-mix(in srgb,var(--ac) 30%,transparent)}
-.app-admin-strip .ads-go{display:inline-flex;align-items:center;gap:8px;min-height:44px;margin-left:12px;padding:0 16px;border-radius:11px;font-family:var(--font-body);font-size:15px;font-weight:700;color:var(--ac);background:color-mix(in srgb,var(--ac) 8%,transparent);border:1px solid color-mix(in srgb,var(--ac) 55%,transparent);cursor:pointer;transition:.2s}
+.app-admin-strip .ads-go{display:inline-flex;align-items:center;gap:8px;min-height:44px;margin-left:12px;padding:0 16px;border-radius:11px;font-family:var(--font-body);font-size:15px;font-weight:700;color:var(--ac);background:color-mix(in srgb,var(--ac) 8%,transparent);border:1px solid color-mix(in srgb,var(--ac) 55%,transparent);cursor:pointer;transition:background-color .2s,border-color .2s}
+/* Label colour switches instantly (no transition on color) so it never fades through an unreadable mid-state. */
 .app-admin-strip:hover .ads-go,.app-admin-strip .ads-go:focus-visible{background:var(--ac);color:#0a120c;border-color:var(--ac)}
 .app-admin-strip .ads-go b{transition:transform .2s}
 .app-admin-strip:hover .ads-go b{transform:translateX(4px)}
-.app-admin-strip .ads-go:focus-visible{outline:none;box-shadow:0 0 0 3px #0a120c,0 0 0 5px #9fe3bb}
+.app-admin-strip .ads-go:focus-visible{transition:none;outline:none;box-shadow:0 0 0 3px #0a120c,0 0 0 5px #9fe3bb}
+/* Power-user (view-only) Admin: grant controls are not rendered by admin.js; this hides them too as a safety net. */
+body.ws-viewonly #adminStage :is([data-act="adduser"],[data-act="addsave"],[data-act="dsave"],[data-act="ddiscard"],[data-act="dph"],[data-act="dreg"],[data-act="dmgr"],[data-act="deact"],[data-act="react"],[data-act="resetpw"],[data-act="rpwgo"],[data-act="aaok"],[data-act="aadeny"],[data-act="aarevoke"],[data-act="actuser"],[data-ch="drRole"],[data-ch="add-role"],[data-ch="add-ph"],a[href="#admin/access"],a[href="#admin/activity"]){display:none!important}
 @media(max-width:760px){.app-admin-strip{margin-top:4px;padding:10px 12px 10px 16px;gap:10px 14px}.app-admin-strip .ads-go{margin-left:0}}
 @media(prefers-reduced-motion:reduce){.app-admin-strip{animation:none;opacity:1}.app-admin-strip:hover .ads-go b{transform:none}}
 </style>
@@ -402,8 +405,8 @@ button.dh-av{border:0;padding:0;font-family:var(--font-body);width:44px;height:4
       <div class="app-admin-strip" id="adminStrip" style="display:none">
         <svg class="ads-ico" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="16" cy="16" r="4"/><path d="M16 3v4M16 25v4M3 16h4M25 16h4M6.8 6.8l2.8 2.8M22.4 22.4l2.8 2.8M6.8 25.2l2.8-2.8M22.4 9.6l2.8-2.8"/></svg>
         <span class="ads-name">Administration</span>
-        <span class="ads-badge">Admin only</span>
-        <button type="button" class="ads-go" id="adminStripGo" aria-label="Open Admin (admin only)">Open Admin <b aria-hidden="true">→</b></button>
+        <span class="ads-badge">Admins &amp; power users</span>
+        <button type="button" class="ads-go" id="adminStripGo" aria-label="Open Admin (admins and power users)">Open Admin <b aria-hidden="true">→</b></button>
       </div>
     </div>
     <div class="dh-ribbon">
@@ -418,7 +421,7 @@ button.dh-av{border:0;padding:0;font-family:var(--font-body);width:44px;height:4
 <div class="adm" id="adminStage" data-admin-theme="b" style="display:none"></div>
 
 <script src="dal.js?v=7"></script>
-<script src="admin.js?v=9"></script>
+<script src="admin.js?v=10"></script>
 <script src="celebrate.js?v=7"></script>
 <script>
 var DALOS_SUPABASE_URL='https://sfyjvgjwvtwkrnqrvqyc.supabase.co';
@@ -563,18 +566,22 @@ function openNext(target,animate){
   } else {fire(900);}
 }
 /* ── Workspace user + #admin hash route ───────────────────────────────────
-   WS_USER is set once resolveUser() has run. #admin is admin-only by role
-   (cosmetic gate — RLS/RPC checks on the server stay the real gate); anyone
-   else hitting #admin is bounced to the chooser. */
+   WS_USER is set once resolveUser() has run. #admin opens for active admins and
+   power users (wsCanViewAdmin, = Vision viewAdmin). Grant controls (users, roles,
+   packhouses, regions, app access, activity) are admin-only (wsIsAdmin, = Vision
+   giveAccess). Both are cosmetic gates — RLS/RPC checks on the server stay the
+   real gate; anyone else hitting #admin is bounced to the chooser. */
 var WS_USER=null;
 function wsIsAdmin(){return !!(WS_USER&&WS_USER.role==='admin');}
+function wsCanViewAdmin(){return !!(WS_USER&&WS_USER.active!==false&&(WS_USER.role==='admin'||WS_USER.role==='power_user'));}
 function wsRoute(){
   if(!WS_USER)return;
   var wantAdmin=/^#admin(\/|$)/.test(location.hash||'');
-  if(wantAdmin&&!wsIsAdmin()){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}wantAdmin=false;}
+  if(wantAdmin&&!wsCanViewAdmin()){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}wantAdmin=false;}
   var cs=$('chooserStage'),as=$('adminStage');
   if(wantAdmin){
     cs.style.display='none';as.style.display='block';document.body.classList.add('ws-admin');
+    document.body.classList.toggle('ws-viewonly',!wsIsAdmin());
     try{adminShow(WS_USER);}catch(e){console.error('[Workspace] admin failed',e);}
   }else{
     as.style.display='none';document.body.classList.remove('ws-admin');cs.style.display='flex';
@@ -599,7 +606,7 @@ function wsBindAvatar(btn){
     var u=WS_USER||{},rl=(u.role||'').replace(/_/g,' ');rl=rl.charAt(0).toUpperCase()+rl.slice(1);
     menu.setAttribute('aria-label','Account: '+(u.name||''));
     menu.innerHTML='<div class="who"><b>'+esc(u.name||'—')+'</b><span>'+esc(u.email||'')+'</span><span class="ws-rp">'+esc(rl||'—')+'</span></div>'+
-      (wsIsAdmin()?'<a href="#admin" role="menuitem" tabindex="-1" data-mi="admin"><span aria-hidden="true">⚙</span> Admin<span class="k">Users, roles, access</span></a><hr>':'')+
+      (wsCanViewAdmin()?'<a href="#admin" role="menuitem" tabindex="-1" data-mi="admin"><span aria-hidden="true">⚙</span> Admin<span class="k">Users, roles, access</span></a><hr>':'')+
       '<button type="button" role="menuitem" tabindex="-1" class="ws-out" data-mi="signout"><span aria-hidden="true">⏻</span> Sign out</button>';
   }
   function items(){return [].slice.call(menu.querySelectorAll('[role=menuitem]'));}
@@ -623,10 +630,10 @@ function wsBindAvatar(btn){
     if(it.getAttribute('data-mi')==='admin')wsGoAdmin();else wsSignOut();
   });
 }
-/* Admin strip under the app row — admin-only via wsIsAdmin() (cosmetic; server checks stay the real gate). */
+/* Admin strip under the app row — admins & power users via wsCanViewAdmin() (cosmetic; server checks stay the real gate). */
 function applyAdminTile(){
   var s=$('adminStrip');if(!s)return;
-  s.style.display=wsIsAdmin()?'':'none';
+  s.style.display=wsCanViewAdmin()?'':'none';
 }
 function showChooser(u,animate){
   WS_USER=u;
@@ -726,7 +733,7 @@ $('tileCommercial').onclick=function(){if($('tileCommercial').getAttribute('data
 $('tileLandCloud').onclick=function(){if($('tileLandCloud').getAttribute('data-state')==='granted'){openProduct('landcloud');}};
 $('chSignoutPill').onclick=function(){sb.auth.signOut().then(function(){window.location.reload();});};
 /* Whole strip is clickable; the native <button> gives Enter/Space + focus ring. */
-$('adminStrip').onclick=function(){if(wsIsAdmin())wsGoAdmin();};
+$('adminStrip').onclick=function(){if(wsCanViewAdmin())wsGoAdmin();};
 function resolveUser(au){
   return sb.from('users').select('*').eq('id',au.id).single().then(function(pr){
     if(pr.error||!pr.data) return {err:'Account not found. Contact your administrator.'};

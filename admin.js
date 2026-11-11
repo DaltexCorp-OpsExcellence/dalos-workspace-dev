@@ -9,12 +9,20 @@
 
    ADM_ROLES / ADM_PERM_LABELS / ADM_LC_ROWS mirror Vision's ROLES / PERM_LABELS /
    LC_ROWS constants (code, not DB). Keep them in sync when Vision's change.
+
+   Who sees what (Vision viewAdmin / giveAccess):
+   - admin      → everything (wsIsAdmin()).
+   - power_user → viewAdmin only: Users (view), Roles & permissions, Vision
+     settings / forms / seasons (incl. writes — RLS is_power_user_or_admin()).
+     No grant controls are built for them (add user, role, deactivate/reactivate,
+     reset password, packhouses, regions, App access, Activity log), and every
+     grant write path early-returns unless wsIsAdmin(). aGrant() is that gate.
    Depends on globals from index.html: sb, VISION_URL, WS_USER, wsBindAvatar,
    wsSignOut, wsGoHome.
    ───────────────────────────────────────────────────────────────────────────── */
 
 var ADM_ROLES={
-  admin:{label:'Admin',perms:{viewFG:1,createFG:1,editFG:1,approveFG:1,viewClientQC:1,createClientQC:1,viewExport:1,viewAnalytics:1,viewAdmin:1,viewConfig:1,viewEscalation:1,escalate:1,allPackhouses:1,viewShipments:1,viewCRM:1,editCRM:1,viewLeads:1,editLeadStatus:1,manageLeads:1}},
+  admin:{label:'Admin',perms:{viewFG:1,createFG:1,editFG:1,approveFG:1,viewClientQC:1,createClientQC:1,viewExport:1,viewAnalytics:1,viewAdmin:1,giveAccess:1,viewConfig:1,viewEscalation:1,escalate:1,allPackhouses:1,viewShipments:1,viewCRM:1,editCRM:1,viewLeads:1,editLeadStatus:1,manageLeads:1}},
   power_user:{label:'Power User',perms:{viewFG:1,createFG:1,editFG:1,approveFG:1,viewClientQC:1,createClientQC:1,viewExport:1,viewAnalytics:1,viewAdmin:1,viewConfig:1,viewEscalation:1,escalate:1,allPackhouses:1,viewShipments:1,viewCRM:1,editCRM:1,viewLeads:1,editLeadStatus:1,manageLeads:1}},
   board:{label:'Senior Board',perms:{viewFG:1,editFG:1,viewClientQC:1,viewAnalytics:1,viewEscalation:1,allPackhouses:1,viewShipments:1}},
   qc_manager:{label:'QC Manager',perms:{viewFG:1,createFG:1,editFG:1,approveFG:1,viewClientQC:1,createClientQC:1,viewExport:1,viewAnalytics:1,escalate:1,allPackhouses:1,viewShipments:1}},
@@ -28,7 +36,7 @@ var ADM_ROLES={
   agronomy_admin:{label:'Agronomy Admin (Land Cloud)',perms:{}},
   agronomy_viewer:{label:'Agronomy Viewer (Land Cloud)',perms:{}}
 };
-var ADM_PERM_LABELS={viewFG:'View inspections',createFG:'Create inspections',editFG:'Edit inspections',approveFG:'Approve / reject',viewClientQC:'View client reports',createClientQC:'Submit client reports',viewExport:'Export data',viewAnalytics:'Analytics dashboard',viewAdmin:'User management',viewConfig:'System configuration',viewEscalation:'Board review / escalation queue',escalate:'Escalate batches',allPackhouses:'All packhouses',viewShipments:'View shipments',viewCRM:'CRM — claims & regions (view)',editCRM:'CRM — raise/edit claims, grade, redirect',viewLeads:'Leads — view',editLeadStatus:'Leads — change status & add notes',manageLeads:'Leads — full management (create, import, assign, campaigns)'};
+var ADM_PERM_LABELS={viewFG:'View inspections',createFG:'Create inspections',editFG:'Edit inspections',approveFG:'Approve / reject',viewClientQC:'View client reports',createClientQC:'Submit client reports',viewExport:'Export data',viewAnalytics:'Analytics dashboard',viewAdmin:'User management',giveAccess:'Grant access / manage users',viewConfig:'System configuration',viewEscalation:'Board review / escalation queue',escalate:'Escalate batches',allPackhouses:'All packhouses',viewShipments:'View shipments',viewCRM:'CRM — claims & regions (view)',editCRM:'CRM — raise/edit claims, grade, redirect',viewLeads:'Leads — view',editLeadStatus:'Leads — change status & add notes',manageLeads:'Leads — full management (create, import, assign, campaigns)'};
 var ADM_CRM_SET={viewCRM:1,editCRM:1,viewLeads:1,editLeadStatus:1,manageLeads:1};
 var ADM_LC_ROWS=[
   {label:'Land Cloud — view (structure & blocks)',roles:{admin:1,power_user:1,agronomy_admin:1,agronomy_viewer:1,commercial:1}},
@@ -66,6 +74,8 @@ var AD={
 /* ── helpers ───────────────────────────────────────────────────────────── */
 function aEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function aIni(n){return (n||'?').split(' ').filter(Boolean).map(function(w){return w[0];}).slice(0,2).join('').toUpperCase()||'?';}
+/* Grant gate: true only for the signed-in admin (index.html wsIsAdmin). Fails closed. */
+function aGrant(){try{return typeof wsIsAdmin==='function'&&wsIsAdmin()===true;}catch(e){return false;}}
 function aPerms(r){return (ADM_ROLES[r]||{}).perms||{};}
 function aRoleLabel(r){return (ADM_ROLES[r]||{}).label||r||'—';}
 function aRolePill(r){return '<span class="rp '+(ADM_ROLE_CLS[r]||'r-qc')+'">'+aEsc(aRoleLabel(r))+'</span>';}
@@ -126,10 +136,13 @@ function admLoadRegions(){
 }
 function admLoadAA(){
   AD.aaErr='';
-  /* Vision AnalyticsAccessPanel */
+  /* admin-only RPC: never called for power users (AD.aa stays null → no Analytics status shown) */
+  if(!aGrant()){AD.aa=null;AD.aaAcc={};AD.aaReq={};return Promise.resolve();}
+  /* Vision AnalyticsAccessPanel. A NULL payload (non-admin) or 42501/forbidden error → error state, no throw. */
   return Promise.resolve(sb.rpc('list_analytics_access_admin')).then(function(r){
     if(r&&r.error)throw r.error;
-    AD.aa=(r&&r.data)?r.data:{requests:[],access:[]};
+    if(!r||r.data==null)throw new Error('No access data returned — admins only.');
+    AD.aa=r.data;
     AD.aaAcc={};(AD.aa.access||[]).forEach(function(a){AD.aaAcc[a.user_id]=a;});
     AD.aaReq={};(AD.aa.requests||[]).forEach(function(q){if(q.user_id)AD.aaReq['id:'+q.user_id]=q;if(q.email)AD.aaReq[String(q.email).toLowerCase()]=q;});
   }).catch(function(e){AD.aaErr=(e&&e.message)||'Load failed';}).then(admRender);
@@ -174,7 +187,11 @@ function aAnalytics(u){if(u.role==='admin')return 'auto';if(!AD.aa)return '';if(
 function aActivePH(){return AD.cfg?AD.cfg.packhouses.filter(function(p){return p.active!==false;}):[];}
 function aPhName(id){var p=AD.cfg&&AD.cfg.packhouses.filter(function(x){return x.id===id;})[0];return p?p.name:id;}
 function aPhWords(role,phs){
-  if(ADM_ALL_PH[role]||!phs||phs[0]==='All')return 'all packhouses';
+  if(ADM_ALL_PH[role])return 'all packhouses';
+  /* power user: user_packhouse_access RLS returns only their own rows, so the
+     loader's empty→"All" fallback would be wrong for everyone else. Don't show lists. */
+  if(!aGrant())return 'packhouses: admins only';
+  if(!phs||phs[0]==='All')return 'all packhouses';
   var all=aActivePH().map(function(p){return p.id;});
   if(all.length&&all.every(function(id){return phs.indexOf(id)>=0;}))return 'all packhouses';
   if(phs.length<=2)return phs.map(aPhName).join(', ');
@@ -244,17 +261,20 @@ function admBuild(){
   try{wsBindAvatar(av);}catch(e){}
   AD.built=true;
 }
+var ADM_GRANT_SECS={access:1,activity:1}; /* admin-only sections */
 function admSecFromHash(){var m=/^#admin(?:\/([a-z]+))?/.exec(location.hash||'');var s=m&&m[1];return {users:1,perms:1,access:1,activity:1,settings:1}[s]?s:'users';}
-/* Called by index.html wsRoute() whenever #admin is shown for an admin. */
+/* Called by index.html wsRoute() whenever #admin is shown for an admin or power user. */
 function adminShow(user){
   AD.me=user;
   if(!AD.built)admBuild();
   var av=document.getElementById('admAv');if(av){av.textContent=aIni(user.name);av.setAttribute('aria-label','Account menu for '+(user.name||'you'));}
   var prev=AD.sec;AD.sec=admSecFromHash();
-  if(AD.users===null&&!AD._usersStarted){AD._usersStarted=1;admLoadUsers();admLoadRegions();admLoadAA();admLoadCfg();}
+  /* power user on #admin/access or #admin/activity → bounce to Users; those RPCs are never called */
+  if(ADM_GRANT_SECS[AD.sec]&&!aGrant()){AD.sec='users';try{history.replaceState(null,'',location.pathname+location.search+'#admin/users');}catch(e){}}
+  if(AD.users===null&&!AD._usersStarted){AD._usersStarted=1;admLoadUsers();admLoadRegions();if(aGrant())admLoadAA();admLoadCfg();}
   AD.rowMenu=null;
   if(AD.sec!=='activity')AD.act.sheet=false;
-  if(AD.sec==='activity'&&!AD.act.loaded)actReset();
+  if(AD.sec==='activity'&&!AD.act.loaded&&aGrant())actReset();
   admRender();
   if(prev!==AD.sec){var mm=document.getElementById('admMain');if(mm)mm.focus({preventScroll:true});window.scrollTo(0,0);}
 }
@@ -267,12 +287,14 @@ function admRender(){
     '<h2>Workspace-wide</h2>'+
     L('users','👤','Users','<span class="n">'+nUsers+'</span>')+
     L('perms','▦','Roles &amp; permissions','<span class="n">'+Object.keys(ADM_ROLES).length+'</span>')+
-    L('access','🔑','App access',pend?'<span class="badge" style="margin-left:auto" aria-label="'+pend+' waiting">'+pend+'</span>':'')+
-    L('activity','🕘','Activity log')+
+    /* App access + Activity log: admins only — not rendered for power users */
+    (aGrant()?L('access','🔑','App access',pend?'<span class="badge" style="margin-left:auto" aria-label="'+pend+' waiting">'+pend+'</span>':'')+
+    L('activity','🕘','Activity log'):'')+
     '<h2>App settings</h2>'+
     L('settings','❦','Vision','<span class="n">'+ADM_ST_GROUPS.reduce(function(a,g){return a+g.items.length;},0)+'</span>'));
   var h='';
-  if(AD.sec==='users')h=admUsersHTML();
+  if(ADM_GRANT_SECS[AD.sec]&&!aGrant())h=admAdminsOnlyHTML();
+  else if(AD.sec==='users')h=admUsersHTML();
   else if(AD.sec==='perms')h=admPermsHTML();
   else if(AD.sec==='access')h=admAccessHTML();
   else if(AD.sec==='activity')h=admActivityHTML();
@@ -286,10 +308,13 @@ function admRender(){
   if(AD._focusLayer){AD._focusLayer=0;var lf=document.querySelector('#admLayer [data-autofocus]');if(lf)lf.focus();}
 }
 
+/* Empty state for an admin-only section reached by a power user (no RPC is called). */
+function admAdminsOnlyHTML(){return '<div class="crumb">Workspace / Admin</div>'+aEmpty('Admins only','This section is only available to admins.','<a class="adm-btn" href="#admin/users">Go to Users</a>');}
+
 /* ── Users ─────────────────────────────────────────────────────────────── */
 function admUsersHTML(){
-  var f=AD.f,h='<div class="crumb">Workspace / Admin</div>'+
-    '<div class="ptrow"><div><h1 class="pt">Users</h1><p class="sub">Who can sign in to DalOS, their role, and which apps and sites they can see.</p></div><div class="hsp"></div><button type="button" class="adm-btn pri" data-act="adduser">+ Add user</button></div>';
+  var g=aGrant(),f=AD.f,h='<div class="crumb">Workspace / Admin</div>'+
+    '<div class="ptrow"><div><h1 class="pt">Users</h1><p class="sub">Who can sign in to DalOS, their role, and which apps and sites they can see.'+(g?'':' View only: adding users and changing roles, packhouses, regions or access is for admins.')+'</p></div><div class="hsp"></div>'+(g?'<button type="button" class="adm-btn pri" data-act="adduser">+ Add user</button>':'')+'</div>';
   if(AD.users===null&&AD.usersErr)return h+aError("Couldn't load users",'retry-users');
   if(AD.users===null)return h+aUsersSkel();
   var base=AD.users.filter(function(u){return f.test||!aIsTest(u.name,u.email);});
@@ -300,7 +325,7 @@ function admUsersHTML(){
   h+='<button type="button" class="chip inact" aria-pressed="'+(!f.role&&f.status==='inactive')+'" data-act="chip" data-arg="__inactive">Inactive <span class="c">'+inact+'</span></button></div>';
   h+='<div class="toolbar"><label class="fl search"><span>Search</span><input class="inp" type="search" data-fid="uq" data-in="uq" value="'+aEsc(f.q)+'" placeholder="Name, email or role" autocomplete="off"></label>'+
     aSel('urole','Role',[['','Any']].concat(Object.keys(ADM_ROLES).map(function(k){return [k,ADM_ROLES[k].label];})),f.role)+
-    aSel('uapp','App',[['','Any'],['vision','Vision'],['analytics','Analytics'],['commercial','Commercial'],['landcloud','Land Cloud'],['none','No app access']],f.app)+
+    aSel('uapp','App',[['','Any'],['vision','Vision']].concat(AD.aa?[['analytics','Analytics']]:[]).concat([['commercial','Commercial'],['landcloud','Land Cloud'],['none','No app access']]),f.app)+
     aSel('ustatus','Status',[['active','Active'],['inactive','Inactive'],['any','Any']],f.status)+
     aSwitch('utest',f.test,'Show test data')+'</div>';
   if(AD.usersErr)h+='<div class="ferr" role="alert">Couldn’t refresh users: '+aEsc(AD.usersErr)+' <button type="button" class="adm-btn" data-act="retry-users">↻ Retry</button></div>';
@@ -335,6 +360,8 @@ function admPager(n,pages,hid){var f=AD.f,from=f.page*ADM_PAGE+1,to=Math.min(n,(
 function admKebab(u,sfx){
   var id=u.id+(sfx||''),open=AD.rowMenu===id,self=AD.me&&u.id===AD.me.id;
   var h='<div class="kw"><button type="button" class="keb" aria-haspopup="menu" aria-expanded="'+open+'" aria-label="Actions for '+aEsc(u.name)+'" data-act="kebab" data-arg="'+id+'" data-fid="keb-'+id+'">⋯</button>';
+  /* power user: view only — no reset password / deactivate / reactivate */
+  if(open&&!aGrant()){h+='<div class="rmenu" role="menu" aria-label="Actions for '+aEsc(u.name)+'"><button type="button" role="menuitem" data-act="edit" data-arg="'+u.id+'">👁 View user</button></div>';return h+'</div>';}
   if(open){h+='<div class="rmenu" role="menu" aria-label="Actions for '+aEsc(u.name)+'">'+
     '<button type="button" role="menuitem" data-act="edit" data-arg="'+u.id+'">✎ Edit user</button>'+
     '<button type="button" role="menuitem" data-act="resetpw" data-arg="'+u.id+'">🔒 Reset password</button><hr>'+
@@ -363,6 +390,7 @@ function admDrawerHTML(){
   var D=AD.drawer;if(!D)return '';
   if(D.mode==='add')return admAddHTML();
   var u=aUser(D.uid);if(!u)return '';
+  if(!aGrant())return admViewDrawerHTML(u);
   var d=D.d,self=AD.me&&u.id===AD.me.id,ch=admChanges();
   var h='<div class="scrim" data-act="dclose"></div><aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drwT">'+
     '<div class="dh"><span class="av" aria-hidden="true">'+aEsc(aIni(u.name))+'</span><div style="min-width:0"><h2 id="drwT">'+aEsc(u.name||'—')+'</h2><small>'+aEsc(u.email)+' · last login '+aEsc(aDate(u.lastLogin))+'</small></div><div class="hsp"></div><button type="button" class="keb" aria-label="Close" data-act="dclose" data-fid="dclose" data-autofocus>✕</button></div><div class="db" data-sk="drw">';
@@ -419,7 +447,25 @@ function admDrawerHTML(){
     '<button type="button" class="adm-btn pri" data-act="dsave" data-fid="dsave"'+(ch.length&&!D.busy?'':' disabled')+'>'+(D.busy?'Saving…':'Save')+'</button></div></aside>';
   return h;
 }
+/* Power-user drawer: read-only. No role select, packhouse/region/manager toggles,
+   Analytics status, deactivate/reactivate, reset password, activity link or Save. */
+function admViewDrawerHTML(u){
+  var r=u.role,h='<div class="scrim" data-act="dclose"></div><aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drwT">'+
+    '<div class="dh"><span class="av" aria-hidden="true">'+aEsc(aIni(u.name))+'</span><div style="min-width:0"><h2 id="drwT">'+aEsc(u.name||'—')+'</h2><small>'+aEsc(u.email)+' · last login '+aEsc(aDate(u.lastLogin))+'</small></div><div class="hsp"></div><button type="button" class="keb" aria-label="Close" data-act="dclose" data-fid="dclose" data-autofocus>✕</button></div><div class="db" data-sk="drw">';
+  h+='<div class="fld"><span class="lbl">Full name</span><div class="ro">'+aEsc(u.name||'—')+'</div></div>';
+  h+='<div class="fld"><span class="lbl">Role</span><div class="ro">'+aEsc(aRoleLabel(r))+'</div><div class="hint"><a href="#admin/perms">See permissions</a></div></div>';
+  h+='<div class="fld"><span class="lbl">App access</span>';
+  h+='<div class="appacc"><div class="ah"><span class="dot" style="background:var(--gr)"></span><b>Vision</b><span class="val">'+(aHasVision(r)?aEsc(aPhWords(r,u.packhouses)):'No access (role)')+'</span></div></div>';
+  h+='<div class="appacc"><div class="ah"><span class="dot" style="background:var(--pu)"></span><b>Commercial</b><span class="val">'+(aHasCom(r)?aEsc(aRegWords(r,AD.regMem[u.id])):'No access (role)')+'</span></div></div>';
+  var lc=aLc(r);
+  h+='<div class="appacc"><div class="ah"><span class="dot" style="background:var(--te)"></span><b>Land Cloud</b><span class="val">'+(lc?aEsc(lc[0].toUpperCase()+lc.slice(1))+' (role)':'No access (role)')+'</span></div></div>';
+  h+='</div>';
+  h+='<div class="fld"><span class="lbl">Status</span><div><span class="st'+(u.active?'':' off')+'">'+(u.active?'Active':'Inactive')+'</span></div></div>';
+  h+='</div><div class="df"><span class="msg" role="status">View only — access changes are made by admins.</span><button type="button" class="adm-btn" data-act="dclose" data-fid="dclose2">Close</button></div></aside>';
+  return h;
+}
 function admAddHTML(){
+  if(!aGrant())return '';
   var D=AD.drawer,v=D.v;
   var phOpts=[['All','All packhouses']].concat(aActivePH().map(function(p){return [p.id,p.name];}));
   var h='<div class="scrim" data-act="dclose"></div><aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drwT">'+
@@ -454,6 +500,7 @@ function admDraftReg(rid){var d=AD.drawer.d,cur=d.regs.slice(),all=AD.regions.ma
   else d.regs=cur.indexOf(rid)>=0?cur.filter(function(x){return x!==rid;}):cur.concat([rid]);
   d.mgrs=d.mgrs.filter(function(x){return d.regs.indexOf(x)>=0;});}
 function admSaveDrawer(){
+  if(!aGrant()||!AD.drawer||AD.drawer.mode!=='edit')return;
   var D=AD.drawer,uid=D.uid,o=D.orig,d=D.d,errs=[],phLost=false,u0=aUser(uid)||{};
   D.busy=true;D.err='';admRender();
   /* one write; resolves rows, or null after recording the failure (error or < min rows) */
@@ -507,6 +554,7 @@ function admSaveDrawer(){
 }
 /* Vision addUser — create-user edge function */
 function admAddSave(){
+  if(!aGrant()||!AD.drawer||AD.drawer.mode!=='add')return;
   var D=AD.drawer,v=D.v;D.busy=true;D.err='';admRender();
   sb.auth.getSession().then(function(s){
     var tok=s&&s.data&&s.data.session&&s.data.session.access_token;
@@ -587,6 +635,7 @@ function admPermsHTML(){
 
 /* ── App access (Analytics) ────────────────────────────────────────────── */
 function admAccessHTML(){
+  if(!aGrant())return admAdminsOnlyHTML();
   var h='<div class="crumb">Workspace / Admin</div><h1 class="pt">App access</h1><p class="sub">Requests and grants for each DalOS app. Admins get every app automatically.</p>';
   var pend=AD.aa?(AD.aa.requests||[]).length:0;
   h+='<div class="acctabs" role="tablist" aria-label="App">'+
@@ -616,10 +665,11 @@ function admAccessHTML(){
   return h;
 }
 /* Vision AnalyticsAccessPanel.decide / revoke */
-function admAADecide(id,action){AD.aaBusy=id+action;admRender();
+function admAADecide(id,action){if(!aGrant())return;AD.aaBusy=id+action;admRender();
   sb.functions.invoke('analytics-access-decide',{body:{request_id:id,action:action}}).then(function(r){AD.aaBusy='';if(r&&r.error)aToast('Could not '+(action==='approve'?'approve':'decline')+': '+(r.error.message||'error'),true);else aToast(action==='approve'?'Approved':'Declined');return admLoadAA();})
     .catch(function(){AD.aaBusy='';aToast('Network error — nothing changed.',true);admLoadAA();});}
 function admAARevoke(uid){
+  if(!aGrant())return;
   var a=AD.aaAcc[uid]||{},u=aUser(uid)||{};var nm=a.name||u.name||'this user';
   admConfirm({title:'Remove Analytics access for '+nm+'?',text:'They will lose access to DalOS Analytics straight away.',list:['They can ask again from the Analytics tile in Workspace.','Their other apps are not affected.'],ok:'Remove access',danger:true,
     run:function(){return Promise.resolve(sb.rpc('revoke_analytics_access',{p_user_id:uid})).then(function(r){if(r&&r.error)throw r.error;return admLoadAA();}).then(function(){aToast('Analytics access removed');});}});
@@ -1272,9 +1322,10 @@ function actStreams(){var f=AD.act.f,r=actRange();
   if(!f.actor||f.actor===f.user)s.push(Object.assign({},base,{p_actor:f.user}));
   s.push(Object.assign({},base,{p_target_type:'user',p_target_id:f.user}));
   return s;}
-function actReset(){var A=AD.act;clearTimeout(A._qt);A.seq++;A.loaded=1;A.rows=null;A.err='';A.open={};
+/* admin-only: list_admin_activity is never called for power users */
+function actReset(){if(!aGrant())return;var A=AD.act;clearTimeout(A._qt);A.seq++;A.loaded=1;A.rows=null;A.err='';A.open={};
   A.streams=actStreams().map(function(p){return {p:p,off:0,more:true,rows:[],total:null};});actFetch();}
-function actFetch(){var A=AD.act,seq=A.seq,todo=A.streams.filter(function(s){return s.more;});
+function actFetch(){if(!aGrant())return;var A=AD.act,seq=A.seq,todo=A.streams.filter(function(s){return s.more;});
   A.busy=true;A.err='';admRender();
   Promise.all(todo.map(function(s){
     return Promise.resolve(sb.rpc('list_admin_activity',Object.assign({},s.p,{p_limit:ACT_PAGE,p_offset:s.off}))).then(function(r){if(r&&r.error)throw r.error;return [s,(r&&r.data)||[]];});
@@ -1375,6 +1426,7 @@ function actRowHTML(r){
     (open?'<div class="act-det" id="actd-'+aEsc(id)+'">'+actDetailHTML(r)+'</div>':'')+'</li>';
 }
 function admActivityHTML(){
+  if(!aGrant())return admAdminsOnlyHTML();
   var A=AD.act,f=A.f,nf=actFilterCount();
   var h='<div class="crumb">Workspace / Admin</div><div class="ptrow"><div><h1 class="pt">Activity log</h1><p class="sub">Who changed users, roles, access and settings, and when. Read-only.</p></div><div class="hsp"></div>'+
     '<button type="button" class="adm-btn" data-act="actreload"'+(A.busy?' disabled':'')+'>↻ Refresh</button></div>';
@@ -1415,11 +1467,16 @@ function admActivityHTML(){
 }
 
 /* ── events ────────────────────────────────────────────────────────────── */
+var ADM_GRANT_ACTS={adduser:1,addm:1,addsave:1,dsave:1,ddiscard:1,dgo:1,dph:1,dreg:1,dmgr:1,deact:1,react:1,resetpw:1,rpwgo:1,aaok:1,aadeny:1,aarevoke:1,aaclear:1,'retry-aa':1,actuser:1,actuserx:1,actmore:1,actreload:1,actclear:1,actrow:1,actsheet:1,actsheetx:1};
+var ADM_GRANT_CHS={drRole:1,'add-role':1,'add-ph':1,actapp:1,actactor:1,actaction:1,actrange:1,actfrom:1,actto:1};
+var ADM_GRANT_INS={actq:1,aaq:1,'add-name':1,'add-email':1,'add-pw':1,rpw:1};
 function admClick(e){
   var t=e.target.closest('[data-act]');if(!t||t.disabled)return;
   var act=t.getAttribute('data-act'),arg=t.getAttribute('data-arg');
   if(act==='phopen'){AD.st.nv.phOpen=!t.parentNode.open;return;}
   if(t.tagName==='A'&&act!=='home'&&act!=='dgo')return;
+  /* grant write paths + admin-only reads: early-return unless admin (a crafted click can't fire them) */
+  if(ADM_GRANT_ACTS[act]&&!aGrant())return;
   var f=AD.f,S=AD.st,c=AD.cfg;
   switch(act){
     case 'home':e.preventDefault();wsGoHome();return;
@@ -1539,7 +1596,7 @@ function admClick(e){
   admRender();
 }
 function admChange(e){
-  var t=e.target,k=t.getAttribute('data-ch');if(!k)return;var v=t.value,S=AD.st;
+  var t=e.target,k=t.getAttribute('data-ch');if(!k)return;if(ADM_GRANT_CHS[k]&&!aGrant())return;var v=t.value,S=AD.st;
   if(k==='urole'){AD.f.role=v;AD.f.page=0;}
   else if(k==='uapp'){AD.f.app=v;AD.f.page=0;}
   else if(k==='ustatus'){AD.f.status=v;AD.f.page=0;}
@@ -1560,7 +1617,7 @@ function admChange(e){
   admRender();
 }
 function admInput(e){
-  var t=e.target,k=t.getAttribute('data-in');if(!k)return;var v=t.value,S=AD.st;
+  var t=e.target,k=t.getAttribute('data-in');if(!k)return;if(ADM_GRANT_INS[k]&&!aGrant())return;var v=t.value,S=AD.st;
   if(k==='uq'){AD.f.q=v;AD.f.page=0;}
   else if(k==='aaq')AD.aaQ=v;
   else if(k==='actq'){AD.act.f.q=v;clearTimeout(AD.act._qt);AD.act._qt=setTimeout(actReset,350);}
@@ -1600,10 +1657,10 @@ function admKey(e){
   }
 }
 
-/* Chooser tile counts (admins only) — same reads as above. */
+/* Chooser tile counts — not used by the strip (no counts). The access RPC is admin-only: skipped for power users. */
 function admTileInfo(cb){
   Promise.all([
     sb.from('users').select('id',{count:'exact',head:true}).eq('active',true),
-    sb.rpc('list_analytics_access_admin')
+    aGrant()?sb.rpc('list_analytics_access_admin'):Promise.resolve(null)
   ]).then(function(rs){cb({users:rs[0]&&!rs[0].error?rs[0].count:null,requests:rs[1]&&!rs[1].error&&rs[1].data?(rs[1].data.requests||[]).length:null});}).catch(function(){cb({});});
 }
